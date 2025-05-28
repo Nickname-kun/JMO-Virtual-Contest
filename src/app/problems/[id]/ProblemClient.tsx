@@ -1,0 +1,68 @@
+"use client"
+
+import SubmissionSection from './submission-section'
+import { InlineMath, BlockMath } from 'react-katex'
+import {
+  Box,
+  Heading,
+  Text,
+  VStack,
+  Divider,
+  SimpleGrid,
+  Badge,
+  Flex,
+  Container,
+  Button,
+} from '@chakra-ui/react'
+import Link from 'next/link'
+
+function renderLatex(text: string) {
+  const parts = text.split(/(\$\$.*?\$\$|\$.*?\$)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('$$') && part.endsWith('$$')) {
+      const math = part.slice(2, -2)
+      return <BlockMath key={i} math={math} />
+    } else if (part.startsWith('$') && part.endsWith('$')) {
+      const math = part.slice(1, -1)
+      return <InlineMath key={i} math={math} />
+    } else {
+      return part.trim() === '' ? null : <span key={i}>{part}</span>
+    }
+  })
+}
+
+interface Problem {
+  id: string
+  title: string
+  content: string
+  correct_answers?: string[];
+  has_diagram: boolean
+  diagram_svg: string
+  // ... other fields
+}
+
+export default function ProblemClient({ problem }: { problem: Problem }) {
+  return (
+    <Container maxW="container.lg" py={8}>
+      <VStack spacing={8} align="stretch">
+        <Heading as="h1" size="xl">
+          {problem.title}
+        </Heading>
+        <Button as={Link} href="/problems" colorScheme="gray" variant="outline" size="sm" alignSelf="flex-start">
+          問題一覧へ戻る
+        </Button>
+        
+        {/* 問題文（Boxラッパーを外して直接表示） */}
+        <Text whiteSpace="pre-wrap">{renderLatex(problem.content)}</Text>
+
+        {/* 図形がある場合のみ表示（ボックスなしで表示） */}
+        {problem.diagram_svg && (
+          <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+        )}
+
+        {/* 解答欄・提出履歴 */}
+        <SubmissionSection problemId={problem.id} correctAnswers={problem.correct_answers || null} />
+      </VStack>
+    </Container>
+  )
+} 

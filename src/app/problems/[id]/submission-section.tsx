@@ -166,7 +166,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
                     outline: 'none',
                     padding: 4,
                   }}
-                  placeholder="ここに数式を入力"
+                  aria-placeholder="ここに数式を入力"
                 >{answer}</math-field>
               </Box>
               <Box mt={2} p={3} border="1px solid" borderColor="gray.200" borderRadius={6} bg="gray.100">

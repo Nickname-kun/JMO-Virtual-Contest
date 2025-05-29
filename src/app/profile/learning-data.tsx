@@ -52,13 +52,28 @@ export default function LearningData({
   console.log("Submissions data received in LearningData:", submissions);
 
   // 分野ごとの正答率を計算
-  const calculateCorrectnessByField = () => {
+  const calculateCorrectnessByField = (): { field: string; total: number; correct: number; rate: number }[] => {
     const stats: { [key: string]: { total: number; correct: number } } = {};
 
     submissions.forEach(submission => {
-      // 提出に含まれる問題の情報から分野を取得
-      if (submission.problems && typeof submission.problems === 'object' && submission.problems.field) {
-        const field = submission.problems.field;
+      // 提出に含まれる問題の情報から分野を取得（配列として処理）
+      if (Array.isArray(submission.problems)) {
+        submission.problems.forEach(problem => {
+          const field = problem.field || '不明な分野';
+          if (!stats[field]) {
+            stats[field] = { total: 0, correct: 0 };
+          }
+          stats[field].total++;
+          // 注意：提出全体が正解か不正解かで判定しているため、
+          // 問題ごとの正誤が必要であればsupabaseのクエリやテーブル構造の見直しが必要です。
+          // ここでは提出全体の正誤を各問題に単純に加算しています。
+          if (submission.is_correct) {
+            stats[field].correct++;
+          }
+        });
+      } else if (submission.problems && typeof submission.problems === 'object') {
+        // 万が一オブジェクト単体でproblemsが来る場合のフォールバック（型定義とは異なるが安全のため）
+        const field = (submission.problems as SubmissionProblem).field || '不明な分野'; // 型アサーション
         if (!stats[field]) {
           stats[field] = { total: 0, correct: 0 };
         }
@@ -66,17 +81,18 @@ export default function LearningData({
         if (submission.is_correct) {
           stats[field].correct++;
         }
+        console.warn("submission.problems is an object instead of an array:", submission.problems);
       } else {
-        // 問題情報が取得できない、またはfieldがない場合の処理
+        // 問題情報が完全に取得できない場合のフォールバック
         const field = '不明な分野';
-         if (!stats[field]) {
+        if (!stats[field]) {
           stats[field] = { total: 0, correct: 0 };
         }
         stats[field].total++;
         if (submission.is_correct) {
           stats[field].correct++;
         }
-        console.error("Problem field not found for submission:", submission);
+        console.error("submission.problems is missing or not an expected type:", submission.problems);
       }
     });
 

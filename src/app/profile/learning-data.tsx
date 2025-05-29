@@ -228,7 +228,7 @@ export default function LearningData({
                 <Td>
                   {vc.contest_id ? (
                     <ChakraLink as={Link} href={`/contests/${vc.contest_id}/virtual/${vc.id}`}>
-                      {(vc.contests as any)?.[0]?.name || 'N/A'} {/* 一時的にanyで型エラーを回避 */}
+                      {Array.isArray(vc.contests) && vc.contests.length > 0 ? vc.contests[0].name : 'N/A'}
                     </ChakraLink>
                   ) : 'N/A'}
                 </Td>

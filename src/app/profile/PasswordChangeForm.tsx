@@ -69,7 +69,7 @@ function PasswordChangeFormContent() {
   };
 
   return (
-    <Box p={4} borderWidth={1} borderRadius="md">
+    <Box p={4} borderWidth={1} borderRadius="md" maxW="md" mx="auto">
       <VStack spacing={4}>
         <Heading as="h2" size="md">パスワード変更</Heading>
         <FormControl>

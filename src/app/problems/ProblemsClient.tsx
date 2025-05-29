@@ -47,21 +47,21 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
         <Table variant="simple">
           <Thead>
             <Tr>
-              <Th>年度</Th>
+              <Th textAlign="center" borderRight="1px solid #E2E8F0">年度</Th>
               {PROBLEM_NUMBERS.map(number => (
-                <Th key={number} isNumeric>{number}</Th>
+                <Th key={number} isNumeric textAlign="center" borderRight="1px solid #E2E8F0">{number}</Th>
               ))}
             </Tr>
           </Thead>
           <Tbody>
             {filteredProblemsByContest.map(({ contest, problems }) => (
               <Tr key={contest.id}>
-                <Td>{contest.name}</Td>
+                <Td borderRight="1px solid #E2E8F0">{contest.name}</Td>
                 {PROBLEM_NUMBERS.map(number => {
                   const problem = problems.find((p: any) => p.number === number);
                   const isCorrect = problem ? correctProblemIds.includes(problem.id) : false;
                   return (
-                    <Td key={number} isNumeric bg={isCorrect ? "green.100" : "transparent"}>
+                    <Td key={number} isNumeric bg={isCorrect ? "green.100" : "transparent"} textAlign="center" borderRight="1px solid #E2E8F0">
                       {problem ? (
                         <Link href={`/problems/${problem.id}`}>
                           <Text color="gray.800" fontWeight="bold">

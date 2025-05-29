@@ -37,7 +37,7 @@ interface VirtualContest {
   status: string;
   score: number;
   contest_id: string | null;
-  contests: VirtualContestContest[] | null; // 配列として定義
+  contests: VirtualContestContest[]; // 配列として定義
 }
 
 interface LearningDataProps {

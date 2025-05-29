@@ -53,21 +53,6 @@ export default async function ProfilePage() {
 
   if (submissionsError) throw submissionsError;
 
-  // 型を変換
-  const submissions = (submissionsData || []).map(submission => ({
-    id: submission.id,
-    problem_id: submission.problem_id,
-    answer: submission.answer,
-    is_correct: submission.is_correct,
-    submitted_at: submission.submitted_at,
-    problems: [{
-      id: submission.problems[0].id,
-      title: submission.problems[0].title,
-      number: submission.problems[0].number,
-      field: submission.problems[0].field
-    }]
-  }));
-
   // ユーザーのバーチャルコンテスト履歴を取得（関連するコンテスト情報も結合）
   const { data: virtualContestsData, error: virtualContestsError } = await supabase
     .from('virtual_contests')
@@ -87,20 +72,6 @@ export default async function ProfilePage() {
     .order('start_time', { ascending: false });
 
   if (virtualContestsError) throw virtualContestsError;
-
-  // 型を変換
-  const virtualContests = (virtualContestsData || []).map(contest => ({
-    id: contest.id,
-    start_time: contest.start_time,
-    end_time: contest.end_time,
-    status: contest.status,
-    score: contest.score,
-    contest_id: contest.contest_id,
-    contests: [{
-      id: contest.contests[0].id,
-      name: contest.contests[0].name
-    }]
-  }));
 
   // Server Action for updating username - Called directly from Client Component
   // sessionは直接参照せず、Server Action内でcookiesからsupabaseクライアントを作成して取得
@@ -166,7 +137,7 @@ export default async function ProfilePage() {
         <Box mt={8} w="full">
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>
           <Suspense fallback={<div>Loading...</div>}>
-            <LearningData submissions={submissions} virtualContests={virtualContests} />
+            <LearningData submissions={submissionsData || []} virtualContests={virtualContestsData || []} />
           </Suspense>
         </Box>
 

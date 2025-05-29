@@ -1,12 +1,12 @@
 "use client"
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { Box, Table, Thead, Tbody, Tr, Th, Td, TableContainer, Text, Button, ButtonGroup, Input } from '@chakra-ui/react'
 
 const PROBLEM_LABELS = ['1','2','3','4','5','6','7','8','9','10','11','12']
 const FIELDS = ['ALL', 'A', 'G', 'C', 'N']
 
-export default function ProblemsClient({ problemsByContest, correctProblemIds }: { problemsByContest: any[], correctProblemIds: string[] }) {
+function ProblemsClientContent({ problemsByContest, correctProblemIds }: { problemsByContest: any[], correctProblemIds: string[] }) {
   const [selectedField, setSelectedField] = useState('ALL')
   const [search, setSearch] = useState('')
 
@@ -44,39 +44,56 @@ export default function ProblemsClient({ problemsByContest, correctProblemIds }:
         />
       </Box>
       <TableContainer overflowX="auto" bg="white" borderRadius="xl" boxShadow="md" p={4}>
-        <Table variant="simple" size="md">
-          <Thead>
-            <Tr>
-              <Th fontSize="lg">年度</Th>
-              {PROBLEM_LABELS.map((label) => (
-                <Th key={label} textAlign="center" fontSize="lg">{label}</Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody>
-            {filteredProblemsByContest.map(({ contest, problems }) => (
-              <Tr key={contest.id} _hover={{ bg: 'gray.50' }}>
-                <Td fontWeight="bold">{contest.name}</Td>
-                {PROBLEM_LABELS.map((label, idx) => {
-                  const problem = problems[idx]
-                  const isCorrect = problem && correctProblemIds.includes(problem.id)
+        {filteredProblemsByContest.map(({ contest, problems }) => (
+          <Box key={contest.id} mb={8}>
+            <Text fontSize="2xl" fontWeight="bold" mb={4}>
+              {contest.name}
+            </Text>
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>番号</Th>
+                  <Th>問題</Th>
+                  <Th>分野</Th>
+                  <Th>状態</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {problems.map((problem: any, index: number) => {
+                  if (!problem) return null;
+                  const isCorrect = correctProblemIds.includes(problem.id);
                   return (
-                    <Td key={label} textAlign="center" bg={isCorrect ? 'green.100' : undefined}>
-                      {problem ? (
-                        <Link href={`/problems/${problem.id}`} style={{ color: '#3182ce', fontWeight: 500 }}>
-                          {label}
+                    <Tr key={problem.id}>
+                      <Td>{PROBLEM_LABELS[index]}</Td>
+                      <Td>
+                        <Link href={`/problems/${problem.id}`}>
+                          {problem.title}
                         </Link>
-                      ) : (
-                        <Text color="gray.400">-</Text>
-                      )}
-                    </Td>
-                  )
+                      </Td>
+                      <Td>{problem.field}</Td>
+                      <Td>
+                        {isCorrect ? (
+                          <Text color="green.500">正解</Text>
+                        ) : (
+                          <Text color="gray.500">未解答</Text>
+                        )}
+                      </Td>
+                    </Tr>
+                  );
                 })}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+              </Tbody>
+            </Table>
+          </Box>
+        ))}
       </TableContainer>
     </Box>
-  )
+  );
+}
+
+export default function ProblemsClient(props: { problemsByContest: any[], correctProblemIds: string[] }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProblemsClientContent {...props} />
+    </Suspense>
+  );
 } 

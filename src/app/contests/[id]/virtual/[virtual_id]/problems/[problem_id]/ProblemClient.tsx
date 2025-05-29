@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { Container, Heading, Text, Box, VStack, Button, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Tooltip, Flex, FormControl, FormLabel, Alert, AlertIcon,
   TableContainer, Table, Thead, Tbody, Tr, Th, Td
 } from '@chakra-ui/react';
@@ -54,7 +54,7 @@ function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
   }
 }
 
-export default function ProblemClient({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
+function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
   const toast = useToast();
   const [answer, setAnswer] = useState('');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -416,5 +416,13 @@ export default function ProblemClient({ problem, params, userId, virtualContest 
       </AlertDialog>
 
     </Container>
+  );
+}
+
+export default function ProblemClient(props: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProblemClientContent {...props} />
+    </Suspense>
   );
 } 

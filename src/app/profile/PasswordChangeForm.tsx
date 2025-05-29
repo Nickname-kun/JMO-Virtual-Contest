@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import {
   Box,
@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'; // react-iconsを使用
 
-export default function PasswordChangeForm() {
+function PasswordChangeFormContent() {
   const supabase = createClientComponentClient();
   const toast = useToast();
 
@@ -29,21 +29,11 @@ export default function PasswordChangeForm() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChangePassword = async () => {
+  const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
       toast({
         title: 'エラー',
         description: '新しいパスワードと確認用パスワードが一致しません。',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-    if (!newPassword) {
-      toast({
-        title: 'エラー',
-        description: '新しいパスワードを入力してください。',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -55,7 +45,6 @@ export default function PasswordChangeForm() {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
-    setIsLoading(false);
 
     if (error) {
       toast({
@@ -67,8 +56,8 @@ export default function PasswordChangeForm() {
       });
     } else {
       toast({
-        title: 'パスワード変更完了',
-        description: 'パスワードが変更されました。',
+        title: 'パスワードを変更しました',
+        description: '新しいパスワードでログインしてください。',
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -76,62 +65,68 @@ export default function PasswordChangeForm() {
       setNewPassword('');
       setConfirmPassword('');
     }
+    setIsLoading(false);
   };
 
   return (
-    <Box mt={8} w="full">
-      <Heading as="h2" size="lg" mb={4}>パスワード変更</Heading>
-      <VStack spacing={4} align="start">
-        <FormControl id="new-password">
+    <Box p={4} borderWidth={1} borderRadius="md">
+      <VStack spacing={4}>
+        <Heading as="h2" size="md">パスワード変更</Heading>
+        <FormControl>
           <FormLabel>新しいパスワード</FormLabel>
-          <InputGroup size="md">
+          <InputGroup>
             <Input
-              placeholder="新しいパスワード"
               type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              pr="4.5rem"
             />
-            <InputRightElement width="4.5rem">
+            <InputRightElement>
               <IconButton
-                h="1.75rem" size="sm"
-                onClick={() => setShowNewPassword(v => !v)}
-                icon={showNewPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
                 aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                icon={showNewPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                onClick={() => setShowNewPassword(!showNewPassword)}
                 variant="ghost"
+                size="sm"
               />
             </InputRightElement>
           </InputGroup>
         </FormControl>
-        <FormControl id="confirm-password">
+        <FormControl>
           <FormLabel>新しいパスワード（確認用）</FormLabel>
-          <InputGroup size="md">
+          <InputGroup>
             <Input
-              placeholder="新しいパスワード（確認用）"
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              pr="4.5rem"
             />
-            <InputRightElement width="4.5rem">
+            <InputRightElement>
               <IconButton
-                h="1.75rem" size="sm"
-                onClick={() => setShowConfirmPassword(v => !v)}
-                icon={showConfirmPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
                 aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                icon={showConfirmPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 variant="ghost"
+                size="sm"
               />
             </InputRightElement>
           </InputGroup>
         </FormControl>
         <Button
           colorScheme="blue"
-          onClick={handleChangePassword}
+          onClick={handlePasswordChange}
           isLoading={isLoading}
+          width="full"
         >
           パスワードを変更
         </Button>
       </VStack>
     </Box>
+  );
+}
+
+export default function PasswordChangeForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PasswordChangeFormContent />
+    </Suspense>
   );
 } 

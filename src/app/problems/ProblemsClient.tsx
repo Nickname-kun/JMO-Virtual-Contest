@@ -3,7 +3,7 @@ import { useState, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { Box, Table, Thead, Tbody, Tr, Th, Td, TableContainer, Text, Button, ButtonGroup, Input } from '@chakra-ui/react'
 
-const PROBLEM_LABELS = ['1','2','3','4','5','6','7','8','9','10','11','12']
+const PROBLEM_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1);
 const FIELDS = ['ALL', 'A', 'G', 'C', 'N']
 
 function ProblemsClientContent({ problemsByContest, correctProblemIds }: { problemsByContest: any[], correctProblemIds: string[] }) {
@@ -11,18 +11,18 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
   const [search, setSearch] = useState('')
 
   const filteredProblemsByContest = useMemo(() => {
-    return problemsByContest.map(({ contest, problems }) => {
-      const contestMatch = contest.name.includes(search)
-      const filteredProblems = problems.map((p: any) => {
-        if (!p) return null
-        const titleMatch = p.title && p.title.includes(search)
-        const contentMatch = p.content && p.content.includes(search)
-        const fieldMatch = selectedField === 'ALL' || p.field === selectedField
-        return (titleMatch || contentMatch || contestMatch) && fieldMatch ? p : null
-      })
-      return { contest, problems: filteredProblems }
-    })
-  }, [problemsByContest, selectedField, search])
+    return problemsByContest
+      .filter(({ contest }) => contest.name.includes(search))
+      .map(({ contest, problems }) => {
+        const filteredProblems = problems.filter((p: any) => {
+          if (!p) return false;
+          const fieldMatch = selectedField === 'ALL' || p.field === selectedField;
+          // 問題のタイトルや内容での検索は、年度での検索と組み合わせる必要はないため削除
+          return fieldMatch;
+        });
+        return { contest, problems: filteredProblems };
+      });
+  }, [problemsByContest, selectedField, search]);
 
   return (
     <Box maxW="100vw" px={{ base: 2, md: 8 }} py={10}>
@@ -44,47 +44,40 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
         />
       </Box>
       <TableContainer overflowX="auto" bg="white" borderRadius="xl" boxShadow="md" p={4}>
-        {filteredProblemsByContest.map(({ contest, problems }) => (
-          <Box key={contest.id} mb={8}>
-            <Text fontSize="2xl" fontWeight="bold" mb={4}>
-              {contest.name}
-            </Text>
-            <Table variant="simple">
-              <Thead>
-                <Tr>
-                  <Th>番号</Th>
-                  <Th>問題</Th>
-                  <Th>分野</Th>
-                  <Th>状態</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {problems.map((problem: any, index: number) => {
-                  if (!problem) return null;
-                  const isCorrect = correctProblemIds.includes(problem.id);
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>年度</Th>
+              {PROBLEM_NUMBERS.map(number => (
+                <Th key={number} isNumeric>{number}</Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {filteredProblemsByContest.map(({ contest, problems }) => (
+              <Tr key={contest.id}>
+                <Td>{contest.name}</Td>
+                {PROBLEM_NUMBERS.map(number => {
+                  const problem = problems.find((p: any) => p.number === number);
+                  const isCorrect = problem ? correctProblemIds.includes(problem.id) : false;
                   return (
-                    <Tr key={problem.id}>
-                      <Td>{PROBLEM_LABELS[index]}</Td>
-                      <Td>
+                    <Td key={number} isNumeric>
+                      {problem ? (
                         <Link href={`/problems/${problem.id}`}>
-                          {problem.title}
+                          <Text color={isCorrect ? "green.500" : "gray.500"} fontWeight="bold">
+                            {problem.number}
+                          </Text>
                         </Link>
-                      </Td>
-                      <Td>{problem.field}</Td>
-                      <Td>
-                        {isCorrect ? (
-                          <Text color="green.500">正解</Text>
-                        ) : (
-                          <Text color="gray.500">未解答</Text>
-                        )}
-                      </Td>
-                    </Tr>
+                      ) : (
+                        <Text>-</Text>
+                      )}
+                    </Td>
                   );
                 })}
-              </Tbody>
-            </Table>
-          </Box>
-        ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
       </TableContainer>
     </Box>
   );

@@ -55,7 +55,7 @@ export default function LearningData({
     const stats: { [key: string]: { total: number; correct: number } } = {};
 
     submissions.forEach(submission => {
-      const field = submission.problems?.field || '不明な分野';
+      const field = submission.problems?.[0]?.field || '不明な分野';
       if (!stats[field]) {
         stats[field] = { total: 0, correct: 0 };
       }

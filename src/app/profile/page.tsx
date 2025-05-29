@@ -2,7 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Box, Heading, Text, VStack, FormControl, FormLabel, Input, Button } from '@chakra-ui/react';
-// import FeedbackToast from './FeedbackToast'; // FeedbackToastのインポートを削除
+import FeedbackToast from './FeedbackToast';
 import ProfileForm from './profile-form'; // 後で作成するProfileFormをインポート
 import LearningData from './learning-data'; // LearningDataコンポーネントをインポート
 import PasswordChangeForm from './PasswordChangeForm'; // パスワード変更フォームをインポート
@@ -138,7 +138,9 @@ export default async function ProfilePage() {
 
   return (
     <Box p={8} maxW="container.md" mx="auto">
-      {/* <FeedbackToast /> */}
+      <Suspense fallback={<div>Loading...</div>}>
+        <FeedbackToast />
+      </Suspense>
       <VStack spacing={6} align="start">
         <Heading as="h1" size="xl">マイページ</Heading>
         <Text fontSize="lg">現在のユーザー: {profile?.username || session.user.email} さん</Text>

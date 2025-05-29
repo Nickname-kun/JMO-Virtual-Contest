@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -153,5 +153,13 @@ export default function ResetPasswordPage() {
         </Button>
       </Stack>
     </Box>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordPageContent />
+    </Suspense>
   );
 } 

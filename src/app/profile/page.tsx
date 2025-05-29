@@ -40,21 +40,32 @@ export default async function ProfilePage() {
       answer,
       is_correct,
       submitted_at,
-      problems!inner ( id, title, number, field )
+      problems!inner (
+        id,
+        title,
+        number,
+        field
+      )
     `)
     .eq('user_id', session.user.id)
     .order('submitted_at', { ascending: false });
 
-  if (submissionsError) {
-    console.error('Error fetching submissions:', submissionsError);
-    // エラーハンドリング
-  }
+  if (submissionsError) throw submissionsError;
 
-  // 型に合わせてデータを変換
-  const submissions = submissionsData?.map(submission => ({
-    ...submission,
-    problems: submission.problems[0] // 配列の最初の要素を取得
-  })) || [];
+  // 型を変換
+  const submissions = (submissionsData || []).map(submission => ({
+    id: submission.id,
+    problem_id: submission.problem_id,
+    answer: submission.answer,
+    is_correct: submission.is_correct,
+    submitted_at: submission.submitted_at,
+    problems: [{
+      id: submission.problems[0].id,
+      title: submission.problems[0].title,
+      number: submission.problems[0].number,
+      field: submission.problems[0].field
+    }]
+  }));
 
   // ユーザーのバーチャルコンテスト履歴を取得（関連するコンテスト情報も結合）
   const { data: virtualContestsData, error: virtualContestsError } = await supabase
@@ -66,21 +77,29 @@ export default async function ProfilePage() {
       status,
       score,
       contest_id,
-      contests!inner ( id, name )
+      contests!inner (
+        id,
+        name
+      )
     `)
     .eq('user_id', session.user.id)
     .order('start_time', { ascending: false });
 
-  if (virtualContestsError) {
-    console.error('Error fetching virtual contests:', virtualContestsError);
-    // エラーハンドリング
-  }
+  if (virtualContestsError) throw virtualContestsError;
 
-  // 型に合わせてデータを変換
-  const virtualContests = virtualContestsData?.map(contest => ({
-    ...contest,
-    contests: contest.contests[0] // 配列の最初の要素を取得
-  })) || [];
+  // 型を変換
+  const virtualContests = (virtualContestsData || []).map(contest => ({
+    id: contest.id,
+    start_time: contest.start_time,
+    end_time: contest.end_time,
+    status: contest.status,
+    score: contest.score,
+    contest_id: contest.contest_id,
+    contests: [{
+      id: contest.contests[0].id,
+      name: contest.contests[0].name
+    }]
+  }));
 
   // Server Action for updating username - Called directly from Client Component
   // sessionは直接参照せず、Server Action内でcookiesからsupabaseクライアントを作成して取得

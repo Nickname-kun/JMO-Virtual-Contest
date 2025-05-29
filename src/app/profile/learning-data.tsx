@@ -49,6 +49,7 @@ export default function LearningData({
   submissions,
   virtualContests,
 }: LearningDataProps) {
+  console.log("Submissions data received in LearningData:", submissions);
 
   // 分野ごとの正答率を計算
   const calculateCorrectnessByField = () => {

@@ -49,9 +49,6 @@ export default function LearningData({
   submissions,
   virtualContests,
 }: LearningDataProps) {
-  console.log("VirtualContests data received in LearningData:", virtualContests);
-  console.log("Submissions data received in LearningData:", submissions);
-
   // 分野ごとの正答率を計算
   const calculateCorrectnessByField = (): { field: string; total: number; correct: number; rate: number }[] => {
     const stats: { [key: string]: { total: number; correct: number } } = {};
@@ -82,7 +79,7 @@ export default function LearningData({
         if (submission.is_correct) {
           stats[field].correct++;
         }
-        console.warn("submission.problems is an object instead of an array:", submission.problems);
+        // console.warn("submission.problems is an object instead of an array:", submission.problems);
       } else {
         // 問題情報が完全に取得できない場合のフォールバック
         const field = '不明な分野';
@@ -93,7 +90,7 @@ export default function LearningData({
         if (submission.is_correct) {
           stats[field].correct++;
         }
-        console.error("submission.problems is missing or not an expected type:", submission.problems);
+        // console.error("submission.problems is missing or not an expected type:", submission.problems);
       }
     });
 

@@ -32,7 +32,7 @@ export default async function ProfilePage() {
   }
 
   // ユーザーの提出履歴を取得（関連する問題情報も結合）
-  const { data: submissions, error: submissionsError } = await supabase
+  const { data: submissionsData, error: submissionsError } = await supabase
     .from('submissions')
     .select(`
       id,
@@ -50,8 +50,14 @@ export default async function ProfilePage() {
     // エラーハンドリング
   }
 
+  // 型に合わせてデータを変換
+  const submissions = submissionsData?.map(submission => ({
+    ...submission,
+    problems: submission.problems[0] // 配列の最初の要素を取得
+  })) || [];
+
   // ユーザーのバーチャルコンテスト履歴を取得（関連するコンテスト情報も結合）
-  const { data: virtualContests, error: virtualContestsError } = await supabase
+  const { data: virtualContestsData, error: virtualContestsError } = await supabase
     .from('virtual_contests')
     .select(`
       id,
@@ -69,6 +75,12 @@ export default async function ProfilePage() {
     console.error('Error fetching virtual contests:', virtualContestsError);
     // エラーハンドリング
   }
+
+  // 型に合わせてデータを変換
+  const virtualContests = virtualContestsData?.map(contest => ({
+    ...contest,
+    contests: contest.contests[0] // 配列の最初の要素を取得
+  })) || [];
 
   // Server Action for updating username - Called directly from Client Component
   // sessionは直接参照せず、Server Action内でcookiesからsupabaseクライアントを作成して取得
@@ -129,7 +141,7 @@ export default async function ProfilePage() {
         {/* 学習データ表示コンポーネントにデータを渡す */}
         <Box mt={8} w="full">
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>
-          <LearningData submissions={submissions || []} virtualContests={virtualContests || []} />
+          <LearningData submissions={submissions} virtualContests={virtualContests} />
         </Box>
 
       </VStack>

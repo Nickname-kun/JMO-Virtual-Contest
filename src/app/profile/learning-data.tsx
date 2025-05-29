@@ -22,7 +22,7 @@ interface Submission {
   answer: string;
   is_correct: boolean;
   submitted_at: string;
-  problems: SubmissionProblem; // 配列ではなく単一オブジェクト
+  problems: SubmissionProblem[]; // 配列として定義
 }
 
 interface VirtualContestContest {
@@ -37,7 +37,7 @@ interface VirtualContest {
   status: string;
   score: number;
   contest_id: string | null;
-  contests: VirtualContestContest; // 配列ではなく単一オブジェクト
+  contests: VirtualContestContest[]; // 配列として定義
 }
 
 interface LearningDataProps {

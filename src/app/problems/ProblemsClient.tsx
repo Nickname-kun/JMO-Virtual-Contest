@@ -61,10 +61,10 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
                   const problem = problems.find((p: any) => p.number === number);
                   const isCorrect = problem ? correctProblemIds.includes(problem.id) : false;
                   return (
-                    <Td key={number} isNumeric bg={isCorrect ? "green.100" : "transparent"} textAlign="center" borderRight="1px solid #E2E8F0">
+                    <Td key={number} bg={isCorrect ? "green.100" : "transparent"} textAlign="center" borderRight="1px solid #E2E8F0">
                       {problem ? (
                         <Link href={`/problems/${problem.id}`}>
-                          <Text color="gray.800" fontWeight="bold">
+                          <Text color="gray.800" fontWeight="bold" textDecoration={isCorrect ? "none" : "underline"} _hover={{ textDecoration: "underline" }}>
                             {problem.number}
                           </Text>
                         </Link>

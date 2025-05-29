@@ -79,6 +79,7 @@ function PasswordChangeFormContent() {
               type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              width="full"
             />
             <InputRightElement>
               <IconButton
@@ -98,6 +99,7 @@ function PasswordChangeFormContent() {
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              width="full"
             />
             <InputRightElement>
               <IconButton

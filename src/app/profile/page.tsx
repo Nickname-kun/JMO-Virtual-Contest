@@ -7,6 +7,7 @@ import ProfileForm from './profile-form'; // 後で作成するProfileFormをイ
 import LearningData from './learning-data'; // LearningDataコンポーネントをインポート
 import PasswordChangeForm from './PasswordChangeForm'; // パスワード変更フォームをインポート
 import DeleteAccountButton from './DeleteAccountButton'; // アカウント削除ボタンをインポート
+import { Suspense } from 'react';
 
 export default async function ProfilePage() {
   const supabase = createServerComponentClient({ cookies });
@@ -144,23 +145,27 @@ export default async function ProfilePage() {
 
         <Box mt={8} w="full">
           <Heading as="h2" size="lg" mb={4}>プロフィール編集</Heading>
-          {/* ProfileForm Client Component に初期データとServer Actionを渡す */}
-          <ProfileForm initialProfile={profile} updateUsernameAction={updateUsername} />
+          <Suspense fallback={<div>Loading...</div>}>
+            <ProfileForm initialProfile={profile} updateUsernameAction={updateUsername} />
+          </Suspense>
         </Box>
 
-        {/* パスワード変更フォームを追加 */}
-        <PasswordChangeForm />
+        <Suspense fallback={<div>Loading...</div>}>
+          <PasswordChangeForm />
+        </Suspense>
 
-        {/* アカウント削除ボタンを追加 */}
         <Box mt={8} w="full">
           <Heading as="h2" size="lg" mb={4}>アカウント削除</Heading>
-          <DeleteAccountButton />
+          <Suspense fallback={<div>Loading...</div>}>
+            <DeleteAccountButton />
+          </Suspense>
         </Box>
 
-        {/* 学習データ表示コンポーネントにデータを渡す */}
         <Box mt={8} w="full">
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>
-          <LearningData submissions={submissions} virtualContests={virtualContests} />
+          <Suspense fallback={<div>Loading...</div>}>
+            <LearningData submissions={submissions} virtualContests={virtualContests} />
+          </Suspense>
         </Box>
 
       </VStack>

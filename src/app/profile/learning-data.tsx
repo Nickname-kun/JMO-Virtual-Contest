@@ -21,8 +21,8 @@ interface Submission {
   problem_id: string;
   answer: string;
   is_correct: boolean;
-  submitted_at: string; // SupabaseからはISO文字列として取得される前提
-  problems: SubmissionProblem | null; // 配列ではなく単一オブジェクトまたはnullに修正
+  submitted_at: string;
+  problems: SubmissionProblem; // 配列ではなく単一オブジェクト
 }
 
 interface VirtualContestContest {
@@ -32,12 +32,12 @@ interface VirtualContestContest {
 
 interface VirtualContest {
   id: string;
-  start_time: string; // ISO文字列
-  end_time: string;   // ISO文字列
+  start_time: string;
+  end_time: string;
   status: string;
   score: number;
   contest_id: string | null;
-  contests: VirtualContestContest | null; // 配列ではなく単一オブジェクトまたはnullに修正
+  contests: VirtualContestContest; // 配列ではなく単一オブジェクト
 }
 
 interface LearningDataProps {

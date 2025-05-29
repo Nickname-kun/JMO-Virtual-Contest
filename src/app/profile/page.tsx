@@ -40,7 +40,7 @@ export default async function ProfilePage() {
       answer,
       is_correct,
       submitted_at,
-      problems ( id, title, number, field )
+      problems!inner ( id, title, number, field )
     `)
     .eq('user_id', session.user.id)
     .order('submitted_at', { ascending: false });
@@ -60,7 +60,7 @@ export default async function ProfilePage() {
       status,
       score,
       contest_id,
-      contests ( id, name )
+      contests!inner ( id, name )
     `)
     .eq('user_id', session.user.id)
     .order('start_time', { ascending: false });

@@ -72,7 +72,7 @@ function PasswordChangeFormContent() {
     <Box p={4} borderWidth={1} borderRadius="md" maxW="md" mx="auto">
       <VStack spacing={4}>
         <Heading as="h2" size="md">パスワード変更</Heading>
-        <FormControl>
+        <FormControl width="full">
           <FormLabel>新しいパスワード</FormLabel>
           <InputGroup>
             <Input
@@ -92,7 +92,7 @@ function PasswordChangeFormContent() {
             </InputRightElement>
           </InputGroup>
         </FormControl>
-        <FormControl>
+        <FormControl width="full">
           <FormLabel>新しいパスワード（確認用）</FormLabel>
           <InputGroup>
             <Input

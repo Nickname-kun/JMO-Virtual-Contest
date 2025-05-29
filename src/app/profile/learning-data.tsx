@@ -55,7 +55,9 @@ export default function LearningData({
     const stats: { [key: string]: { total: number; correct: number } } = {};
 
     submissions.forEach(submission => {
-      const field = submission.problems?.[0]?.field || '不明な分野';
+      // 提出のproblem_idに対応する問題を見つける
+      const problem = submissions.find(sub => sub.problems?.[0]?.id === submission.problem_id)?.problems?.[0];
+      const field = problem?.field || '不明な分野';
       if (!stats[field]) {
         stats[field] = { total: 0, correct: 0 };
       }

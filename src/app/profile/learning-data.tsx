@@ -57,19 +57,24 @@ export default function LearningData({
 
     submissions.forEach(submission => {
       // 提出に含まれる各問題の分野を集計
-      submission.problems?.forEach(problem => {
-        const field = problem.field || '不明な分野';
-        if (!stats[field]) {
-          stats[field] = { total: 0, correct: 0 };
-        }
-        stats[field].total++;
-        // 注意：提出全体が正解か不正解かで判定しているため、
-        // 問題ごとの正誤が必要であればsupabaseのクエリやテーブル構造の見直しが必要です。
-        // ここでは提出全体の正誤を各問題に単純に加算しています。
-        if (submission.is_correct) {
-          stats[field].correct++;
-        }
-      });
+      if (Array.isArray(submission.problems)) {
+        submission.problems.forEach(problem => {
+          const field = problem.field || '不明な分野';
+          if (!stats[field]) {
+            stats[field] = { total: 0, correct: 0 };
+          }
+          stats[field].total++;
+          // 注意：提出全体が正解か不正解かで判定しているため、
+          // 問題ごとの正誤が必要であればsupabaseのクエリやテーブル構造の見直しが必要です。
+          // ここでは提出全体の正誤を各問題に単純に加算しています。
+          if (submission.is_correct) {
+            stats[field].correct++;
+          }
+        });
+      } else {
+        // problemsが配列でない場合のデバッグログ（必要に応じて）
+        console.error("submission.problems is not an array:", submission.problems);
+      }
     });
 
     // 正答率の計算とソート（分野名でソート）

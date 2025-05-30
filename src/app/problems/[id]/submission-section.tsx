@@ -90,11 +90,12 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
         const normalizeLatexFraction = (latex: string): string => {
           // バックスラッシュを2個に正規化
           const cleanedLatex = latex.replace(/\\+/g, '\\\\');
-          // \frac{分子}{分母} または \frac分子分母 の形式を (分子)/(分母) に変換
-          // \sqrt{数} または \sqrt数 の形式を sqrt(数) に変換
-          // 三角関数を正規化
-          // 掛け算記号 \times, \cdot を * に変換
-          return cleanedLatex
+          
+          // コンビネーションの正規化
+          // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
+          const normalizedLatex = cleanedLatex
+            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
+            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
@@ -105,6 +106,8 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
             .replace(/\\\\pi/g, 'pi')
             .replace(/\\\\times/g, '*')
             .replace(/\\\\cdot/g, '*');
+
+          return normalizedLatex;
         };
 
         // ユーザーの入力値を正規化して評価

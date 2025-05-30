@@ -93,7 +93,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
           // \frac{分子}{分母} または \frac分子分母 の形式を (分子)/(分母) に変換
           // \sqrt{数} または \sqrt数 の形式を sqrt(数) に変換
           // 三角関数を正規化
-          // 掛け算記号 \times を * に変換
+          // 掛け算記号 \times, \cdot を * に変換
           return cleanedLatex
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
@@ -103,7 +103,8 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
             .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
             .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
             .replace(/\\\\pi/g, 'pi')
-            .replace(/\\\\times/g, '*');
+            .replace(/\\\\times/g, '*')
+            .replace(/\\\\cdot/g, '*');
         };
 
         // ユーザーの入力値を正規化して評価

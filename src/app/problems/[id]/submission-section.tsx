@@ -86,16 +86,27 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
     let isCorrect = false;
     if (correctAnswers && Array.isArray(correctAnswers)) {
       try {
-        // ユーザーの入力値をmathjsで評価可能な形式に変換
-        // MathLiveのgetExpression()を使用することを想定
-        const userAnswerExpression = (mathfieldRef.current as any)?.getExpression?.() || answer; // getExpressionがあればそれを使用、なければ元のanswer
-        const userValue = evaluate(userAnswerExpression, { scope: { factorial } });
+        // LaTeXの分数形式 \frac{分子}{分母} を (分子)/(分母) に変換するヘルパー関数
+        const convertLatexFractionToMathExpression = (latex: string): string => {
+          // データベースから取得した文字列にはエスケープされたバックスラッシュが含まれる可能性を考慮
+          const cleanedLatex = latex.replace(/\\/g, '\\'); // 二重エスケープを単一に戻す
+          // \frac{分子}{分母} パターンを (分子)/(分母) に変換
+          // シンプルなケースのみ対応 (ネストや複雑な表現は非対応)
+          const fractionRegex = /\\frac{(.*?)}{(.*?)}/g;
+          return cleanedLatex.replace(fractionRegex, '($1)/($2)');
+        };
+
+        // ユーザーの入力値を変換して評価
+        const userExpression = convertLatexFractionToMathExpression(answer);
+        const userValue = evaluate(userExpression, { scope: { factorial } });
 
         isCorrect = correctAnswers.some(correctAnswer => {
           // 管理者設定の正解もmathjsで評価可能な形式に変換する必要があるかもしれない
           // ここでは簡単のため、DBから取得した文字列をそのまま評価しているが、必要に応じて変換処理を追加
           try {
-            const correctValue = evaluate(correctAnswer, { scope: { factorial } });
+            // 管理者設定の正解を変換して評価
+            const correctExpression = convertLatexFractionToMathExpression(correctAnswer);
+            const correctValue = evaluate(correctExpression, { scope: { factorial } });
             // 数値的な比較
             // 小数点誤差を考慮して比較
             const tolerance = 1e-9; // 許容誤差

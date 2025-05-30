@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from 'react'
 import SubmissionSection from './submission-section'
 import { InlineMath, BlockMath } from 'react-katex'
 import {
@@ -41,7 +42,7 @@ interface Problem {
   // ... other fields
 }
 
-export default function ProblemClient({ problem }: { problem: Problem }) {
+function ProblemClientContent({ problem }: { problem: Problem }) {
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={8} align="stretch">
@@ -64,5 +65,13 @@ export default function ProblemClient({ problem }: { problem: Problem }) {
         <SubmissionSection problemId={problem.id} correctAnswers={problem.correct_answers || null} />
       </VStack>
     </Container>
+  )
+}
+
+export default function ProblemClient(props: { problem: Problem }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProblemClientContent {...props} />
+    </Suspense>
   )
 } 

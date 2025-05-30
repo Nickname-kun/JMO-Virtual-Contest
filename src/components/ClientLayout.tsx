@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, Suspense } from "react";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -23,7 +23,9 @@ export default function ClientLayout({
       {isLoading && <LoadingOverlay />}
       <main>{children}</main>
       <Footer />
-      <FeedbackToast />
+      <Suspense fallback={<div>Loading...</div>}>
+        <FeedbackToast />
+      </Suspense>
     </>
   );
 } 

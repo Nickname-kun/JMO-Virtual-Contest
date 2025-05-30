@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, Suspense } from 'react';
 import { Container, Heading, Text, Box, VStack, Button, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Tooltip, Flex, FormControl, FormLabel, Alert, AlertIcon,
   TableContainer, Table, Thead, Tbody, Tr, Th, Td
 } from '@chakra-ui/react';
-import { BlockMath } from 'react-katex';
+import { BlockMath, InlineMath } from 'react-katex';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ function renderLatex(text: string) {
       return <BlockMath key={i} math={math} />
     } else if (part.startsWith('$') && part.endsWith('$')) {
       const math = part.slice(1, -1)
-      return <BlockMath key={i} math={math} />
+      return <InlineMath key={i} math={math} />
     } else {
       return part.trim() === '' ? null : <span key={i}>{part}</span>
     }

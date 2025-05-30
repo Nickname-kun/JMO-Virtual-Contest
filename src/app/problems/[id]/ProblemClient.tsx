@@ -58,7 +58,9 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
 
         {/* 図形がある場合のみ表示（ボックスなしで表示） */}
         {problem.diagram_svg && (
-          <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+          <Box display="flex" justifyContent="center">
+            <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+          </Box>
         )}
 
         {/* 解答欄・提出履歴 */}

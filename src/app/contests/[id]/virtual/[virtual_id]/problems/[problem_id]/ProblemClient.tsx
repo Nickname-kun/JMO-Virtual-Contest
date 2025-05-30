@@ -243,7 +243,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
         {/* 図形がある場合のみ表示 */}
         {problem.diagram_svg && (
-          <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+          <Box display="flex" justifyContent="center">
+            <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+          </Box>
         )}
 
         {/* 回答入力欄 */}

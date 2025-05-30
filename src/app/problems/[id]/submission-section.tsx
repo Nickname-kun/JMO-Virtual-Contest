@@ -93,9 +93,12 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
           
           // コンビネーションの正規化
           // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
+          // nCk の形式も C(n,k) に変換
           const normalizedLatex = cleanedLatex
             .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
             .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
+            // nCk形式の正規化（nとkは数字）
+            .replace(/([0-9]+)C([0-9]+)/g, 'C($1,$2)')
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')

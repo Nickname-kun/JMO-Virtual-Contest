@@ -60,6 +60,27 @@ function normalizeLatexForEvaluation(latex: string): string {
   return latex.replace(/\\/g, '\\');
 }
 
+// Helper function to convert basic LaTeX math (like fractions) to mathjs readable format
+function convertLatexToMathExpression(latex: string): string {
+  // 1. Normalize backslashes (handle potential double backslashes from DB)
+  let cleanedLatex = latex.replace(/\\/g, '\\');
+  
+  // 2. Convert basic fractions \frac{a}{b} to (a)/(b)
+  // This is a simplified conversion and might need refinement for complex cases
+  const fractionRegex = /\\frac{(.*?)}{(.*?)}/g;
+  cleanedLatex = cleanedLatex.replace(fractionRegex, '($1)/($2)');
+
+  // Add more conversions for other LaTeX math commands as needed (e.g., \sqrt, \cdot, etc.)
+  // Example: convert \sqrt{a} to sqrt(a)
+  const sqrtRegex = /\\sqrt{(.*?)}/g;
+  cleanedLatex = cleanedLatex.replace(sqrtRegex, 'sqrt($1)');
+
+  // Example: convert \cdot to *
+  cleanedLatex = cleanedLatex.replace(/\\cdot/g, '*');
+
+  return cleanedLatex;
+}
+
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
   const toast = useToast();
   const [answer, setAnswer] = useState('');
@@ -146,13 +167,19 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
       try {
-        const userValue = evaluate(answer, { scope: { factorial } });
+        // Convert user input and correct answer to mathjs readable format before evaluating
+        const userExpression = convertLatexToMathExpression(answer);
+        const userValue = evaluate(userExpression, { scope: { factorial } });
+
         isCorrect = problem.correct_answers.some(correctAnswer => {
           try {
-            // Normalize correctAnswer before evaluating
-            const normalizedCorrectAnswer = normalizeLatexForEvaluation(correctAnswer);
-            const correctValue = evaluate(normalizedCorrectAnswer, { scope: { factorial } });
-            return userValue === correctValue;
+            const correctExpression = convertLatexToMathExpression(correctAnswer);
+            const correctValue = evaluate(correctExpression, { scope: { factorial } });
+            
+            // Use a tolerance for floating point comparison if necessary
+            const tolerance = 1e-9; // Define a small tolerance
+            return Math.abs(userValue - correctValue) < tolerance;
+
           } catch {
             return false;
           }

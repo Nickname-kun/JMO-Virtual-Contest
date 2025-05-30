@@ -86,26 +86,24 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
     let isCorrect = false;
     if (correctAnswers && Array.isArray(correctAnswers)) {
       try {
-        // LaTeXの分数形式 \frac{分子}{分母} を (分子)/(分母) に変換するヘルパー関数
-        const convertLatexFractionToMathExpression = (latex: string): string => {
-          // データベースから取得した文字列にはエスケープされたバックスラッシュが含まれる可能性を考慮
-          const cleanedLatex = latex.replace(/\\/g, '\\'); // 二重エスケープを単一に戻す
-          // \frac{分子}{分母} パターンを (分子)/(分母) に変換
-          // シンプルなケースのみ対応 (ネストや複雑な表現は非対応)
-          const fractionRegex = /\\frac{(.*?)}{(.*?)}/g;
-          return cleanedLatex.replace(fractionRegex, '($1)/($2)');
+        // LaTeXの分数形式を正規化する関数
+        const normalizeLatexFraction = (latex: string): string => {
+          // バックスラッシュを2個に正規化
+          const cleanedLatex = latex.replace(/\\+/g, '\\\\');
+          // \frac{分子}{分母} または \frac分子分母 の形式を (分子)/(分母) に変換
+          return cleanedLatex
+            .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)');
         };
 
-        // ユーザーの入力値を変換して評価
-        const userExpression = convertLatexFractionToMathExpression(answer);
+        // ユーザーの入力値を正規化して評価
+        const userExpression = normalizeLatexFraction(answer);
         const userValue = evaluate(userExpression, { scope: { factorial } });
 
         isCorrect = correctAnswers.some(correctAnswer => {
-          // 管理者設定の正解もmathjsで評価可能な形式に変換する必要があるかもしれない
-          // ここでは簡単のため、DBから取得した文字列をそのまま評価しているが、必要に応じて変換処理を追加
           try {
-            // 管理者設定の正解を変換して評価
-            const correctExpression = convertLatexFractionToMathExpression(correctAnswer);
+            // 管理者設定の正解も正規化して評価
+            const correctExpression = normalizeLatexFraction(correctAnswer);
             const correctValue = evaluate(correctExpression, { scope: { factorial } });
             // 数値的な比較
             // 小数点誤差を考慮して比較
@@ -119,7 +117,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
         isCorrect = false;
       }
     } else {
-      // correctAnswersが設定されていない場合は不正解とするか、または別の判定方法に戻す
+      // correctAnswersが設定されていない場合は不正解とする
       isCorrect = false;
       console.warn(`Problem ${problemId} does not have correctAnswers defined.`);
     }

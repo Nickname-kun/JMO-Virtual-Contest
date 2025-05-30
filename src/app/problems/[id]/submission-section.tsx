@@ -91,9 +91,12 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
           // バックスラッシュを2個に正規化
           const cleanedLatex = latex.replace(/\\+/g, '\\\\');
           // \frac{分子}{分母} または \frac分子分母 の形式を (分子)/(分母) に変換
+          // \sqrt{数} または \sqrt数 の形式を sqrt(数) に変換
           return cleanedLatex
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)');
+            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
+            .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)');
         };
 
         // ユーザーの入力値を正規化して評価

@@ -36,7 +36,7 @@ export default async function Home() {
         <Heading as="h2" size="md" mb={4} textAlign="center">
           お知らせ
         </Heading>
-        <Box bg="white" borderRadius="xl" boxShadow="md" p={6} borderWidth={1}>
+        <Box bg="white" borderRadius="xl" boxShadow="md" p={{ base: 4, md: 6 }} borderWidth={1}>
           {announcements && announcements.length > 0 ? (
             <VStack align="stretch" spacing={4} divider={<Divider borderColor="gray.400" />}>
               {announcements.map((announcement: any) => (

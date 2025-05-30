@@ -10,7 +10,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { evaluate, factorial } from 'mathjs';
-import math from 'mathjs';
+import * as math from 'mathjs';
 
 interface Problem {
   id: string;

@@ -54,6 +54,12 @@ function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
   }
 }
 
+// Helper function to normalize backslashes from database for evaluation
+function normalizeLatexForEvaluation(latex: string): string {
+  // Replace double backslashes with single backslashes
+  return latex.replace(/\\/g, '\\');
+}
+
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
   const toast = useToast();
   const [answer, setAnswer] = useState('');
@@ -143,7 +149,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         const userValue = evaluate(answer, { scope: { factorial } });
         isCorrect = problem.correct_answers.some(correctAnswer => {
           try {
-            const correctValue = evaluate(correctAnswer, { scope: { factorial } });
+            // Normalize correctAnswer before evaluating
+            const normalizedCorrectAnswer = normalizeLatexForEvaluation(correctAnswer);
+            const correctValue = evaluate(normalizedCorrectAnswer, { scope: { factorial } });
             return userValue === correctValue;
           } catch {
             return false;

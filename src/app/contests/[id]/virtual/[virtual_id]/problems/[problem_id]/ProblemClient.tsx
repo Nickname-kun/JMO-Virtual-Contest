@@ -10,7 +10,6 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { evaluate, factorial } from 'mathjs';
-import * as math from 'mathjs';
 
 interface Problem {
   id: string;
@@ -47,42 +46,12 @@ function renderLatex(text: string) {
 
 function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
   try {
-    // Convert to mathjs expression tree and compare structure
-    const userNode = math.parse(userInput);
-    const correctNode = math.parse(correctAnswer);
-    // Node.equals() performs a structural comparison
-    return userNode.equals(correctNode);
+    // 数式として評価し、数値的に比較
+    return evaluate(userInput) === evaluate(correctAnswer);
   } catch {
     // 評価できない場合は不正解
     return false;
   }
-}
-
-// Helper function to normalize backslashes from database for evaluation
-function normalizeLatexForEvaluation(latex: string): string {
-  // Replace double backslashes with single backslashes
-  return latex.replace(/\\/g, '\\');
-}
-
-// Helper function to convert basic LaTeX math (like fractions) to mathjs readable format
-function convertLatexToMathExpression(latex: string): string {
-  // 1. Normalize backslashes (handle potential double backslashes from DB)
-  let cleanedLatex = latex.replace(/\\/g, '\\');
-  
-  // 2. Convert basic fractions \frac{a}{b} to (a)/(b)
-  // This is a simplified conversion and might need refinement for complex cases
-  const fractionRegex = /\\frac{(.*?)}{(.*?)}/g;
-  cleanedLatex = cleanedLatex.replace(fractionRegex, '($1)/($2)');
-
-  // Add more conversions for other LaTeX math commands as needed (e.g., \sqrt, \cdot, etc.)
-  // Example: convert \sqrt{a} to sqrt(a)
-  const sqrtRegex = /\\sqrt{(.*?)}/g;
-  cleanedLatex = cleanedLatex.replace(sqrtRegex, 'sqrt($1)');
-
-  // Example: convert \cdot to *
-  cleanedLatex = cleanedLatex.replace(/\\cdot/g, '*');
-
-  return cleanedLatex;
 }
 
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
@@ -102,6 +71,33 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
   const quitCancelRef = useRef<HTMLButtonElement>(null);
   const finishCancelRef = useRef<HTMLButtonElement>(null);
   const [loading, setLoading] = useState(false);
+
+  // LaTeXの正規化関数 (submission-section.tsx と同様)
+  const normalizeLatex = (latex: string): string => {
+    // バックスラッシュを2個に正規化
+    const cleanedLatex = latex.replace(/\\+/g, '\\\\');
+    
+    // コンビネーションの正規化
+    // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
+    // _nC_k の形式も C(n,k) に変換
+    const normalizedLatex = cleanedLatex
+      .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
+      .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
+      .replace(/_([^C]+)C_([^}]+)/g, 'C($1,$2)')
+      .replace(/_([^C]+)C([0-9]+)/g, 'C($1,$2)')
+      .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+      .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
+      .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+      .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
+      .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
+      .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
+      .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
+      .replace(/\\\\pi/g, 'pi')
+      .replace(/\\\\times/g, '*')
+      .replace(/\\\\cdot/g, '*');
+
+    return normalizedLatex;
+  };
 
   const handleOpenDialog = () => {
     if (submissions.length > 0) {
@@ -168,45 +164,45 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     }
     setLoading(true);
     setError(null);
+
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
       try {
-        // Convert user input and correct answer to mathjs readable format
-        const userExpression = convertLatexToMathExpression(answer);
-        // const userValue = evaluate(userExpression, { scope: { factorial } }); // No longer needed for structural comparison
+        const userValue = evaluate(normalizeLatex(answer), { scope: { factorial } });
 
         isCorrect = problem.correct_answers.some(correctAnswer => {
           try {
-            const correctExpression = convertLatexToMathExpression(correctAnswer);
-            // const correctValue = evaluate(correctExpression, { scope: { factorial } }); // No longer needed for structural comparison
-            
-            // Use the updated isCorrectAnswer function for structural comparison
-            return isCorrectAnswer(userExpression, correctExpression);
-
+            const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
+            return userValue === correctValue;
           } catch {
             return false;
           }
         });
-      } catch {
-        isCorrect = false;
+      } catch (e) { // Catch any errors during parsing or comparison
+        console.error("Error during mathjs parse/compare:", e);
+        return false; // Treat error during comparison as incorrect
       }
     } else {
-      isCorrect = false;
       console.warn(`Problem ${problem.id} does not have correct_answers defined.`);
+      isCorrect = false;
     }
-    const { data, error } = await supabase.from('submissions').insert({
+
+    // Save submission with original answer string, but determined isCorrect status
+    const { data, error: submissionError } = await supabase.from('submissions').insert({
       virtual_contest_id: params.virtual_id,
       problem_id: params.problem_id,
       user_id: userId,
-      answer: answer,
+      answer: answer, // Save original user input
       is_correct: isCorrect,
     }).select().single();
+
     setLoading(false);
     setDialogOpen(false);
-    if (error) {
+
+    if (submissionError) {
       toast({
         title: 'エラー',
-        description: `提出に失敗しました: ${error.message}`,
+        description: `提出に失敗しました: ${submissionError.message}`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -219,16 +215,19 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         duration: 5000,
         isClosable: true,
       });
-      setAnswer('');
-      // 再取得
-      const { data: newSubs } = await supabase
+      setAnswer(''); // Clear the input field
+      // Re-fetch submissions to update the list
+      const { data: newSubs, error: fetchError } = await supabase
         .from('submissions')
         .select('*')
         .eq('user_id', userId)
         .eq('problem_id', params.problem_id)
         .eq('virtual_contest_id', params.virtual_id)
         .order('created_at', { ascending: false });
-      if (newSubs) setSubmissions(newSubs);
+
+      if (!fetchError && newSubs) {
+        setSubmissions(newSubs);
+      }
     }
   };
 

@@ -239,15 +239,11 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         </Tooltip>
 
         {/* 問題文 */}
-        <Box p={6} borderWidth={1} borderRadius={8} bg="gray.50">
-          <Text whiteSpace="pre-wrap">{renderLatex(problem.content)}</Text>
-        </Box>
+        <Text whiteSpace="pre-wrap">{renderLatex(problem.content)}</Text>
 
         {/* 図形がある場合のみ表示 */}
         {problem.diagram_svg && (
-          <Box p={6} borderWidth={1} borderRadius={8} bg="gray.50">
-            <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
-          </Box>
+          <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
         )}
 
         {/* 回答入力欄 */}

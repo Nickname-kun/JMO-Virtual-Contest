@@ -337,8 +337,20 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         )}
 
         {/* コンテスト操作ボタン */}
-        <Flex justify="flex-end" mt={8}>
-          <Button onClick={() => setQuitDialogOpen(true)} colorScheme="red" variant="outline" size="sm" mr={4}>
+        <Flex
+          justify="flex-end"
+          mt={8}
+          direction={{ base: 'column', md: 'row' }}
+          align={{ base: 'stretch', md: 'center' }}
+        >
+          <Button
+            onClick={() => setQuitDialogOpen(true)}
+            colorScheme="red"
+            variant="outline"
+            size="sm"
+            mb={{ base: 2, md: 0 }}
+            mr={{ base: 0, md: 4 }}
+          >
             バーチャルコンテストをやめる
           </Button>
           <Button onClick={() => setFinishDialogOpen(true)} colorScheme="green" size="sm">

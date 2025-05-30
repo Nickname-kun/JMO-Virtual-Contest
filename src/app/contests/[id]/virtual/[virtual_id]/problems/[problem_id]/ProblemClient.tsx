@@ -10,6 +10,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { evaluate, factorial } from 'mathjs';
+import math from 'mathjs';
 
 interface Problem {
   id: string;
@@ -46,8 +47,11 @@ function renderLatex(text: string) {
 
 function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
   try {
-    // 数式として評価し、数値的に比較
-    return evaluate(userInput) === evaluate(correctAnswer);
+    // Convert to mathjs expression tree and compare structure
+    const userNode = math.parse(userInput);
+    const correctNode = math.parse(correctAnswer);
+    // Node.equals() performs a structural comparison
+    return userNode.equals(correctNode);
   } catch {
     // 評価できない場合は不正解
     return false;
@@ -167,18 +171,17 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
       try {
-        // Convert user input and correct answer to mathjs readable format before evaluating
+        // Convert user input and correct answer to mathjs readable format
         const userExpression = convertLatexToMathExpression(answer);
-        const userValue = evaluate(userExpression, { scope: { factorial } });
+        // const userValue = evaluate(userExpression, { scope: { factorial } }); // No longer needed for structural comparison
 
         isCorrect = problem.correct_answers.some(correctAnswer => {
           try {
             const correctExpression = convertLatexToMathExpression(correctAnswer);
-            const correctValue = evaluate(correctExpression, { scope: { factorial } });
+            // const correctValue = evaluate(correctExpression, { scope: { factorial } }); // No longer needed for structural comparison
             
-            // Use a tolerance for floating point comparison if necessary
-            const tolerance = 1e-9; // Define a small tolerance
-            return Math.abs(userValue - correctValue) < tolerance;
+            // Use the updated isCorrectAnswer function for structural comparison
+            return isCorrectAnswer(userExpression, correctExpression);
 
           } catch {
             return false;

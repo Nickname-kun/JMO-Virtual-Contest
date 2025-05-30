@@ -86,12 +86,20 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
     let isCorrect = false;
     if (correctAnswers && Array.isArray(correctAnswers)) {
       try {
-        const userValue = evaluate(answer, { scope: { factorial } });
+        // ユーザーの入力値をmathjsで評価可能な形式に変換
+        // MathLiveのgetExpression()を使用することを想定
+        const userAnswerExpression = (mathfieldRef.current as any)?.getExpression?.() || answer; // getExpressionがあればそれを使用、なければ元のanswer
+        const userValue = evaluate(userAnswerExpression, { scope: { factorial } });
+
         isCorrect = correctAnswers.some(correctAnswer => {
+          // 管理者設定の正解もmathjsで評価可能な形式に変換する必要があるかもしれない
+          // ここでは簡単のため、DBから取得した文字列をそのまま評価しているが、必要に応じて変換処理を追加
           try {
             const correctValue = evaluate(correctAnswer, { scope: { factorial } });
             // 数値的な比較
-            return userValue === correctValue;
+            // 小数点誤差を考慮して比較
+            const tolerance = 1e-9; // 許容誤差
+            return Math.abs(userValue - correctValue) < tolerance;
           } catch {
             return false;
           }

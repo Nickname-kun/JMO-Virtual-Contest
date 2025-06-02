@@ -20,6 +20,7 @@ import {
   Select,
   Spinner,
   Text,
+  HStack,
 } from "@chakra-ui/react";
 import { BlockMath } from 'react-katex';
 import React from "react";
@@ -55,6 +56,7 @@ export default function EditProblemPage() {
     points: 1,
   });
   const mathfieldRefs = useRef<(any | null)[]>([]);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { showLoading, hideLoading } = useLoading();
 
   // 問題ID
@@ -188,6 +190,55 @@ export default function EditProblemPage() {
     });
   };
 
+  const insertMarkdown = (format: string) => {
+    const textarea = contentTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+
+    let prefix = '';
+    let suffix = '';
+    let selectedText = value.substring(start, end);
+
+    switch (format) {
+      case 'bold':
+        prefix = '**';
+        suffix = '**';
+        if (!selectedText) selectedText = '太字';
+        break;
+      case 'italic':
+        prefix = '*';
+        suffix = '*';
+        if (!selectedText) selectedText = '斜体';
+        break;
+      case 'list':
+        prefix = '- ';
+        suffix = '';
+        if (selectedText) {
+          selectedText = selectedText.split('\n').map(line => '- ' + line).join('\n');
+          prefix = '';
+        } else {
+          selectedText = '';
+        }
+        break;
+      // 他の書式設定のケースもここに追加
+    }
+
+    const newValue = value.substring(0, start) + prefix + selectedText + suffix + value.substring(end);
+
+    setFormData(prev => ({ ...prev, content: newValue }));
+
+    // カーソル位置を調整
+    // 次のレンダリングで値が更新された後に実行されるように少し遅延させる
+    setTimeout(() => {
+      if (textarea) {
+        textarea.selectionStart = textarea.selectionEnd = start + prefix.length + selectedText.length;
+      }
+    }, 0);
+  };
+
   if (loading) {
     return (
       <Box py={20} textAlign="center">
@@ -243,6 +294,12 @@ export default function EditProblemPage() {
           </FormControl>
           <FormControl isRequired>
             <FormLabel>問題文</FormLabel>
+            <HStack spacing={2} mb={2}>
+              <Button size="sm" onClick={() => insertMarkdown('bold')}>太字</Button>
+              <Button size="sm" onClick={() => insertMarkdown('italic')}>斜体</Button>
+              <Button size="sm" onClick={() => insertMarkdown('list')}>リスト</Button>
+              {/* 他の書式設定ボタンもここに追加 */}
+            </HStack>
             <Textarea name="content" value={formData.content} onChange={handleChange} rows={5} />
           </FormControl>
           <FormControl isRequired>

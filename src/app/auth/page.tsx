@@ -32,12 +32,24 @@ export default function AuthPage() {
   const [loginPassword, setLoginPassword] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   const handleSignUp = async () => {
     setIsLoading(true);
+    if (!signupUsername.trim()) {
+      toast({
+        title: 'エラー',
+        description: 'ユーザーネームを入力してください',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
     const { data, error } = await supabase.auth.signUp({ email: signupEmail, password: signupPassword });
     if (error) {
       toast({
@@ -52,7 +64,7 @@ export default function AuthPage() {
         await supabase.from('profiles').insert({
           id: data.user.id,
           is_admin: false,
-          username: null,
+          username: signupUsername.trim(),
         });
       }
       toast({
@@ -172,6 +184,12 @@ export default function AuthPage() {
           <TabPanel>
             <Stack direction="column" spacing={4}>
               <Heading mb={4} size="md">サインアップ</Heading>
+              <Input
+                placeholder="ユーザーネーム"
+                value={signupUsername}
+                onChange={e => setSignupUsername(e.target.value)}
+                type="text"
+              />
               <Input
                 placeholder="メールアドレス"
                 value={signupEmail}

@@ -59,6 +59,18 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
   const finishCancelRef = useRef<HTMLButtonElement>(null);
   const [loading, setLoading] = useState(false);
 
+  // LaTeXコマンド挿入
+  const insertLatex = (cmd: string) => {
+    // アクティブな（フォーカスされている）math-fieldに挿入
+    const activeMathfield = mathfieldRefs.current.find(mf => mf === document.activeElement);
+    if (activeMathfield) {
+      (activeMathfield as any).executeCommand('insert', cmd);
+    } else if (mathfieldRefs.current[0]) {
+      // フォーカスされていなければ最初のフィールドに挿入
+      (mathfieldRefs.current[0] as any).executeCommand('insert', cmd);
+    }
+  };
+
   // 解答の変更をハンドリング
   const handleAnswerChange = (index: number, value: string) => {
     setAnswers(prevAnswers => {

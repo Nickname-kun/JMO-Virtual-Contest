@@ -24,11 +24,11 @@ export function renderLatex(text: string) {
     }
     // 数式以外のテキストの場合
     else {
-      // Markdown変換前に特殊文字をエスケープ
-      let escapedPart = part.replace(/[$_]/g, '\\$&'); // $や_をエスケープ
+      // 改行文字を<br />に置換
+      const textWithBr = part.replace(/\n/g, '<br />');
 
-      // MarkdownをHTMLに変換
-      const processedHtml = remark().use(html).processSync(escapedPart).toString();
+      // MarkdownをHTMLに変換（改行以外の装飾のため）
+      const processedHtml = remark().use(html).processSync(textWithBr).toString();
       return <span key={`html-${i}`} dangerouslySetInnerHTML={{ __html: processedHtml }} />;
     }
   });

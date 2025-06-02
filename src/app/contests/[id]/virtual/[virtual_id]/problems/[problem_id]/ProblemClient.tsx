@@ -442,6 +442,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                         ref={(el: any) => { mathfieldRefs.current[index] = el; }}
                         value={ans}
                         onInput={(evt: any) => handleAnswerChange(index, evt.target.value)}
+                        math-virtual-keyboard-policy="manual"
                         style={{
                           width: '100%',
                           minHeight: 40,

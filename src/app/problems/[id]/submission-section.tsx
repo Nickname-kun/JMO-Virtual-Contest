@@ -364,6 +364,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                         ref={(el: any) => { mathfieldRefs.current[index] = el; }}
                         value={ans}
                         onInput={(evt: any) => handleAnswerChange(index, evt.target.value)}
+                        math-virtual-keyboard-policy="manual"
                         style={{
                           width: '100%',
                           minHeight: 40,

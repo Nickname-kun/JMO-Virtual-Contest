@@ -170,14 +170,14 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
           // _nC_k の形式も C(n,k) に変換
           const normalizedLatex = cleanedLatex
-            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
-            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
-            .replace(/_([^C]+)C_([^}]+)/g, 'C($1,$2)')
-            .replace(/_([^C]+)C([0-9]+)/g, 'C($1,$2)')
+            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'combinations($1,$2)')
+            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'combinations($1,$2)')
+            .replace(/_([^C]+)C_([^}]+)/g, 'combinations($1,$2)')
+            .replace(/_([^C]+)C([0-9]+)/g, 'combinations($1,$2)')
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-            .replace(/\\\\sqrt([0-9]+)\}/g, 'sqrt($1)')
+            .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
             .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
             .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
             .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')

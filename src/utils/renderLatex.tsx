@@ -4,9 +4,9 @@ import html from 'remark-html';
 import React from 'react';
 
 export function renderLatex(text: string) {
-  // 数式部分を一時的に異なるプレースホルダーに置換
-  const blockMathPlaceholder = "__BLOCK_MATH_PLACEHOLDER__";
-  const inlineMathPlaceholder = "__INLINE_MATH_PLACEHOLDER__";
+  // 数式部分を一時的に異なる、より特殊なプレースホルダーに置換
+  const blockMathPlaceholder = "__$$BLOCK_MATH_PLACEHOLDER$$__";
+  const inlineMathPlaceholder = "__$INLINE_MATH_PLACEHOLDER$__";
   const blockMathRegex = /(\$\$.*?[\s\S]*?\$\$)/g;
   const inlineMathRegex = /(\$.*?[\s\S]*?\$)/g;
   

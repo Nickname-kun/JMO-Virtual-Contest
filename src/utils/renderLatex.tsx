@@ -13,12 +13,12 @@ export function renderLatex(text: string) {
 
   return parts.map((part, i) => {
     // ブロック数式にマッチするか判定
-    if (/^\$\$.*?[\s\S]*?\$\$$/.test(part)) { // 正規表現テストを修正
+    if (part.startsWith('$$') && part.endsWith('$$') && part.length > 3) { // startsWith/endsWithで判定
       const math = part.slice(2, -2); // $$...$$ から $$ を除去
       return <BlockMath key={`block-math-${i}`} math={math} />;
     }
     // インライン数式にマッチするか判定
-    else if (/^\$.*?[\s\S]*?\$$/.test(part)) { // 正規表現テストのタイプミスを修正
+    else if (part.startsWith('$') && part.endsWith('$') && part.length > 1) { // startsWith/endsWithで判定
       const math = part.slice(1, -1); // $...$ から $ を除去
       return <InlineMath key={`inline-math-${i}`} math={math} />;
     }

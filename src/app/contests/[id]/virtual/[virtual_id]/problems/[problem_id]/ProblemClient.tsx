@@ -20,6 +20,7 @@ interface Problem {
   answer: string;
   diagram_svg?: string;
   correct_answers?: string[];
+  requires_multiple_answers: boolean;
 }
 
 interface Submission {
@@ -74,7 +75,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
       .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
       .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
       .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-      .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
+      .replace(/\\\\sqrt([0-9]+)\}/g, 'sqrt($1)')
       .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
       .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
       .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
@@ -154,23 +155,132 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
       try {
-        const userValue = evaluate(normalizeLatex(answer), { scope: { factorial } });
+        // LaTeXの分数形式を正規化する関数 (submission-section.tsx と同様)
+        const normalizeLatex = (latex: string): string => {
+          // バックスラッシュを2個に正規化
+          const cleanedLatex = latex.replace(/\\+/g, '\\\\');
+          
+          // コンビネーションの正規化
+          // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
+          // _nC_k の形式も C(n,k) に変換
+          const normalizedLatex = cleanedLatex
+            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
+            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
+            .replace(/_([^C]+)C_([^}]+)/g, 'C($1,$2)')
+            .replace(/_([^C]+)C([0-9]+)/g, 'C($1,$2)')
+            .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
+            .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            .replace(/\\\\sqrt([0-9]+)\}/g, 'sqrt($1)')
+            .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
+            .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
+            .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
+            .replace(/\\\\pi/g, 'pi')
+            .replace(/\\\\times/g, '*')
+            .replace(/\\\\cdot/g, '*');
 
-        isCorrect = problem.correct_answers.some(correctAnswer => {
-          try {
-            const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
-            return userValue === correctValue;
-          } catch {
-            return false;
+          return normalizedLatex;
+        };
+
+        const tolerance = 1e-9; // 許容誤差
+
+        // 数値的な比較、または文字列としての完全一致
+        const isMatch = (userVal: any, correctVal: any): boolean => {
+           if (typeof userVal === 'number' && typeof correctVal === 'number') {
+             return Math.abs(userVal - correctVal) < tolerance;
+           } else {
+             // 数値でない場合は文字列として比較
+             return String(userVal).trim() === String(correctVal).trim();
+           }
+        };
+
+        if (problem.requires_multiple_answers) {
+          // 複数回答が必要な問題の場合
+          // ユーザーの入力値を正規化して評価 (ここでは answer stateは単一なのでanswers配列を模擬)
+          const userValues = [answer].map(ans => {
+             try {
+                const userExpression = normalizeLatex(ans);
+                const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
+                 if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+                  return evaluatedValue;
+                } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
+                   return evaluatedValue.re;
+                } else {
+                  return NaN;
+                }
+              } catch {
+                return NaN;
+              }
+          });
+
+          // 正解候補を正規化して評価
+          const correctValues = problem.correct_answers.map(ans => {
+            try {
+              const correctExpression = normalizeLatex(ans);
+              const evaluatedValue: any = evaluate(correctExpression, { scope: { factorial } });
+               if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+                return evaluatedValue;
+              } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
+                 return evaluatedValue.re;
+              } else {
+                return NaN;
+              }
+            } catch {
+              return NaN;
+            }
+          });
+
+          // @ts-ignore // 一時的に型エラーを無視
+          if (userValues.some(isNaN) || correctValues.some(isNaN) || userValues.length !== correctValues.length) {
+               isCorrect = false;
+          } else {
+              const sortedUserValues = userValues.map(v => String(v)).sort();
+              const sortedCorrectValues = correctValues.map(v => String(v)).sort();
+
+              isCorrect = sortedUserValues.every((userValStr, index) => {
+                  const correctValStr = sortedCorrectValues[index];
+                  const userNum = parseFloat(userValStr);
+                  const correctNum = parseFloat(correctValStr);
+
+                  if (!isNaN(userNum) && !isNaN(correctNum)) {
+                      return Math.abs(userNum - correctNum) < tolerance;
+                  } else {
+                      return userValStr === correctValStr;
+                  }
+              });
           }
-        });
-      } catch (e) { // Catch any errors during parsing or comparison
-        console.error("Error during mathjs parse/compare:", e);
-        return false; // Treat error during comparison as incorrect
+
+        } else {
+          // 単一回答の問題の場合 (既存ロジックを適応)
+          try {
+            const userValue = evaluate(normalizeLatex(answer), { scope: { factorial } });
+            isCorrect = problem.correct_answers.some(correctAnswer => {
+              try {
+                const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
+                 const tolerance = 1e-9; // 許容誤差
+                 if (typeof userValue === 'number' && typeof correctValue === 'number') {
+                   return Math.abs(userValue - correctValue) < tolerance;
+                 } else {
+                   return String(userValue).trim() === String(correctValue).trim();
+                 }
+              } catch {
+                return false;
+              }
+            });
+          } catch (e) {
+             console.error("Error during mathjs parse/compare (single answer):", e);
+             isCorrect = false;
+          }
+        }
+
+      } catch (evalError) {
+        isCorrect = false;
+        console.error('Evaluation Error:', evalError); // 評価エラーログ
       }
     } else {
-      console.warn(`Problem ${problem.id} does not have correct_answers defined.`);
+      // correctAnswersが設定されていない場合は不正解とする
       isCorrect = false;
+      console.warn(`Problem ${problem.id} does not have correct_answers defined.`);
     }
 
     // Save submission with original answer string, but determined isCorrect status

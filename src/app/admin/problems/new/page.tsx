@@ -23,9 +23,10 @@ import {
   Container,
   HStack,
 } from '@chakra-ui/react'
-import { BlockMath } from 'react-katex'
+import { BlockMath, InlineMath } from 'react-katex'
 import React from 'react'
 import 'mathlive'
+import { renderLatex } from '@/utils/renderLatex';
 
 interface NewProblemFormData {
   title: string;
@@ -258,6 +259,15 @@ export default function NewProblemPage() {
                 rows={5}
               />
             </FormControl>
+            {/* 問題文プレビュー */}
+            {formData.content && (
+              <Box mt={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
+                <Text fontSize="sm" fontWeight="bold" mb={2}>プレビュー:</Text>
+                <Box className="problem-text">
+                  {renderLatex(formData.content)}
+                </Box>
+              </Box>
+            )}
             <FormControl isRequired>
               <FormLabel>正解 (複数可)</FormLabel>
               <VStack spacing={2} align="stretch">

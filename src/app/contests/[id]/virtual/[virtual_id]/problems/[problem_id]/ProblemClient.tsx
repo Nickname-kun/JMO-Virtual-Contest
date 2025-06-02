@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { Container, Heading, Text, Box, VStack, Button, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Tooltip, Flex, FormControl, FormLabel, Alert, AlertIcon,
-  TableContainer, Table, Thead, Tbody, Tr, Th, Td
+  TableContainer, Table, Thead, Tbody, Tr, Th, Td, HStack
 } from '@chakra-ui/react';
 import { BlockMath, InlineMath } from 'react-katex';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -43,13 +43,13 @@ function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
 
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
   const toast = useToast();
-  const [answer, setAnswer] = useState('');
+  const [answers, setAnswers] = useState<string[]>(problem.requires_multiple_answers ? [''] : ['']); // 複数回答対応
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('');
   const supabase = createClientComponentClient();
-  const mathfieldRef = useRef<any>(null);
+  const mathfieldRefs = useRef<any[]>([]); // MathLiveのrefを複数持つ
   const [isDialogOpen, setDialogOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -59,52 +59,41 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
   const finishCancelRef = useRef<HTMLButtonElement>(null);
   const [loading, setLoading] = useState(false);
 
-  // LaTeXの正規化関数 (submission-section.tsx と同様)
-  const normalizeLatex = (latex: string): string => {
-    // バックスラッシュを2個に正規化
-    const cleanedLatex = latex.replace(/\\+/g, '\\\\');
-    
-    // コンビネーションの正規化
-    // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
-    // _nC_k の形式も C(n,k) に変換
-    const normalizedLatex = cleanedLatex
-      .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
-      .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
-      .replace(/_([^C]+)C_([^}]+)/g, 'C($1,$2)')
-      .replace(/_([^C]+)C([0-9]+)/g, 'C($1,$2)')
-      .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-      .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
-      .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-      .replace(/\\\\sqrt([0-9]+)\}/g, 'sqrt($1)')
-      .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
-      .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
-      .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
-      .replace(/\\\\pi/g, 'pi')
-      .replace(/\\\\times/g, '*')
-      .replace(/\\\\cdot/g, '*');
-
-    return normalizedLatex;
+  // 解答の変更をハンドリング
+  const handleAnswerChange = (index: number, value: string) => {
+    setAnswers(prevAnswers => {
+      const newAnswers = [...prevAnswers];
+      newAnswers[index] = value;
+      return newAnswers;
+    });
   };
 
-  const handleOpenDialog = () => {
-    if (submissions.length > 0) {
-      setError('この問題はすでに提出済みです');
-      return;
-    }
-    setError(null);
-    setDialogOpen(true);
+  // 解答フィールドを追加
+  const handleAddAnswer = () => {
+    if (!problem.requires_multiple_answers) return; // 複数回答が必要な問題のみ追加可能
+    setAnswers(prevAnswers => [...prevAnswers, '']);
   };
 
+  // 解答フィールドを削除
+  const handleRemoveAnswer = (index: number) => {
+    if (answers.length <= (problem.requires_multiple_answers ? 1 : 1)) return; // 必須複数回答の場合は最低1つ、それ以外も最低1つ
+    setAnswers(prevAnswers => prevAnswers.filter((_, i) => i !== index));
+  };
+
+  // mathliveのWeb Componentを初期化
   useEffect(() => {
-    import('mathlive').then(() => {
-      if (mathfieldRef.current && !(mathfieldRef.current as any).$initialized) {
-        (mathfieldRef.current as any).addEventListener('input', (evt: any) => {
-          setAnswer(evt.target.value)
-        })
-        ;(mathfieldRef.current as any).$initialized = true
-      }
-    })
-  }, [])
+    import('mathlive').then(({ MathfieldElement }) => {
+      answers.forEach((_, index) => {
+        const mathfield = mathfieldRefs.current[index];
+        if (mathfield && !(mathfield as any).$initialized) {
+          (mathfield as any).addEventListener('input', (evt: any) => {
+            handleAnswerChange(index, evt.target.value);
+          });
+          (mathfield as any).$initialized = true;
+        }
+      });
+    });
+  }, [answers.length]); // answersの数が変わったら再実行
 
   // タイマーの更新
   useEffect(() => {
@@ -143,6 +132,15 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     fetchSubmissions();
   }, [userId, params.problem_id, params.virtual_id]);
 
+  const handleOpenDialog = () => {
+    if (submissions.length > 0) {
+      setError('この問題はすでに提出済みです');
+      return;
+    }
+    setError(null);
+    setDialogOpen(true);
+  };
+
   const handleSubmit = async () => {
     if (submissions.length > 0) {
       setError('この問題はすでに提出済みです');
@@ -151,6 +149,14 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     }
     setLoading(true);
     setError(null);
+
+    // 空の回答がないかチェック
+    if (answers.some(ans => ans.trim() === '')) {
+        setError('全ての解答欄を入力してください');
+        setLoading(false);
+        setDialogOpen(false);
+        return;
+    }
 
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
@@ -196,8 +202,8 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
         if (problem.requires_multiple_answers) {
           // 複数回答が必要な問題の場合
-          // ユーザーの入力値を正規化して評価 (ここでは answer stateは単一なのでanswers配列を模擬)
-          const userValues = [answer].map(ans => {
+          // ユーザーの入力値を正規化して評価
+          const userValues = answers.map(ans => {
              try {
                 const userExpression = normalizeLatex(ans);
                 const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
@@ -251,25 +257,29 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           }
 
         } else {
-          // 単一回答の問題の場合 (既存ロジックを適応)
-          try {
-            const userValue = evaluate(normalizeLatex(answer), { scope: { factorial } });
-            isCorrect = problem.correct_answers.some(correctAnswer => {
-              try {
-                const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
-                 const tolerance = 1e-9; // 許容誤差
-                 if (typeof userValue === 'number' && typeof correctValue === 'number') {
-                   return Math.abs(userValue - correctValue) < tolerance;
-                 } else {
-                   return String(userValue).trim() === String(correctValue).trim();
-                 }
-              } catch {
-                return false;
+          // 単一回答の問題の場合
+          if (answers.length !== 1 || answers[0].trim() === '') {
+               isCorrect = false; // 単一回答の場合は1つだけ回答が必要
+          } else {
+             try {
+                const userValue = evaluate(normalizeLatex(answers[0]), { scope: { factorial } }); // 最初の回答を使用
+                isCorrect = problem.correct_answers.some(correctAnswer => {
+                  try {
+                    const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
+                     const tolerance = 1e-9; // 許容誤差
+                     if (typeof userValue === 'number' && typeof correctValue === 'number') {
+                       return Math.abs(userValue - correctValue) < tolerance;
+                     } else {
+                       return String(userValue).trim() === String(correctValue).trim();
+                     }
+                  } catch {
+                    return false;
+                  }
+                });
+              } catch (e) {
+                 console.error("Error during mathjs parse/compare (single answer):", e);
+                 isCorrect = false;
               }
-            });
-          } catch (e) {
-             console.error("Error during mathjs parse/compare (single answer):", e);
-             isCorrect = false;
           }
         }
 
@@ -288,7 +298,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
       virtual_contest_id: params.virtual_id,
       problem_id: params.problem_id,
       user_id: userId,
-      answer: answer, // Save original user input
+      answer: answers.join(' || '), // 複数回答を || で結合して保存
       is_correct: isCorrect,
     }).select().single();
 
@@ -311,7 +321,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         duration: 5000,
         isClosable: true,
       });
-      setAnswer(''); // Clear the input field
+      setAnswers(['']); // Clear the input field
       // Re-fetch submissions to update the list
       const { data: newSubs, error: fetchError } = await supabase
         .from('submissions')
@@ -385,18 +395,62 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         {submissions.length === 0 && virtualContest?.status === 'in_progress' && timeLeft !== '終了' && (
           <Box>
             <FormControl id="answer" isRequired>
-              <FormLabel>解答</FormLabel>
-              <Box flex="1" border="1px solid" borderColor="gray.300" borderRadius="md" p={1}>
-                <math-field
-                  {...{
-                    ref: (el: any) => { mathfieldRef.current = el },
-                    value: answer,
-                    style: { width: '100%', height: '40px', border: 'none' }
-                  } as any}
-                />
-              </Box>
+              <FormLabel>解答{problem.requires_multiple_answers && " (複数解答が必要です)"}</FormLabel>
+               <Text fontSize="xs" color="gray.500" mb={1}>
+                右下のキーボードアイコンから分数や平方根などの数式記号を入力できます
+              </Text>
+              <VStack spacing={2} align="stretch">
+                {answers.map((ans, index) => (
+                  <Flex key={index} gap={2} align="center">
+                    <Box
+                      flex="1"
+                      border="1px solid"
+                      borderColor="gray.300"
+                      borderRadius={6}
+                      bg="gray.50"
+                      p={2}
+                    >
+                      {/* @ts-ignore */}
+                      <math-field
+                        ref={(el: any) => { mathfieldRefs.current[index] = el; }}
+                        value={ans}
+                        onInput={(evt: any) => handleAnswerChange(index, evt.target.value)}
+                        style={{
+                          width: '100%',
+                          minHeight: 40,
+                          fontSize: 18,
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          padding: 4,
+                        }}
+                        aria-placeholder={`解答 ${index + 1}`}
+                      >{ans}</math-field>
+                    </Box>
+                    {problem.requires_multiple_answers && answers.length > 1 && (
+                      <Button size="sm" onClick={() => handleRemoveAnswer(index)}>
+                        削除
+                      </Button>
+                    )}
+                  </Flex>
+                ))}
+                {problem.requires_multiple_answers && (
+                  <Button size="sm" onClick={handleAddAnswer} alignSelf="flex-start">
+                    + 解答を追加
+                  </Button>
+                )}
+              </VStack>
+
+              {/* 解答プレビュー */} {/* 複数回答の場合は各回答のプレビューを表示 */}
+                {answers.map((ans, index) => (
+                  <Box key={`preview-${index}`} mt={2} p={3} border="1px solid" borderColor="gray.200" borderRadius={6} bg="gray.100">
+                    <Text fontSize="xs" color="gray.500" mb={1}>解答 {index + 1} プレビュー</Text>
+                    <BlockMath math={ans} />
+                  </Box>
+                ))}
+
             </FormControl>
-            <Button mt={4} colorScheme="blue" onClick={handleOpenDialog} isLoading={submissions.length > 0 || loading} isDisabled={virtualContest?.status !== 'in_progress' || timeLeft === '終了'}>
+            <Button mt={4} colorScheme="blue" onClick={handleOpenDialog} isLoading={submissions.length > 0 || loading} isDisabled={virtualContest?.status !== 'in_progress' || timeLeft === '終了' || answers.some(ans => ans.trim() === '')}>
               提出する
             </Button>
             {error && <Alert status="error" mt={4}><AlertIcon />{error}</Alert>}
@@ -474,8 +528,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                 バーチャルコンテストでは、<br />
                 この問題に提出できるのは**一度だけ**です。
                 <br />
-                本当にこの解答で提出しますか？
+                本当にこれらの解答で提出しますか？
               </Text>
+              {/* 提出確認ダイアログでの解答表示も複数対応 */}
               <Box
                 border="1px dashed red"
                 p={4}
@@ -483,7 +538,12 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                 bg="red.50"
               >
                 <Text fontWeight="bold" mb={2}>あなたの解答:</Text>
-                <BlockMath math={answer || ''} />
+                {answers.map((ans, index) => (
+                   <Box key={`dialog-preview-${index}`} mb={index < answers.length - 1 ? 2 : 0}>
+                      <Text fontSize="sm">解答 {index + 1}:</Text>
+                      <BlockMath math={ans || ''} />
+                   </Box>
+                ))}
               </Box>
             </AlertDialogBody>
 
@@ -491,7 +551,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
               <Button ref={cancelRef} onClick={() => setDialogOpen(false)} isDisabled={submissions.length > 0 || loading}>
                 キャンセル
               </Button>
-              <Button colorScheme="blue" onClick={handleSubmit} ml={3} isLoading={loading} isDisabled={submissions.length > 0 || virtualContest?.status !== 'in_progress' || timeLeft === '終了'}>
+              <Button colorScheme="blue" onClick={handleSubmit} ml={3} isLoading={loading} isDisabled={submissions.length > 0 || virtualContest?.status !== 'in_progress' || timeLeft === '終了' || answers.some(ans => ans.trim() === '')}>
                 提出する
               </Button>
             </AlertDialogFooter>

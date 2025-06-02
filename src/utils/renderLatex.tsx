@@ -18,7 +18,7 @@ export function renderLatex(text: string) {
       return <BlockMath key={`block-math-${i}`} math={math} />;
     }
     // インライン数式にマッチするか判定
-    else if (/^\$.*?[\s\S]*?\$$/.test(part)) { // 正規表現テストを修正
+    else if (/^\$.*?[\s\S]*?\$$/.test(part)) { // 正規表現テストのタイプミスを修正
       const math = part.slice(1, -1); // $...$ から $ を除去
       return <InlineMath key={`inline-math-${i}`} math={math} />;
     }

@@ -17,8 +17,15 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
         const filteredProblems = problems.filter((p: any) => {
           if (!p) return false;
           const fieldMatch = selectedField === 'ALL' || p.field === selectedField;
-          // 問題のタイトルや内容での検索は、年度での検索と組み合わせる必要はないため削除
-          return fieldMatch;
+          // 問題のタイトルや内容での検索機能を追加
+          const textMatch = p.title.includes(search) || p.content.includes(search);
+          
+          // フィールドで絞り込み、かつ検索テキストに一致するもの
+          if (search) { // 検索テキストがある場合のみテキスト検索を適用
+            return fieldMatch && textMatch;
+          } else { // 検索テキストがない場合はフィールド検索のみ
+            return fieldMatch;
+          }
         });
         return { contest, problems: filteredProblems };
       });

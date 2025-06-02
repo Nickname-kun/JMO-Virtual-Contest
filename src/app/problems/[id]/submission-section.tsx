@@ -354,7 +354,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                 <Button size="sm" onClick={() => insertLatex('\\sqrt{#0}')}>平方根 <InlineMath math="\\sqrt{□}" /></Button>
                 <Button size="sm" onClick={() => insertLatex('^{#?}')}>指数 <InlineMath math="x^□" /></Button>
                 <Button size="sm" onClick={() => insertLatex('\\binom{#0}{#?}')}>コンビネーション(binom) <InlineMath math="\\binom{□}{□}" /></Button>
-                <Button size="sm" onClick={() => insertLatex('_{#0}C_{#?}')}>コンビネーション(_nC_k) <InlineMath math="□C□" /></Button>
+                <Button size="sm" onClick={() => insertLatex('_{#0}\\mathrm{C}_{#?}')}>コンビネーション(_nC_k) <InlineMath math="□C□" /></Button>
                 <Button size="sm" onClick={() => insertLatex('!')}>階乗 (!)</Button>
               </HStack>
               <VStack spacing={2} align="stretch">

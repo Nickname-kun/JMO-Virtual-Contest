@@ -10,6 +10,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { evaluate, factorial } from 'mathjs';
+import { remark } from 'remark';
+import html from 'remark-html';
 
 interface Problem {
   id: string;
@@ -30,18 +32,24 @@ interface Submission {
 }
 
 function renderLatex(text: string) {
-  const parts = text.split(/(\$\$.*?\$\$|\$.*?\$)/g)
+  // MarkdownをHTMLに変換
+  const processedHtml = remark().use(html).processSync(text).toString();
+
+  // HTMLの中からLaTeX部分を探し、KaTeXコンポーネントに置換
+  const parts = processedHtml.split(/(\$\$.*?\$\$|\$.*?\$)/g);
+
   return parts.map((part, i) => {
     if (part.startsWith('$$') && part.endsWith('$$')) {
-      const math = part.slice(2, -2)
-      return <BlockMath key={i} math={math} />
+      const math = part.slice(2, -2);
+      return <BlockMath key={i} math={math} />;
     } else if (part.startsWith('$') && part.endsWith('$')) {
-      const math = part.slice(1, -1)
-      return <InlineMath key={i} math={math} />
+      const math = part.slice(1, -1);
+      return <InlineMath key={i} math={math} />;
     } else {
-      return part.trim() === '' ? null : <span key={i}>{part}</span>
+      // LaTeX部分以外のHTMLを表示
+      return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
     }
-  })
+  });
 }
 
 function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
@@ -276,7 +284,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         </Tooltip>
 
         {/* 問題文 */}
-        <Text whiteSpace="pre-wrap">{renderLatex(problem.content)}</Text>
+        <Text whiteSpace="pre-wrap" className="problem-text">{renderLatex(problem.content)}</Text>
 
         {/* 図形がある場合のみ表示 */}
         {problem.diagram_svg && (

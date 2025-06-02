@@ -3,6 +3,8 @@
 import { Suspense } from 'react'
 import SubmissionSection from './submission-section'
 import { InlineMath, BlockMath } from 'react-katex'
+import { remark } from 'remark';
+import html from 'remark-html';
 import {
   Box,
   Heading,
@@ -18,18 +20,24 @@ import {
 import Link from 'next/link'
 
 function renderLatex(text: string) {
-  const parts = text.split(/(\$\$.*?\$\$|\$.*?\$)/g)
+  // MarkdownをHTMLに変換
+  const processedHtml = remark().use(html).processSync(text).toString();
+
+  // HTMLの中からLaTeX部分を探し、KaTeXコンポーネントに置換
+  const parts = processedHtml.split(/(\$\$.*?\$\$|\$.*?\$)/g);
+
   return parts.map((part, i) => {
     if (part.startsWith('$$') && part.endsWith('$$')) {
-      const math = part.slice(2, -2)
-      return <BlockMath key={i} math={math} />
+      const math = part.slice(2, -2);
+      return <BlockMath key={i} math={math} />;
     } else if (part.startsWith('$') && part.endsWith('$')) {
-      const math = part.slice(1, -1)
-      return <InlineMath key={i} math={math} />
+      const math = part.slice(1, -1);
+      return <InlineMath key={i} math={math} />;
     } else {
-      return part.trim() === '' ? null : <span key={i}>{part}</span>
+      // LaTeX部分以外のHTMLを表示
+      return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
     }
-  })
+  });
 }
 
 interface Problem {
@@ -54,7 +62,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         </Button>
         
         {/* 問題文（Boxラッパーを外して直接表示） */}
-        <Text whiteSpace="pre-wrap">{renderLatex(problem.content)}</Text>
+        <Text whiteSpace="pre-wrap" className="problem-text">{renderLatex(problem.content)}</Text>
 
         {/* 図形がある場合のみ表示（ボックスなしで表示） */}
         {problem.diagram_svg && (

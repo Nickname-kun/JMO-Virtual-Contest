@@ -27,11 +27,7 @@ import { evaluate, factorial } from 'mathjs'
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'math-field': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        value?: string;
-        onInput?: (event: Event) => void;
-        // 必要に応じて他のMathLiveのプロパティを追加
-      };
+      'math-field': any;
     }
   }
 }
@@ -270,6 +266,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
                       bg="gray.50"
                       p={2}
                     >
+                      {/* @ts-ignore */}
                       <math-field
                         ref={(el: any) => { mathfieldRefs.current[index] = el; }}
                         value={ans}
@@ -284,7 +281,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
                           padding: 4,
                         }}
                         aria-placeholder={`解答 ${index + 1}`}
-                      >{ans}</math-field> as any
+                      >{ans}</math-field>
                     </Box>
                     {answers.length > 1 && (
                       <Button size="sm" onClick={() => handleRemoveAnswer(index)}>

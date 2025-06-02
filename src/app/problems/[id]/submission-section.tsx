@@ -83,6 +83,37 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           (mathfield as any).addEventListener('input', (evt: any) => {
             handleAnswerChange(index, evt.target.value)
           })
+
+          // 仮想キーボードの設定
+          // デフォルトのキーボード設定を取得し、不要なキーを削除
+          const customKeyboards = JSON.parse(JSON.stringify((MathfieldElement as any).keyboards)); // ディープコピー
+
+          // 'symbols' キーボードから e, i, 積分のキーを削除 (キーのIDを確認する必要があるかもしれません)
+          // MathLiveのデフォルトキーボード定義に基づいてキーを特定して削除します。
+          // 例: 'e', 'i', '\\int_{0}^{\\infty} {}^{\placeholder} \: \mathrm{d}x'
+          // 正確なキーIDはMathLiveのソースコードやドキュメントで確認が必要です。
+          // ここでは一般的なキーIDまたはLaTeX表現を仮定して削除を試みます。
+          const keysToRemove = ['e', 'i', '\\int_{0}^{\\infty}', '\\int']; // 削除したいキーのコマンドまたはID
+
+          // 'symbols' キーボードのレイアウトからキーをフィルタリング
+          if (customKeyboards && customKeyboards.symbols && customKeyboards.symbols.layers) {
+            Object.keys(customKeyboards.symbols.layers).forEach(layerKey => {
+              customKeyboards.symbols.layers[layerKey] = customKeyboards.symbols.layers[layerKey].filter((key: any) => {
+                // キーが文字列の場合はコマンドとして扱う
+                if (typeof key === 'string') {
+                  return !keysToRemove.includes(key);
+                }
+                // キーがオブジェクトの場合は id または command を確認
+                if (typeof key === 'object' && key !== null) {
+                  return !keysToRemove.includes(key.id) && !keysToRemove.includes(key.command);
+                }
+                return true;
+              });
+            });
+          }
+
+          (mathfield as any).keyboards = customKeyboards; // カスタムキーボード設定を適用
+
           (mathfield as any).$initialized = true
         }
       })

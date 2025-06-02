@@ -24,6 +24,18 @@ import {
 } from '@chakra-ui/react'
 import { evaluate, factorial } from 'mathjs'
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'math-field': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        value?: string;
+        onInput?: (event: Event) => void;
+        // 必要に応じて他のMathLiveのプロパティを追加
+      };
+    }
+  }
+}
+
 interface Submission {
   id: string
   answer: string
@@ -36,26 +48,48 @@ interface ProblemDataForSubmission {
 }
 
 export default function SubmissionSection({ problemId, correctAnswers }: { problemId: string, correctAnswers: string[] | null }) {
-  const [answer, setAnswer] = useState('')
+  const [answers, setAnswers] = useState<string[]>([''])
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const user = useUser()
   const supabase = createClientComponentClient()
-  const mathfieldRef = useRef<any>(null)
+  const mathfieldRefs = useRef<any[]>([])
   const [showAll, setShowAll] = useState(false)
+
+  // 解答の変更をハンドリング
+  const handleAnswerChange = (index: number, value: string) => {
+    setAnswers(prevAnswers => {
+      const newAnswers = [...prevAnswers]
+      newAnswers[index] = value
+      return newAnswers
+    })
+  }
+
+  // 解答フィールドを追加
+  const handleAddAnswer = () => {
+    setAnswers(prevAnswers => [...prevAnswers, ''])
+  }
+
+  // 解答フィールドを削除
+  const handleRemoveAnswer = (index: number) => {
+    setAnswers(prevAnswers => prevAnswers.filter((_, i) => i !== index))
+  }
 
   // mathliveのWeb Componentを初期化
   useEffect(() => {
     import('mathlive').then(({ MathfieldElement }) => {
-      if (mathfieldRef.current && !(mathfieldRef.current as any).$initialized) {
-        (mathfieldRef.current as any).addEventListener('input', (evt: any) => {
-          setAnswer(evt.target.value)
-        })
-        ;(mathfieldRef.current as any).$initialized = true
-      }
+      answers.forEach((_, index) => {
+        const mathfield = mathfieldRefs.current[index]
+        if (mathfield && !(mathfield as any).$initialized) {
+          (mathfield as any).addEventListener('input', (evt: any) => {
+            handleAnswerChange(index, evt.target.value)
+          })
+          (mathfield as any).$initialized = true
+        }
+      })
     })
-  }, [])
+  }, [answers])
 
   // 提出履歴の取得
   useEffect(() => {
@@ -113,25 +147,64 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
           return normalizedLatex;
         };
 
-        // ユーザーの入力値を正規化して評価
-        const userExpression = normalizeLatexFraction(answer);
-        const userValue = evaluate(userExpression, { scope: { factorial } });
-
-        isCorrect = correctAnswers.some(correctAnswer => {
+        // ユーザーの複数の入力値を正規化して評価
+        const userValues = answers.map(ans => {
           try {
-            // 管理者設定の正解も正規化して評価
-            const correctExpression = normalizeLatexFraction(correctAnswer);
-            const correctValue = evaluate(correctExpression, { scope: { factorial } });
-            // 数値的な比較
-            // 小数点誤差を考慮して比較
-            const tolerance = 1e-9; // 許容誤差
-            return Math.abs(userValue - correctValue) < tolerance;
+            const userExpression = normalizeLatexFraction(ans);
+            // evaluateは数値または複素数を返すことが期待されるが、念のためanyで受ける
+            const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
+            // 評価結果が有限な数値であることを確認
+            if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+              return evaluatedValue;
+            } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
+               // 虚数部が0の複素数も数値として扱う
+               return evaluatedValue.re;
+            } else {
+              // 数値として評価できない場合はNaNとして扱う
+              return NaN;
+            }
           } catch {
-            return false;
+            // 評価中のエラーもNaNとして扱う
+            return NaN;
           }
         });
-      } catch {
+
+        // 「1つでも間違ってたら間違い扱い」ロジック
+        // ユーザーが提出した全ての回答が、正解リストのいずれかと一致するかを確認
+        // 空の回答や評価できなかった回答 (NaN) が含まれていないことも条件とする
+        isCorrect = userValues.length > 0 && !userValues.some(isNaN) && userValues.every(userValue =>
+          correctAnswers.some(correctAnswer => {
+            try {
+              const correctExpression = normalizeLatexFraction(correctAnswer);
+              const correctValue: any = evaluate(correctExpression, { scope: { factorial } });
+              const tolerance = 1e-9; // 許容誤差
+
+              // 数値的な比較、または文字列としての完全一致
+              const isMatch = (userVal: any, correctVal: any): boolean => {
+                 if (typeof userVal === 'number' && typeof correctVal === 'number') {
+                   return Math.abs(userVal - correctVal) < tolerance;
+                 } else {
+                   // 数値でない場合は文字列として比較
+                   return String(userVal).trim() === String(correctVal).trim();
+                 }
+              };
+
+              return isMatch(userValue, correctValue);
+
+            } catch {
+              // 正解候補の評価エラー
+              return false;
+            }
+          })
+        );
+
+        // 補足：ユーザーが提出した回答数が正解の数と一致するかどうかは、ここではチェックしない。
+        // 要件「1つでも間違ってたら間違い扱い」に基づき、提出されたものが全て正解に含まれていればOKとする。
+        // もし「正解の数と提出数が一致する必要がある」場合は、別途ロジックを追加。
+
+      } catch (evalError) {
         isCorrect = false;
+        console.error('Evaluation Error:', evalError); // 評価エラーログ
       }
     } else {
       // correctAnswersが設定されていない場合は不正解とする
@@ -142,13 +215,13 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
     const { error } = await supabase.from('submissions').insert({
       user_id: user.id,
       problem_id: problemId,
-      answer,
+      answer: answers.join(' || '),
       is_correct: isCorrect,
     })
     if (error) {
       setError('提出に失敗しました')
     } else {
-      setAnswer('')
+      setAnswers([''])
       // 再取得
       const { data } = await supabase
         .from('submissions')
@@ -163,8 +236,13 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
 
   // LaTeXコマンド挿入
   const insertLatex = (cmd: string) => {
-    if (mathfieldRef.current) {
-      (mathfieldRef.current as any).executeCommand('insert', cmd)
+    // アクティブな（フォーカスされている）math-fieldに挿入
+    const activeMathfield = mathfieldRefs.current.find(mf => mf === document.activeElement);
+    if (activeMathfield) {
+      (activeMathfield as any).executeCommand('insert', cmd);
+    } else if (mathfieldRefs.current[0]) {
+      // フォーカスされていなければ最初のフィールドに挿入
+      (mathfieldRefs.current[0] as any).executeCommand('insert', cmd);
     }
   }
 
@@ -181,32 +259,50 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
               <Text fontSize="xs" color="gray.500" mb={1}>
                 右下のキーボードアイコンから分数や平方根などの数式記号を入力できます
               </Text>
-              <Box
-                border="1px solid"
-                borderColor="gray.300"
-                borderRadius={6}
-                bg="gray.50"
-                p={2}
-                mb={2}
-              >
-                <math-field
-                  ref={mathfieldRef}
-                  style={{
-                    width: '100%',
-                    minHeight: 40,
-                    fontSize: 18,
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    padding: 4,
-                  }}
-                  aria-placeholder="ここに数式を入力"
-                >{answer}</math-field>
-              </Box>
-              <Box mt={2} p={3} border="1px solid" borderColor="gray.200" borderRadius={6} bg="gray.100">
-                <Text fontSize="xs" color="gray.500" mb={1}>プレビュー</Text>
-                <BlockMath math={answer} />
-              </Box>
+              <VStack spacing={2} align="stretch">
+                {answers.map((ans, index) => (
+                  <Flex key={index} gap={2} align="center">
+                    <Box
+                      flex="1"
+                      border="1px solid"
+                      borderColor="gray.300"
+                      borderRadius={6}
+                      bg="gray.50"
+                      p={2}
+                    >
+                      <math-field
+                        ref={(el: any) => { mathfieldRefs.current[index] = el; }}
+                        value={ans}
+                        onInput={(evt: any) => handleAnswerChange(index, evt.target.value)}
+                        style={{
+                          width: '100%',
+                          minHeight: 40,
+                          fontSize: 18,
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          padding: 4,
+                        }}
+                        aria-placeholder={`解答 ${index + 1}`}
+                      >{ans}</math-field> as any
+                    </Box>
+                    {answers.length > 1 && (
+                      <Button size="sm" onClick={() => handleRemoveAnswer(index)}>
+                        削除
+                      </Button>
+                    )}
+                  </Flex>
+                ))}
+                <Button size="sm" onClick={handleAddAnswer} alignSelf="flex-start">
+                  + 解答を追加
+                </Button>
+              </VStack>
+              {answers.map((ans, index) => (
+                <Box key={`preview-${index}`} mt={2} p={3} border="1px solid" borderColor="gray.200" borderRadius={6} bg="gray.100">
+                  <Text fontSize="xs" color="gray.500" mb={1}>解答 {index + 1} プレビュー</Text>
+                  <BlockMath math={ans} />
+                </Box>
+              ))}
             </FormControl>
             {error && (
               <Alert status="error" fontSize="sm">

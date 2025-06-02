@@ -1,14 +1,20 @@
 import { InlineMath, BlockMath } from 'react-katex';
 import { remark } from 'remark';
 import html from 'remark-html';
+import remarkBreaks from 'remark-breaks';
 import React from 'react';
 
 export function renderLatex(text: string) {
   // 数式デリミタ（$...$ および $$...$$）を含むテキストを処理する
+  // remark-breaksを使い、単一の改行を<br>に変換
   // remark-htmlで一度HTMLに変換し、その結果の中の数式部分をreact-katexコンポーネントに置き換える
 
-  // 1. Markdown全体をHTMLに変換
-  const processedHtmlString = remark().use(html).processSync(text).toString();
+  // 1. Markdown全体をHTMLに変換 (remark-breaksを適用)
+  const processedHtmlString = remark()
+    .use(remarkBreaks) // ここでremark-breaksプラグインを使用
+    .use(html)
+    .processSync(text)
+    .toString();
 
   // 2. HTML文字列を解析し、数式部分を置き換えるための処理
   //    ここでは簡易的に、数式デリミタで分割してReact要素の配列を生成する
@@ -20,9 +26,6 @@ export function renderLatex(text: string) {
   // ただし、remark-htmlが数式デリミタをそのまま残すと仮定する。
   const mathRegex = /(\$\$.*?[\s\S]*?\$\$)|(\$.*?[\s\S]*?\$)/g;
 
-  // HTML文字列を数式とそれ以外の部分に分割
-  const parts = processedHtmlString.split(mathRegex).filter(Boolean);
-
   const renderedElements: React.ReactNode[] = [];
   let lastIndex = 0;
 
@@ -31,10 +34,8 @@ export function renderLatex(text: string) {
     // マッチする前のテキスト部分を追加
     const textBefore = processedHtmlString.substring(lastIndex, offset);
     if (textBefore) {
-       // テキスト部分をそのままdangerouslySetInnerHTMLで追加
-       // 注意：この方法だとテキスト部分に含まれるMarkdownのHTMLタグ（<p>, <strong>など）もそのままレンダリングされます。
-       // 段落(<p>)タグが問題になる場合は、別途処理が必要になりますが、
-       // 前回の修正で<p>タグ削除がうまくいかなかったことを踏まえ、一旦そのまま出力します。
+       // テキスト部分をdangerouslySetInnerHTMLで追加
+       // remark-breaksにより、単一の改行は<br>タグに変換されているはずです。
       renderedElements.push(
         <span key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: textBefore }} />
       );

@@ -307,15 +307,13 @@ export default function EditProblemPage() {
             <VStack spacing={2} align="stretch">
               {formData.correct_answers.map((answer, index) => (
                 <Flex key={index} gap={2} align="center">
-                  <Box flex="1" border="1px solid" borderColor="gray.300" borderRadius="md" p={1}>
-                    <math-field
-                      {...{
-                        ref: (el: any) => { mathfieldRefs.current[index] = el },
-                        value: answer,
-                        style: { width: '100%', height: '40px', border: 'none' }
-                      } as any}
-                    />
-                  </Box>
+                  <math-field
+                    {...{
+                      ref: (el: any) => { mathfieldRefs.current[index] = el },
+                      value: answer,
+                      style: { width: '100%', height: '40px', border: 'none' }
+                    } as any}
+                  />
                   {formData.correct_answers.length > 1 && (
                     <Button size="sm" onClick={() => handleRemoveCorrectAnswer(index)}>
                       削除

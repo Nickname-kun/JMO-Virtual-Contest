@@ -51,7 +51,11 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         )}
 
         {/* 解答欄・提出履歴 */}
-        <SubmissionSection problemId={problem.id} correctAnswers={problem.correct_answers || null} />
+        <SubmissionSection 
+          problemId={problem.id}
+          correctAnswers={problem.correct_answers || null}
+          requires_multiple_answers={problem.requires_multiple_answers}
+        />
       </VStack>
     </Container>
   )

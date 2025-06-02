@@ -89,14 +89,11 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           const customKeyboards = JSON.parse(JSON.stringify((MathfieldElement as any).keyboards)); // ディープコピー
 
           // 'symbols' キーボードから e, i, 積分のキーを削除 (キーのIDを確認する必要があるかもしれません)
-          const keysToRemove = [
-            'e', // 自然対数の底
-            'i', // 虚数単位
-            '\\int', // 積分記号
-            '\\int_{0}^{\\infty}', // 定積分 (無限)
-            '\\int_{0}^{\\infty} {}^{\\placeholder} \\: \\mathrm{d}x', // 特定の積分ボタンのLaTeX
-            '\\infty', // 無限大記号 (積分とセットで表示される可能性)
-          ]; // 削除したいキーのコマンド、ID、またはinsert文字列
+          // MathLiveのデフォルトキーボード定義に基づいてキーを特定して削除します。
+          // 例: 'e', 'i', '\\int_{0}^{\\infty} {}^{\placeholder} \: \mathrm{d}x'
+          // 正確なキーIDはMathLiveのソースコードやドキュメントで確認が必要です。
+          // ここでは一般的なキーIDまたはLaTeX表現を仮定して削除を試みます。
+          const keysToRemove = ['e', 'i', '\\int_{0}^{\\infty}', '\\int']; // 削除したいキーのコマンドまたはID
 
           // 'symbols' キーボードのレイアウトからキーをフィルタリング
           if (customKeyboards && customKeyboards.symbols && customKeyboards.symbols.layers) {
@@ -106,16 +103,9 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                 if (typeof key === 'string') {
                   return !keysToRemove.includes(key);
                 }
-                // キーがオブジェクトの場合は id, command, insert を確認
+                // キーがオブジェクトの場合は id または command を確認
                 if (typeof key === 'object' && key !== null) {
-                  const keyId = key.id;
-                  const command = key.command;
-                  const insert = key.insert;
-                  return (
-                    !keysToRemove.includes(keyId) &&
-                    !keysToRemove.includes(command) &&
-                    !keysToRemove.includes(insert)
-                  );
+                  return !keysToRemove.includes(key.id) && !keysToRemove.includes(key.command);
                 }
                 return true;
               });
@@ -374,6 +364,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                         ref={(el: any) => { mathfieldRefs.current[index] = el; }}
                         value={ans}
                         onInput={(evt: any) => handleAnswerChange(index, evt.target.value)}
+                        virtual-keyboards="numeric symbols"
                         style={{
                           width: '100%',
                           minHeight: 40,

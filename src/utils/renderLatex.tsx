@@ -4,55 +4,53 @@ import html from 'remark-html';
 import React from 'react';
 
 export function renderLatex(text: string) {
-  // 数式部分を一時的にプレースホルダーに置換
-  const mathPlaceholder = "__MATH_PLACEHOLDER__";
-  const blockMathRegex = /(\$\$.*?\$\$)/g;
-  const inlineMathRegex = /(\$.*?\$)/g;
+  // 数式部分を一時的に異なるプレースホルダーに置換
+  const blockMathPlaceholder = "__BLOCK_MATH_PLACEHOLDER__";
+  const inlineMathPlaceholder = "__INLINE_MATH_PLACEHOLDER__";
+  const blockMathRegex = /(\$\$.*?[\s\S]*?\$\$)/g;
+  const inlineMathRegex = /(\$.*?[\s\S]*?\$)/g;
   
   const blockMathParts: string[] = [];
   const inlineMathParts: string[] = [];
 
-  let textWithPlaceholders = text.replace(blockMathRegex, (match) => {
-    blockMathParts.push(match);
-    return mathPlaceholder;
+  let textWithPlaceholders = text;
+
+  // ブロック数式を先に置換し、元の数式を保存
+  textWithPlaceholders = textWithPlaceholders.replace(blockMathRegex, (match) => {
+    blockMathParts.push(match.slice(2, -2)); // $$...$$ から $$ を除去
+    return blockMathPlaceholder;
   });
 
+  // インライン数式を置換し、元の数式を保存
   textWithPlaceholders = textWithPlaceholders.replace(inlineMathRegex, (match) => {
-    inlineMathParts.push(match);
-    return mathPlaceholder;
+    inlineMathParts.push(match.slice(1, -1)); // $...$ から $ を除去
+    return inlineMathPlaceholder;
   });
 
   // MarkdownをHTMLに変換
   const processedHtml = remark().use(html).processSync(textWithPlaceholders).toString();
 
   // HTMLの中からプレースホルダーを探し、KaTeXコンポーネントに置換
-  const parts = processedHtml.split(mathPlaceholder);
+  // プレースホルダーを区切り文字としてHTMLを分割
+  const htmlParts = processedHtml.split(new RegExp(`(${blockMathPlaceholder}|${inlineMathPlaceholder})`, 'g'));
 
   let blockMathIndex = 0;
   let inlineMathIndex = 0;
 
-  return parts.map((part, i) => {
-    const htmlPart = <span key={`html-${i}`} dangerouslySetInnerHTML={{ __html: part }} />;
-
-    if (i < parts.length - 1) {
-      // 次のプレースホルダーがブロック数式かインライン数式か判断
-      const nextMathPart = blockMathParts[blockMathIndex] || inlineMathParts[inlineMathIndex];
-
-      if (blockMathParts[blockMathIndex] && nextMathPart === blockMathParts[blockMathIndex]) {
-         const math = blockMathParts[blockMathIndex].slice(2, -2);
-         blockMathIndex++;
-         return <React.Fragment key={i}>{htmlPart}<BlockMath key={`math-${i}`} math={math} /></React.Fragment>;
-      } else if (inlineMathParts[inlineMathIndex] && nextMathPart === inlineMathParts[inlineMathIndex]) {
-         const math = inlineMathParts[inlineMathIndex].slice(1, -1);
-         inlineMathIndex++;
-         return <React.Fragment key={i}>{htmlPart}<InlineMath key={`math-${i}`} math={math} /></React.Fragment>;
-      } else {
-        // ここには到達しないはずだが念のため
-         return htmlPart;
-      }
-
+  return htmlParts.map((part, i) => {
+    if (part === blockMathPlaceholder) {
+      // ブロック数式プレースホルダーの場合
+      const math = blockMathParts[blockMathIndex];
+      blockMathIndex++;
+      return <BlockMath key={`block-math-${i}`} math={math} />;
+    } else if (part === inlineMathPlaceholder) {
+      // インライン数式プレースホルダーの場合
+      const math = inlineMathParts[inlineMathIndex];
+      inlineMathIndex++;
+      return <InlineMath key={`inline-math-${i}`} math={math} />;
     } else {
-      return htmlPart;
+      // 通常のHTML部分
+      return <span key={`html-${i}`} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });
 } 

@@ -8,7 +8,7 @@ async function getProblem(id: string) {
   const supabase = createServerComponentClient({ cookies: () => cookieStore })
   const { data: problem, error } = await supabase
     .from('problems')
-    .select('*, correct_answers')
+    .select('*, correct_answers, requires_multiple_answers')
     .eq('id', id)
     .single()
 

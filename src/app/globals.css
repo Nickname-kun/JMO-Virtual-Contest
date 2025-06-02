@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+
+.problem-text {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

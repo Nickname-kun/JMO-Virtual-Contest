@@ -128,10 +128,10 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
           // _nC_k の形式も C(n,k) に変換
           const normalizedLatex = cleanedLatex
-            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'C($1,$2)')
-            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'C($1,$2)')
-            .replace(/_([^C]+)C_([^}]+)/g, 'C($1,$2)')
-            .replace(/_([^C]+)C([0-9]+)/g, 'C($1,$2)')
+            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, '($1)!/($2)!*($1-$2)!') // \binom{n}{k} -> n!/(k!*(n-k)!)
+            .replace(/\\\\binom([0-9]+)([0-9]+)/g, '($1)!/($2)!*($1-$2)!') // \binom nk -> n!/(k!*(n-k)!)
+            .replace(/_([^C]+)C_([^}]+)/g, '($1)!/($2)!*($1-$2)!') // _nC_k -> n!/(k!*(n-k)!)
+            .replace(/_([^C]+)C([0-9]+)/g, '($1)!/($2)!*($1-$2)!') // _nCk -> n!/(k!*(n-k)!)
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')

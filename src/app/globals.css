@@ -10,6 +10,12 @@
   line-height: 1.8;
 }
 
+/* 問題文中の太字をゴシック体に */
+.problem-text strong {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700; /* Noto Sans JPの太字ウェイト */
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

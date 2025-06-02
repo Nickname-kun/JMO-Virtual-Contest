@@ -249,6 +249,7 @@ export default function NewProblemPage() {
                 <Button size="sm" onClick={() => insertMarkdown('italic')}>斜体</Button>
                 <Button size="sm" onClick={() => insertMarkdown('list')}>リスト</Button>
               </HStack>
+              <Text fontSize="sm" color="gray.500" mt={1}>Markdown記法が利用可能です（太字: **太字**, 斜体: *斜体*, リスト: - リスト項目）</Text>
               <Textarea
                 ref={contentTextareaRef}
                 name="content"

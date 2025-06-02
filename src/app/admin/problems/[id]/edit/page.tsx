@@ -192,7 +192,15 @@ export default function EditProblemPage() {
 
   const insertMarkdown = (format: string) => {
     const textarea = contentTextareaRef.current;
-    if (!textarea) return;
+    if (!textarea) {
+      console.log('Textarea ref is not available.');
+      return;
+    }
+
+    console.log('insertMarkdown called with format:', format);
+    console.log('Initial textarea value:', textarea.value);
+    console.log('Initial selectionStart:', textarea.selectionStart);
+    console.log('Initial selectionEnd:', textarea.selectionEnd);
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -230,12 +238,17 @@ export default function EditProblemPage() {
 
     setFormData(prev => ({ ...prev, content: newValue }));
 
+    console.log('New value set:', newValue);
+
     // カーソル位置を調整
     // 次のレンダリングで値が更新された後に実行されるように少し遅延させる
     setTimeout(() => {
       if (textarea) {
+        console.log('Setting selection range after timeout.');
+        console.log('New selectionStart:', start + prefix.length + selectedText.length);
         textarea.selectionStart = textarea.selectionEnd = start + prefix.length + selectedText.length;
       }
+      console.log('Timeout function executed.');
     }, 0);
   };
 
@@ -300,6 +313,7 @@ export default function EditProblemPage() {
               <Button size="sm" onClick={() => insertMarkdown('list')}>リスト</Button>
               {/* 他の書式設定ボタンもここに追加 */}
             </HStack>
+            <Text fontSize="sm" color="gray.500" mt={1}>Markdown記法が利用可能です（太字: **太字**, 斜体: *斜体*, リスト: - リスト項目）</Text>
             <Textarea name="content" value={formData.content} onChange={handleChange} rows={5} />
           </FormControl>
           <FormControl isRequired>

@@ -12,7 +12,8 @@ function ProblemsClientContent({ problemsByContest, correctProblemIds }: { probl
 
   const filteredProblemsByContest = useMemo(() => {
     return problemsByContest
-      .filter(({ contest }) => contest.name.includes(search))
+      // コンテスト名での検索を削除し、問題のタイトルと内容での検索のみを行う
+      // .filter(({ contest }) => contest.name.includes(search))
       .map(({ contest, problems }) => {
         const filteredProblems = problems.filter((p: any) => {
           if (!p) return false;

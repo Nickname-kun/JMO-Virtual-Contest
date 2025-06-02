@@ -228,9 +228,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                 return evaluatedValue;
               } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
                  return evaluatedValue.re;
-              } else {
-                return NaN;
-              }
+               } else {
+                 return NaN;
+               }
             } catch {
               return NaN;
             }
@@ -382,7 +382,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         </Tooltip>
 
         {/* 問題文 */}
-        <Text whiteSpace="pre-wrap" className="problem-text">{renderLatex(problem.content)}</Text>
+        <Text className="problem-text">{renderLatex(problem.content)}</Text>
 
         {/* 図形がある場合のみ表示 */}
         {problem.diagram_svg && (

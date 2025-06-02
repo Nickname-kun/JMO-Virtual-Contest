@@ -41,7 +41,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         </Button>
         
         {/* 問題文（Boxラッパーを外して直接表示） */}
-        <Text whiteSpace="pre-wrap" className="problem-text">{renderLatex(problem.content)}</Text>
+        <Text className="problem-text">{renderLatex(problem.content)}</Text>
 
         {/* 図形がある場合のみ表示（ボックスなしで表示） */}
         {problem.diagram_svg && (

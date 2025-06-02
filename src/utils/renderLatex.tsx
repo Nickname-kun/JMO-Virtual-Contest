@@ -24,8 +24,15 @@ export function renderLatex(text: string) {
     }
     // 数式以外のテキストの場合
     else {
-      // MarkdownをHTMLに変換（改行以外の装飾のため）
-      const processedHtml = remark().use(html).processSync(part).toString();
+      // MarkdownをHTMLに変換
+      let processedHtml = remark().use(html).processSync(part).toString();
+
+      // 生成されたHTMLから不要な<p>タグを取り除く（テキスト部分が常にインラインになるように）
+      // remarkは単一のテキストブロックを<p>...</p>で囲むことがある
+      if (processedHtml.startsWith('<p>') && processedHtml.endsWith('</p>')) {
+        processedHtml = processedHtml.slice(3, -4);
+      }
+
       return <span key={`html-${i}`} dangerouslySetInnerHTML={{ __html: processedHtml }} />;
     }
   });

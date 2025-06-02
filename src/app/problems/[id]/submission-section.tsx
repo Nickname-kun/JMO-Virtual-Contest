@@ -116,6 +116,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
     }
     // 採点ロジック (複数の正解候補と比較)
     let isCorrect = false;
+    // @ts-ignore
     if (correctAnswers && Array.isArray(correctAnswers)) {
       try {
         // LaTeXの分数形式を正規化する関数
@@ -167,38 +168,96 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           }
         });
 
-        // 「1つでも間違ってたら間違い扱い」ロジック
-        // ユーザーが提出した全ての回答が、正解リストのいずれかと一致するかを確認
-        // 空の回答や評価できなかった回答 (NaN) が含まれていないことも条件とする
-        isCorrect = userValues.length > 0 && !userValues.some(isNaN) && userValues.every(userValue =>
-          correctAnswers.some(correctAnswer => {
-            try {
-              const correctExpression = normalizeLatexFraction(correctAnswer);
-              const correctValue: any = evaluate(correctExpression, { scope: { factorial } });
-              const tolerance = 1e-9; // 許容誤差
-
-              // 数値的な比較、または文字列としての完全一致
-              const isMatch = (userVal: any, correctVal: any): boolean => {
-                 if (typeof userVal === 'number' && typeof correctVal === 'number') {
-                   return Math.abs(userVal - correctVal) < tolerance;
-                 } else {
-                   // 数値でない場合は文字列として比較
-                   return String(userVal).trim() === String(correctVal).trim();
-                 }
-              };
-
-              return isMatch(userValue, correctValue);
-
-            } catch {
-              // 正解候補の評価エラー
-              return false;
+        // 正解候補を正規化して評価
+        const correctValues = correctAnswers.map(ans => {
+          try {
+            const correctExpression = normalizeLatexFraction(ans);
+            const evaluatedValue: any = evaluate(correctExpression, { scope: { factorial } });
+             if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+              return evaluatedValue;
+            } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
+               // 虚数部が0の複素数も数値として扱う
+               return evaluatedValue.re;
+            } else {
+              // 数値として評価できない場合はNaNとして扱う
+              return NaN;
             }
-          })
-        );
+          } catch {
+            return NaN;
+          }
+        });
 
-        // 補足：ユーザーが提出した回答数が正解の数と一致するかどうかは、ここではチェックしない。
-        // 要件「1つでも間違ってたら間違い扱い」に基づき、提出されたものが全て正解に含まれていればOKとする。
-        // もし「正解の数と提出数が一致する必要がある」場合は、別途ロジックを追加。
+        const tolerance = 1e-9; // 許容誤差
+
+        // 数値的な比較、または文字列としての完全一致
+        const isMatch = (userVal: any, correctVal: any): boolean => {
+           if (typeof userVal === 'number' && typeof correctVal === 'number') {
+             return Math.abs(userVal - correctVal) < tolerance;
+           } else {
+             // 数値でない場合は文字列として比較
+             return String(userVal).trim() === String(correctVal).trim();
+           }
+        };
+
+        // === 新しい採点ロジック ===
+        // ユーザーが提出した回答が全て有効な数値/文字列であり、かつ
+        // 必須複数回答の場合は回答数が正解数と一致する必要がある
+        // @ts-ignore
+        if (userValues.some(isNaN) || correctValues.some(isNaN) || (!requires_multiple_answers && userValues.length !== 1) || (requires_multiple_answers && userValues.length !== correctValues.length)) {
+             isCorrect = false;
+        } else {
+            // ソートして比較（セットとしての一致を確認）
+            // 数値と文字列が混在する可能性を考慮し、文字列に変換してソート
+            const sortedUserValues = userValues.map(v => String(v)).sort();
+            const sortedCorrectValues = correctValues.map(v => String(v)).sort();
+
+            if (sortedUserValues.length !== sortedCorrectValues.length) {
+                isCorrect = false; // 回答数は上記でチェック済みだが念のため
+            } else {
+                // 各要素が一致するか確認
+                isCorrect = sortedUserValues.every((userValStr, index) => {
+                    const correctValStr = sortedCorrectValues[index];
+                    // 文字列として比較するか、数値として評価して比較するかを判断
+                    const userNum = parseFloat(userValStr);
+                    const correctNum = parseFloat(correctValStr);
+
+                    if (!isNaN(userNum) && !isNaN(correctNum)) {
+                         // 両方数値に変換可能なら数値として比較
+                        return Math.abs(userNum - correctNum) < tolerance;
+                    } else {
+                         // それ以外は文字列として比較
+                        return userValStr === correctValStr;
+                    }
+                });
+            }
+        }
+
+        // === 既存の採点ロジック（コメントアウトまたは削除） ===
+        // isCorrect = userValues.length > 0 && !userValues.some(isNaN) && userValues.every(userValue =>
+        //   correctAnswers.some(correctAnswer => {
+        //     try {
+        //       const correctExpression = normalizeLatexFraction(correctAnswer);
+        //       const correctValue: any = evaluate(correctExpression, { scope: { factorial } });
+        //       const tolerance = 1e-9; // 許容誤差
+
+        //       // 数値的な比較、または文字列としての完全一致
+        //       const isMatch = (userVal: any, correctVal: any): boolean => {
+        //          if (typeof userVal === 'number' && typeof correctVal === 'number') {
+        //            return Math.abs(userVal - correctVal) < tolerance;
+        //          } else {
+        //            // 数値でない場合は文字列として比較
+        //            return String(userVal).trim() === String(correctVal).trim();
+        //          }
+        //       };
+
+        //       return isMatch(userValue, correctValue);
+
+        //     } catch {
+        //       // 正解候補の評価エラー
+        //       return false;
+        //     }
+        //   })
+        // );
 
       } catch (evalError) {
         isCorrect = false;

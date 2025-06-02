@@ -43,7 +43,7 @@ export default async function Home() {
                 {announcements.map((announcement: any) => (
                   <Box key={announcement.created_at}>
                     <Flex direction={{ base: 'column', md: 'row' }} justify="space-between" align="start">
-                      <Text fontSize="sm" color="gray.700" mr={4}>
+                      <Text fontSize="sm" color="gray.700" mr={4} whiteSpace="pre-wrap">
                         {new Date(announcement.created_at) >= new Date(new Date().setDate(new Date().getDate() - 2)) && (
                           <Text as="span" mr={2} fontSize="sm" color="red.500" fontWeight="normal">
                             new!

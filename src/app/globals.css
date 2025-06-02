@@ -8,6 +8,7 @@
   font-family: 'Noto Serif JP', serif;
   font-size: 1.1em;
   line-height: 1.8;
+  word-break: break-word;
 }
 
 /* 問題文中の太字をゴシック体に */

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useUser } from '@supabase/auth-helpers-react'
-import { BlockMath } from 'react-katex'
+import { BlockMath, InlineMath } from 'react-katex'
 import Link from 'next/link'
 import {
   Box,
@@ -348,6 +348,14 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                 右下のキーボードアイコンから分数や平方根などの数式記号を入力できます
                 {requires_multiple_answers && "（この問題は複数の解答が必要です）"}
               </Text>
+              {/* 数式入力支援ボタン */}
+              <HStack spacing={2} mb={2} wrap="wrap">
+                <Button size="sm" onClick={() => insertLatex('\\frac{#0}{#?}')}>分数 <InlineMath math="\\frac{□}{□}" /></Button>
+                <Button size="sm" onClick={() => insertLatex('\\sqrt{#0}')}>平方根 <InlineMath math="\\sqrt{□}" /></Button>
+                <Button size="sm" onClick={() => insertLatex('^{#?}')}>指数 <InlineMath math="x^□" /></Button>
+                <Button size="sm" onClick={() => insertLatex('\\binom{#0}{#?}')}>コンビネーション <InlineMath math="\\binom{□}{□}" /></Button>
+                <Button size="sm" onClick={() => insertLatex('\placeholder{}!')}>階乗 <InlineMath math="□!" /></Button>
+              </HStack>
               <VStack spacing={2} align="stretch">
                 {answers.map((ans, index) => (
                   <Flex key={index} gap={2} align="center">

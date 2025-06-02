@@ -38,6 +38,7 @@ interface NewProblemFormData {
   has_diagram: boolean;
   diagram_svg: string;
   field: string;
+  requires_multiple_answers: boolean;
 }
 
 export default function NewProblemPage() {
@@ -55,6 +56,7 @@ export default function NewProblemPage() {
     has_diagram: false,
     diagram_svg: '',
     field: '',
+    requires_multiple_answers: false,
   })
   const mathfieldRefs = useRef<(any | null)[]>([])
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,10 +96,10 @@ export default function NewProblemPage() {
       return
     }
     if (!formData.correct_answers || formData.correct_answers.every(answer => answer.trim() === '')) {
-        setError('正解を少なくとも1つ入力してください');
-        return;
+      setError('正解を少なくとも1つ入力してください')
+      return
     }
-    setError(null);
+    setError(null)
     try {
       const dataToSend: any = {
         title: formData.title,
@@ -107,9 +109,10 @@ export default function NewProblemPage() {
         number: Number(formData.number),
         contest_id: formData.contest_id,
         field: formData.field,
+        requires_multiple_answers: formData.requires_multiple_answers,
       }
       if (formData.has_diagram && formData.diagram_svg) {
-        dataToSend.diagram_svg = formData.diagram_svg;
+        dataToSend.diagram_svg = formData.diagram_svg
       }
       const { error: insertError } = await supabase.from('problems').insert([
         dataToSend
@@ -335,6 +338,18 @@ export default function NewProblemPage() {
                 </Text>
               </FormControl>
             )}
+            <FormControl>
+              <FormLabel>複数回答が必要</FormLabel>
+              <Checkbox
+                isChecked={formData.requires_multiple_answers}
+                onChange={(e) => setFormData(prev => ({ ...prev, requires_multiple_answers: e.target.checked }))}
+              >
+                この問題は複数の解答を必要とします
+              </Checkbox>
+              <Text fontSize="sm" color="gray.500" mt={1}>
+                チェックを入れると、ユーザーは複数の解答を提出できるようになります
+              </Text>
+            </FormControl>
             <Flex justify="flex-end">
               <Button type="submit" colorScheme="blue" size="lg">
                 問題を追加

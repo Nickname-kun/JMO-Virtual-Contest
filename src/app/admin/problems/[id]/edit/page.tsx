@@ -21,6 +21,7 @@ import {
   Spinner,
   Text,
   HStack,
+  Checkbox,
 } from "@chakra-ui/react";
 import { BlockMath, InlineMath } from 'react-katex';
 import React from "react";
@@ -37,6 +38,7 @@ interface EditProblemFormData {
   diagram_svg: string;
   field: string;
   points: number;
+  requires_multiple_answers: boolean;
 }
 
 export default function EditProblemPage() {
@@ -55,6 +57,7 @@ export default function EditProblemPage() {
     diagram_svg: "",
     field: "",
     points: 1,
+    requires_multiple_answers: false,
   });
   const mathfieldRefs = useRef<(any | null)[]>([]);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -97,6 +100,7 @@ export default function EditProblemPage() {
           diagram_svg: data.diagram_svg ?? "",
           field: data.field ?? "",
           points: data.points ?? 1,
+          requires_multiple_answers: data.requires_multiple_answers ?? false,
         });
       }
       setLoading(false);
@@ -142,6 +146,7 @@ export default function EditProblemPage() {
         number: Number(formData.number),
         field: formData.field,
         points: Number(formData.points),
+        requires_multiple_answers: formData.requires_multiple_answers,
       };
       dataToUpdate.diagram_svg = formData.diagram_svg || null;
 
@@ -366,6 +371,18 @@ export default function EditProblemPage() {
             <NumberInput min={1} value={formData.points} onChange={(_, v) => setFormData((prev) => ({ ...prev, points: v }))}>
               <NumberInputField name="points" />
             </NumberInput>
+          </FormControl>
+          <FormControl>
+            <FormLabel>複数回答が必要</FormLabel>
+            <Checkbox
+              isChecked={formData.requires_multiple_answers}
+              onChange={(e) => setFormData(prev => ({ ...prev, requires_multiple_answers: e.target.checked }))}
+            >
+              この問題は複数の解答を必要とします
+            </Checkbox>
+            <Text fontSize="sm" color="gray.500" mt={1}>
+              チェックを入れると、ユーザーは複数の解答を提出できるようになります
+            </Text>
           </FormControl>
           <Flex justify="flex-end">
             <Button type="submit" colorScheme="blue" isLoading={loading}>

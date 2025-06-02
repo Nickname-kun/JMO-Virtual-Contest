@@ -25,6 +25,7 @@ interface Problem {
   correct_answers?: string[];
   has_diagram: boolean
   diagram_svg: string
+  requires_multiple_answers: boolean
   // ... other fields
 }
 

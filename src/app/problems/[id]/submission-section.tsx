@@ -41,9 +41,10 @@ interface Submission {
 
 interface ProblemDataForSubmission {
   correct_answers?: string[];
+  requires_multiple_answers: boolean;
 }
 
-export default function SubmissionSection({ problemId, correctAnswers }: { problemId: string, correctAnswers: string[] | null }) {
+export default function SubmissionSection({ problemId, correctAnswers, requires_multiple_answers }: { problemId: string, correctAnswers: string[] | null, requires_multiple_answers: boolean }) {
   const [answers, setAnswers] = useState<string[]>([''])
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(false)
@@ -64,6 +65,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
 
   // 解答フィールドを追加
   const handleAddAnswer = () => {
+    if (!requires_multiple_answers) return;
     setAnswers(prevAnswers => [...prevAnswers, ''])
   }
 
@@ -254,6 +256,7 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
               <FormLabel>解答</FormLabel>
               <Text fontSize="xs" color="gray.500" mb={1}>
                 右下のキーボードアイコンから分数や平方根などの数式記号を入力できます
+                {requires_multiple_answers && "（この問題は複数の解答が必要です）"}
               </Text>
               <VStack spacing={2} align="stretch">
                 {answers.map((ans, index) => (
@@ -283,16 +286,18 @@ export default function SubmissionSection({ problemId, correctAnswers }: { probl
                         aria-placeholder={`解答 ${index + 1}`}
                       >{ans}</math-field>
                     </Box>
-                    {answers.length > 1 && (
+                    {requires_multiple_answers && answers.length > 1 && (
                       <Button size="sm" onClick={() => handleRemoveAnswer(index)}>
                         削除
                       </Button>
                     )}
                   </Flex>
                 ))}
-                <Button size="sm" onClick={handleAddAnswer} alignSelf="flex-start">
-                  + 解答を追加
-                </Button>
+                {requires_multiple_answers && (
+                  <Button size="sm" onClick={handleAddAnswer} alignSelf="flex-start">
+                    + 解答を追加
+                  </Button>
+                )}
               </VStack>
               {answers.map((ans, index) => (
                 <Box key={`preview-${index}`} mt={2} p={3} border="1px solid" borderColor="gray.200" borderRadius={6} bg="gray.100">

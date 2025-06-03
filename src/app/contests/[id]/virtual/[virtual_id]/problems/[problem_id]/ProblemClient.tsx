@@ -209,12 +209,12 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           // \binom{n}{k} または \binom nk の形式を C(n,k) に変換
           // _nC_k の形式も C(n,k) に変換
           const normalizedLatex = cleanedLatex
-            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'combinations($1,$2)')
-            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'combinations($1,$2)')
-            .replace(/_([0-9]+)C_([0-9]+)/g, 'combinations($1,$2)') // _nC_k -> combinations(n,k)
-            .replace(/_([0-9]+)C([0-9]+)/g, 'combinations($1,$2)') // _nCk -> combinations(n,k)
+            .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \binom{n}{k} -> combinations(n,k)
+            .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \binom nk -> combinations(n,k)
+            .replace(/_([0-9]+)C_([0-9]+)/g, "combinations($1,$2)") // _nC_k -> combinations(n,k)
+            .replace(/_([0-9]+)C([0-9]+)/g, "combinations($1,$2)") // _nCk -> combinations(n,k)
+            .replace(/_\{([0-9]+)\}\\mathrm\{C\}\_\{([0-9]+)\}/g, "combinations($1,$2)") // _{n}C_{k} -> combinations(n,k) (MathLive出力対応)
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
             .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
             .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')

@@ -163,6 +163,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
             .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'combinations($1,$2)') // \binom nk -> combinations(n,k)
             .replace(/_([0-9]+)C_([0-9]+)/g, 'combinations($1,$2)') // _nC_k -> combinations(n,k)
             .replace(/_([0-9]+)C([0-9]+)/g, 'combinations($1,$2)') // _nCk -> combinations(n,k)
+            .replace(/_\{([0-9]+)\}\\\\mathrm\{C\}\_\{([0-9]+)\}/g, 'combinations($1,$2)') // _{n}C_{k} -> combinations(n,k) (MathLive出力対応)
             .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')

@@ -152,10 +152,12 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
       try {
         // LaTeXの分数形式を正規化する関数
         const normalizeLatexFraction = (latex: string): string => {
+          const cleanedLatex = latex; // 元のLaTeXをそのまま使用
+          
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
           // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
-          const normalizedLatex = latex
+          let normalizedLatex = cleanedLatex
             .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
             .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
             // _nC_k variations including with or without braces and with C or \\mathrm{C}
@@ -163,7 +165,13 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
               const n = nBraced || nGroup;
               const k = kBraced || kGroup;
               return `combinations(${n},${k})`;
-            })
+            });
+
+          // 指数形式の正規化 (base^{exponent} -> pow(base, exponent))
+          // キャレットの直前の要素 (変数、数字、), ], } など) を底としてマッチ
+          normalizedLatex = normalizedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
+
+          normalizedLatex = normalizedLatex
             .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')

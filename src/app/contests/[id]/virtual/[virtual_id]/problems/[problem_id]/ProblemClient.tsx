@@ -202,14 +202,12 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
       try {
         // LaTeXの分数形式などをmathjsで評価可能な形式に正規化する関数 (submission-section.tsx と同様)
         const normalizeLatex = (latex: string): string => {
-          // バックスラッシュの正規化は削除
-          // MathLiveやKaTeXは通常、mathjsが解釈できる形式のLaTeXを出力するため、\+ -> \\ の正規化は不要
           const cleanedLatex = latex; // 元のLaTeXをそのまま使用
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
           // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
-          const normalizedLatex = cleanedLatex
+          let normalizedLatex = cleanedLatex
             .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
             .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
             // _nC_k variations including with or without braces and with C or \\mathrm{C}
@@ -217,7 +215,13 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
               const n = nBraced || nGroup;
               const k = kBraced || kGroup;
               return `combinations(${n},${k})`;
-            })
+            });
+
+          // 指数形式の正規化 (base^{exponent} -> pow(base, exponent))
+          // キャレットの直前の要素 (変数、数字、), ], } など) を底としてマッチ
+          normalizedLatex = normalizedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
+
+          normalizedLatex = normalizedLatex
             .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')

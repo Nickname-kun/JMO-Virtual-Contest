@@ -152,36 +152,28 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
       try {
         // LaTeXの分数形式を正規化する関数
         const normalizeLatexFraction = (latex: string): string => {
-          // バックスラッシュを2個に正規化
-          const cleanedLatex = latex.replace(/\\+/g, '\\\\');
-          
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
-          // _nC_k, _nCk, _{n}C_{k}, _{n}C_k, _nC_{k}, _{n}\mathrm{C}_{k}, _{n}\mathrm{C}_k, _n\mathrm{C}_{k} の形式を combinations(n,k) に変換
-          const normalizedLatex = cleanedLatex
-            .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \binom{n}{k} -> combinations(n,k)
-            .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \binom nk -> combinations(n,k)
+          // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
+          const normalizedLatex = latex
+            .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
+            .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
             // _nC_k variations including with or without braces and with C or \\mathrm{C}
             .replace(/_([0-9]+|\{([0-9]+)\})\s*(C|\\mathrm\{C\})\s*_?([0-9]+|\{([0-9]+)\})/g, (match, nGroup, nBraced, cPart, kGroup, kBraced) => {
               const n = nBraced || nGroup;
               const k = kBraced || kGroup;
               return `combinations(${n},${k})`;
             })
-            .replace(/\\\\binom\{([^}]+)\}\{([^}]+)\}/g, 'combinations($1,$2)') // \binom{n}{k} -> combinations(n,k)
-            .replace(/\\\\binom([0-9]+)([0-9]+)/g, 'combinations($1,$2)') // \binom nk -> combinations(n,k)
-            .replace(/_([0-9]+)C_([0-9]+)/g, 'combinations($1,$2)') // _nC_k -> combinations(n,k)
-            .replace(/_([0-9]+)C([0-9]+)/g, 'combinations($1,$2)') // _nCk -> combinations(n,k)
-            .replace(/_\{([0-9]+)\}\\\\mathrm\{C\}\_\{([0-9]+)\}/g, 'combinations($1,$2)') // _{n}C_{k} -> combinations(n,k) (MathLive出力対応)
-            .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-            .replace(/\\\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
-            .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-            .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
-            .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
-            .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
-            .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
-            .replace(/\\\\pi/g, 'pi')
-            .replace(/\\\\times/g, '*')
-            .replace(/\\\\cdot/g, '*');
+            .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+            .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
+            .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            .replace(/\\sqrt([0-9]+)/g, 'sqrt($1)')
+            .replace(/\\sin\{([^}]+)\}/g, 'sin($1)')
+            .replace(/\\cos\{([^}]+)\}/g, 'cos($1)')
+            .replace(/\\tan\{([^}]+)\}/g, 'tan($1)')
+            .replace(/\\pi/g, 'pi')
+            .replace(/\\times/g, '*')
+            .replace(/\\cdot/g, '*');
 
           return normalizedLatex;
         };

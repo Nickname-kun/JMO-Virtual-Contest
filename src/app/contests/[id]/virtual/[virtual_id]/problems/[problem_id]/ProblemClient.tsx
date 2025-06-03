@@ -200,10 +200,11 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
     let isCorrect = false;
     if (problem.correct_answers && Array.isArray(problem.correct_answers)) {
       try {
-        // LaTeXの分数形式を正規化する関数 (submission-section.tsx と同様)
+        // LaTeXの分数形式などをmathjsで評価可能な形式に正規化する関数 (submission-section.tsx と同様)
         const normalizeLatex = (latex: string): string => {
-          // バックスラッシュを2個に正規化
-          const cleanedLatex = latex.replace(/\\+/g, '\\\\');
+          // バックスラッシュの正規化は削除
+          // MathLiveやKaTeXは通常、mathjsが解釈できる形式のLaTeXを出力するため、\+ -> \\ の正規化は不要
+          const cleanedLatex = latex; // 元のLaTeXをそのまま使用
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
@@ -217,15 +218,16 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
               const k = kBraced || kGroup;
               return `combinations(${n},${k})`;
             })
-            .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-            .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-            .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
-            .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
-            .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
-            .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
-            .replace(/\\\\pi/g, 'pi')
-            .replace(/\\\\times/g, '*')
-            .replace(/\\\\cdot/g, '*');
+            .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+            .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
+            .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            .replace(/\\sqrt([0-9]+)/g, 'sqrt($1)')
+            .replace(/\\sin\{([^}]+)\}/g, 'sin($1)')
+            .replace(/\\cos\{([^}]+)\}/g, 'cos($1)')
+            .replace(/\\tan\{([^}]+)\}/g, 'tan($1)')
+            .replace(/\\pi/g, 'pi')
+            .replace(/\\times/g, '*')
+            .replace(/\\cdot/g, '*');
 
           return normalizedLatex;
         };

@@ -84,30 +84,19 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
       answers.forEach((_, index) => {
         const mathfield = mathfieldRefs.current[index]
         if (mathfield && !(mathfield as any).$initialized) {
-          (mathfield as any).addEventListener('input', (evt: any) => {
+          const handler = (evt: any) => {
             handleAnswerChange(index, evt.target.value)
-          })
+          }
+          (mathfield as any).addEventListener('input', handler)
 
-          // 仮想キーボードの設定
-          // デフォルトのキーボード設定を取得し、不要なキーを削除
-          // const customKeyboards = JSON.parse(JSON.stringify((MathfieldElement as any).keyboards)); // ディープコピー
-
-          // 'symbols' キーボードから e, i, 積分のキーを削除 (キーのIDを確認する必要があるかもしれません)
-          // MathLiveのデフォルトキーボード定義に基づいてキーを特定して削除します。
-          // 例: 'e', 'i', '\\\\int_{0}^{\\\\infty} {}^{\\\\placeholder} \: \\\\mathrm{d}x'\n          // 正確なキーIDはMathLiveのソースコードやドキュメントで確認が必要です。
-          // ここでは一般的なキーIDまたはLaTeX表現を仮定して削除を試みます。
-          // const keysToRemove = ['e', 'i', '\\\\int_{0}^{\\\\infty}', '\\\\int']; // 削除したいキーのコマンドまたはID
-
-          // 'symbols' キーボードのレイアウトからキーをフィルタリング
-          // if (customKeyboards && customKeyboards.symbols && customKeyboards.symbols.layers) {\n          //   Object.keys(customKeyboards.symbols.layers).forEach(layerKey => {\n          //     customKeyboards.symbols.layers[layerKey] = customKeyboards.symbols.layers[layerKey].filter((key: any) => {\n          //       // キーが文字列の場合はコマンドとして扱う\n          //       if (typeof key === 'string') {\n          //         return !keysToRemove.includes(key);\n          //       }\n          //       // キーがオブジェクトの場合は id または command を確認\n          //       if (typeof key === 'object' && key !== null) {\n          //         return !keysToRemove.includes(key.id) && !keysToRemove.includes(key.command);\n          //       }\n          //       return true;\n          //     });\n          //   });\n          // }\n
-
-          // (mathfield as any).keyboards = customKeyboards; // カスタムキーボード設定を適用
-
-          (mathfield as any).$initialized = true
+          // クリーンアップ関数でイベントリスナーを削除
+          return () => {
+            (mathfield as any).removeEventListener('input', handler)
+          }
         }
       })
     })
-  }, [answers])
+  }, [answers, handleAnswerChange])
 
   // 提出履歴の取得
   useEffect(() => {

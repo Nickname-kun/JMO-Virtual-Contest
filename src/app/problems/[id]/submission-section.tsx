@@ -22,7 +22,7 @@ import {
   Flex,
   useColorModeValue,
 } from '@chakra-ui/react'
-import { evaluate, factorial } from 'mathjs'
+import { create, all } from 'mathjs'
 
 declare global {
   namespace JSX {
@@ -31,6 +31,12 @@ declare global {
     }
   }
 }
+
+// BigNumber設定でmathjsインスタンスを作成
+const mathBig = create(all, {
+  number: 'BigNumber', // BigNumberを強制
+  precision: 64 // 精度を設定 (必要に応じて調整)
+});
 
 interface Submission {
   id: string
@@ -190,16 +196,16 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
         const userValues = answers.map(ans => {
           try {
             const userExpression = normalizeLatexFraction(ans);
-            const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
+            // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+            const evaluatedValue: any = mathBig.evaluate(userExpression, { scope: { factorial: mathBig.factorial } });
             console.log(`ユーザー入力評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
-            // 評価結果が有限な数値であることを確認
-            if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+            // 評価結果がBigNumberまたは有限な数値であることを確認
+            if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+              return evaluatedValue; // BigNumberそのまま返す
+            } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;
-            } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
-               // 虚数部が0の複素数も数値として扱う
-               return evaluatedValue.re;
             } else {
-              // 数値として評価できない場合はNaNとして扱う
+              // 数値としてもBigNumberとしても評価できない場合はNaNとして扱う
               return NaN;
             }
           } catch {
@@ -212,15 +218,16 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
         const correctValues = correctAnswers.map(ans => {
           try {
             const correctExpression = normalizeLatexFraction(ans);
-            const evaluatedValue: any = evaluate(correctExpression, { scope: { factorial } });
+            // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+            const evaluatedValue: any = mathBig.evaluate(correctExpression, { scope: { factorial: mathBig.factorial } });
              console.log(`正解候補評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
-             if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+             // 評価結果がBigNumberまたは有限な数値であることを確認
+            if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+              return evaluatedValue; // BigNumberそのまま返す
+            } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;
-            } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
-               // 虚数部が0の複素数も数値として扱う
-               return evaluatedValue.re;
             } else {
-              // 数値として評価できない場合はNaNとして扱う
+              // 数値としてもBigNumberとしても評価できない場合はNaNとして扱う
               return NaN;
             }
           } catch {

@@ -9,7 +9,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { evaluate, factorial } from 'mathjs';
+import { create, all } from 'mathjs';
 import { renderLatex } from '@/utils/renderLatex';
 
 interface Problem {
@@ -31,15 +31,11 @@ interface Submission {
   created_at: string;
 }
 
-function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
-  try {
-    // 数式として評価し、数値的に比較
-    return evaluate(userInput) === evaluate(correctAnswer);
-  } catch {
-    // 評価できない場合は不正解
-    return false;
-  }
-}
+// BigNumber設定でmathjsインスタンスを作成
+const mathBig = create(all, {
+  number: 'BigNumber', // BigNumberを強制
+  precision: 64 // 精度を設定 (必要に応じて調整)
+});
 
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {
   const toast = useToast();
@@ -258,12 +254,15 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           const userValues = answers.map(ans => {
              try {
                 const userExpression = normalizeLatex(ans);
-                const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
-                 if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+                // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+                const evaluatedValue: any = mathBig.evaluate(userExpression, { scope: { factorial: mathBig.factorial } });
+                 // 評価結果がBigNumberまたは有限な数値であることを確認
+                 if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+                  return evaluatedValue; // BigNumberそのまま返す
+                } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
                   return evaluatedValue;
-                } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
-                   return evaluatedValue.re;
                 } else {
+                  // 数値としてもBigNumberとしても評価できない場合はNaNとして扱う
                   return NaN;
                 }
               } catch {
@@ -275,12 +274,15 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           const correctValues = problem.correct_answers.map(ans => {
             try {
               const correctExpression = normalizeLatex(ans);
-              const evaluatedValue: any = evaluate(correctExpression, { scope: { factorial } });
-               if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
+              // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+              const evaluatedValue: any = mathBig.evaluate(correctExpression, { scope: { factorial: mathBig.factorial } });
+               // 評価結果がBigNumberまたは有限な数値であることを確認
+               if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+                return evaluatedValue; // BigNumberそのまま返す
+               } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
                 return evaluatedValue;
-              } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {
-                 return evaluatedValue.re;
                } else {
+                 // 数値としてもBigNumberとしても評価できない場合はNaNとして扱う
                  return NaN;
                }
             } catch {
@@ -314,12 +316,18 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                isCorrect = false; // 単一回答の場合は1つだけ回答が必要
           } else {
              try {
-                const userValue = evaluate(normalizeLatex(answers[0]), { scope: { factorial } }); // 最初の回答を使用
+                // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+                const userValue = mathBig.evaluate(normalizeLatex(answers[0]), { scope: { factorial: mathBig.factorial } }); // 最初の回答を使用
                 isCorrect = problem.correct_answers.some(correctAnswer => {
                   try {
-                    const correctValue = evaluate(normalizeLatex(correctAnswer), { scope: { factorial } });
+                    // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
+                    const correctValue = mathBig.evaluate(normalizeLatex(correctAnswer), { scope: { factorial: mathBig.factorial } });
                      const tolerance = 1e-9; // 許容誤差
-                     if (typeof userValue === 'number' && typeof correctValue === 'number') {
+                     // 評価結果がBigNumber同士か確認し、equalsメソッドで比較
+                     if (typeof userValue === 'object' && userValue !== null && typeof userValue.equals === 'function' &&
+                         typeof correctValue === 'object' && correctValue !== null && typeof correctValue.equals === 'function') {
+                         return userValue.equals(correctValue);
+                     } else if (typeof userValue === 'number' && typeof correctValue === 'number') {
                        return Math.abs(userValue - correctValue) < tolerance;
                      } else {
                        return String(userValue).trim() === String(correctValue).trim();

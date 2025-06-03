@@ -34,7 +34,7 @@ interface Submission {
 // BigNumber設定でmathjsインスタンスを作成
 const mathBig = create(all, {
   number: 'BigNumber', // BigNumberを強制
-  precision: 64 // 精度を設定 (必要に応じて調整)
+  precision: 128 // 精度を128に設定
 });
 
 function ProblemClientContent({ problem, params, userId, virtualContest }: { problem: Problem, params: { id: string; virtual_id: string; problem_id: string }, userId: string, virtualContest: { start_time: string; end_time: string; status: string; score: number } }) {

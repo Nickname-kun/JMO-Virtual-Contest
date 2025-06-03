@@ -35,7 +35,7 @@ declare global {
 // BigNumber設定でmathjsインスタンスを作成
 const mathBig = create(all, {
   number: 'BigNumber', // BigNumberを強制
-  precision: 64 // 精度を設定 (必要に応じて調整)
+  precision: 128 // 精度を128に設定
 });
 
 interface Submission {

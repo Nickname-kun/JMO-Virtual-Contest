@@ -373,13 +373,23 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
     } else {
       setAnswers([''])
       // 再取得
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('submissions')
         .select('*')
         .eq('user_id', user.id)
         .eq('problem_id', problemId)
         .order('created_at', { ascending: false })
-      if (data) setSubmissions(data)
+      // 取得したデータが配列であり、かつ空でない場合にのみsetSubmissionsを呼び出す
+      if (fetchError) {
+        console.error('Failed to fetch submissions:', fetchError);
+        setError('提出履歴の取得に失敗しました');
+      } else if (data && Array.isArray(data) && data.length > 0) {
+        setSubmissions(data);
+      } else {
+        // データが取得できなかった、または空の配列だった場合のログ
+        console.log('No submissions fetched or data is not an array:', data);
+        // 必要に応じて、ここでsetSubmissions([]); など、状態をクリアすることも検討
+      }
     }
     setLoading(false)
   }

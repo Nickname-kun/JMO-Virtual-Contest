@@ -323,10 +323,14 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                     // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
                     const correctValue = mathBig.evaluate(normalizeLatex(correctAnswer), { scope: { factorial: mathBig.factorial } });
                      const tolerance = 1e-9; // 許容誤差
-                     // 評価結果がBigNumber同士か確認し、equalsメソッドで比較
+                     // 評価結果がBigNumber同士か確認し、許容誤差内で比較
                      if (typeof userValue === 'object' && userValue !== null && typeof userValue.equals === 'function' &&
                          typeof correctValue === 'object' && correctValue !== null && typeof correctValue.equals === 'function') {
-                         return userValue.equals(correctValue);
+                         const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
+                         const diff = mathBig.abs(mathBig.subtract(userValue, correctValue));
+                         const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
+                         // console.log(`Virtual Contest BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // 必要に応じてログを追加
+                         return isWithinTolerance;
                      } else if (typeof userValue === 'number' && typeof correctValue === 'number') {
                        return Math.abs(userValue - correctValue) < tolerance;
                      } else {

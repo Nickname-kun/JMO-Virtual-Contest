@@ -239,16 +239,19 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           }
         });
 
-        const tolerance = 1e-9; // 許容誤差
+        const tolerance = 1e-9; // 許容誤差 (Number型の比較用)
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
-           // 両方がmathjsのBigNumberであるかを確認し、equalsメソッドで比較
+           // 両方がmathjsのBigNumberであるかを確認
            if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
                typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
-               const isEqualBigNumber = userVal.equals(correctVal);
-               console.log(`BigNumber.equals() 結果: ${isEqualBigNumber}`);
-               return isEqualBigNumber;
+               // BigNumberの場合、許容誤差内で比較
+               const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
+               const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
+               const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
+               console.log(`BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`);
+               return isWithinTolerance;
            } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
              return Math.abs(userVal - correctVal) < tolerance;
            } else {

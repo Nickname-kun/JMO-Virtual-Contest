@@ -190,8 +190,8 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
         const userValues = answers.map(ans => {
           try {
             const userExpression = normalizeLatexFraction(ans);
-            // evaluateは数値または複素数を返すことが期待されるが、念のためanyで受ける
             const evaluatedValue: any = evaluate(userExpression, { scope: { factorial } });
+            console.log(`ユーザー入力評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
             // 評価結果が有限な数値であることを確認
             if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;
@@ -213,6 +213,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
           try {
             const correctExpression = normalizeLatexFraction(ans);
             const evaluatedValue: any = evaluate(correctExpression, { scope: { factorial } });
+             console.log(`正解候補評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
              if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;
             } else if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.re === 'number' && isFinite(evaluatedValue.re) && evaluatedValue.im === 0) {

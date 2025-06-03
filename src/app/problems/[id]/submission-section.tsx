@@ -130,15 +130,12 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
       try {
         // LaTeXの分数形式を正規化する関数
         const normalizeLatexFraction = (latex: string): string => {
-          // MathLiveの出力に含まれる可能性のある不要な文字を除去
-          // 例: UnicodeのU+2060 (Word Joiner) や警告で示された文字など
-          let cleanedLatex = latex.trim();
-          cleanedLatex = cleanedLatex.replace(/[⁠⁡⁢⁣⁤ ​﻿⎱-⎳□]/g, ''); // 不要な制御文字や'□'を除去
+          const cleanedLatex = latex.trim(); // 元のLaTeXをtrimして使用
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
           // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
-          cleanedLatex = cleanedLatex
+          let normalizedLatex = cleanedLatex
             .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
             .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
             // _nC_k variations including with or without braces and with C or \\mathrm{C}
@@ -150,9 +147,9 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
 
           // 指数形式の正規化 (base^{exponent} -> pow(base, exponent))
           // キャレットの直前の要素 (変数、数字、), ], } など) を底としてマッチ
-          cleanedLatex = cleanedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
+          normalizedLatex = normalizedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
 
-          cleanedLatex = cleanedLatex
+          normalizedLatex = normalizedLatex
             .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
@@ -164,7 +161,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
             .replace(/\\times/g, '*')
             .replace(/\\cdot/g, '*');
 
-          return cleanedLatex;
+          return normalizedLatex;
         };
 
         // ユーザーの複数の入力値を正規化して評価

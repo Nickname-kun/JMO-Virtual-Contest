@@ -196,11 +196,13 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
         const userValues = answers.map(ans => {
           try {
             const userExpression = normalizeLatexFraction(ans);
+            console.log(`正規化されたユーザー入力: ${userExpression}`);
             // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
             const evaluatedValue: any = mathBig.evaluate(userExpression, { scope: { factorial: mathBig.factorial } });
             console.log(`ユーザー入力評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
             // 評価結果がBigNumberまたは有限な数値であることを確認
             if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+              console.log(`ユーザー入力BigNumber完全文字列: ${evaluatedValue.toString()}`);
               return evaluatedValue; // BigNumberそのまま返す
             } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;
@@ -218,11 +220,13 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
         const correctValues = correctAnswers.map(ans => {
           try {
             const correctExpression = normalizeLatexFraction(ans);
+            console.log(`正規化された正解候補: ${correctExpression}`);
             // evaluateの代わりにmathBig.evaluateを使用し、スコープ内のfactorialもmathBigのものを使用
             const evaluatedValue: any = mathBig.evaluate(correctExpression, { scope: { factorial: mathBig.factorial } });
              console.log(`正解候補評価結果: 型 = ${typeof evaluatedValue}, 値 = ${evaluatedValue}`);
              // 評価結果がBigNumberまたは有限な数値であることを確認
             if (typeof evaluatedValue === 'object' && evaluatedValue !== null && typeof evaluatedValue.isBigNumber === 'boolean' && evaluatedValue.isBigNumber) {
+              console.log(`正解候補BigNumber完全文字列: ${evaluatedValue.toString()}`);
               return evaluatedValue; // BigNumberそのまま返す
             } else if (typeof evaluatedValue === 'number' && isFinite(evaluatedValue)) {
               return evaluatedValue;

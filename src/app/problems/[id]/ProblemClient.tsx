@@ -71,6 +71,45 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
+  const renderCommentContent = (content: string) => {
+    const elements: JSX.Element[] = [];
+    let lastIndex = 0;
+    const mathRegex = /(?:^|[^\\])\$(.*?)(?:[^\\])?\$/g;
+    let match;
+
+    while ((match = mathRegex.exec(content)) !== null) {
+      
+    }
+    
+    const parts = content.split(/(\$.*?\$)/g);
+
+    parts.forEach((part, index) => {
+      if (part.startsWith('$') && part.endsWith('$')) {
+        const mathContent = part.slice(1, -1);
+        try {
+           elements.push(
+             <InlineMath key={`math-${index}`} math={mathContent} />
+           );
+        } catch (e) {
+           console.error("Error rendering math in comment:", mathContent, e);
+           elements.push(
+              <Text as="span" key={`math-error-${index}`} color="red.500" fontFamily="sans-serif">
+                 {part}
+              </Text>
+           );
+        }
+      } else {
+        elements.push(
+          <Text as="span" key={`text-${index}`} fontFamily="sans-serif">
+            {part}
+          </Text>
+        );
+      }
+    });
+
+    return elements;
+  };
+
   const fetchComments = async () => {
     setLoadingComments(true);
     const { data, error } = await supabase
@@ -242,7 +281,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                          </HStack>
                       </VStack>
                     ) : (
-                      <Box fontSize="sm" fontFamily="sans-serif"><InlineMath math={comment.content} /></Box>
+                      <Box fontSize="sm">{renderCommentContent(comment.content)}</Box>
                     )}
 
                     {user && user.id === comment.user_id && editingCommentId !== comment.id && (

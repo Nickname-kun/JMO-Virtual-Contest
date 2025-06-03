@@ -52,6 +52,9 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [postingComment, setPostingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
 
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editedCommentContent, setEditedCommentContent] = useState('');
+
   const fetchComments = async () => {
     setLoadingComments(true);
     const { data, error } = await supabase
@@ -152,7 +155,63 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                       <Text fontSize="sm" fontWeight="bold">{comment.profiles?.username || '匿名ユーザー'}</Text>
                       <Text fontSize="xs" color="gray.500">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ja })}</Text>
                     </Flex>
-                    <Text fontSize="sm">{comment.content}</Text>
+                    
+                    {editingCommentId === comment.id ? (
+                      <VStack align="stretch" spacing={2}>
+                         <Textarea
+                            value={editedCommentContent}
+                            onChange={(e) => setEditedCommentContent(e.target.value)}
+                            size="sm"
+                            rows={3}
+                         />
+                         <HStack justify="flex-end">
+                            <Button size="xs" onClick={() => setEditingCommentId(null)} variant="outline">キャンセル</Button>
+                            <Button size="xs" colorScheme="blue" onClick={async () => {
+                               if (editedCommentContent.trim() === '') return;
+                               setPostingComment(true);
+                               const { error } = await supabase
+                                   .from('comments')
+                                   .update({ content: editedCommentContent.trim() })
+                                   .eq('id', comment.id);
+                               setPostingComment(false);
+                               if (error) {
+                                   console.error('Error updating comment:', error);
+                                   setCommentError('コメントの更新に失敗しました。');
+                               } else {
+                                   setEditingCommentId(null);
+                                   fetchComments();
+                               }
+                            }} isLoading={postingComment}>保存</Button>
+                         </HStack>
+                      </VStack>
+                    ) : (
+                      <Text fontSize="sm">{comment.content}</Text>
+                    )}
+
+                    {user && user.id === comment.user_id && editingCommentId !== comment.id && (
+                      <HStack spacing={2} mt={2} justify="flex-end">
+                         <Button size="xs" onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditedCommentContent(comment.content);
+                         }} variant="outline">編集</Button>
+                         <Button size="xs" colorScheme="red" onClick={async () => {
+                             if (confirm('このコメントを削除してもよろしいですか？')) {
+                                setPostingComment(true);
+                                const { error } = await supabase
+                                    .from('comments')
+                                    .delete()
+                                    .eq('id', comment.id);
+                                setPostingComment(false);
+                                if (error) {
+                                    console.error('Error deleting comment:', error);
+                                    setCommentError('コメントの削除に失敗しました。');
+                                } else {
+                                    fetchComments();
+                                }
+                             }
+                         }} isLoading={postingComment}>削除</Button>
+                      </HStack>
+                    )}
                   </ListItem>
                 ))
               )}

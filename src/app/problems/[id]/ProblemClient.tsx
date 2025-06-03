@@ -242,7 +242,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                          </HStack>
                       </VStack>
                     ) : (
-                      <Box fontSize="sm"><InlineMath math={comment.content} /></Box>
+                      <Box fontSize="sm" fontFamily="sans-serif"><InlineMath math={comment.content} /></Box>
                     )}
 
                     {user && user.id === comment.user_id && editingCommentId !== comment.id && (

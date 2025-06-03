@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from 'react'
+import { Suspense, useRef } from 'react'
 import SubmissionSection from './submission-section'
 import { InlineMath, BlockMath } from 'react-katex'
 import { renderLatex } from '@/utils/renderLatex'
@@ -23,6 +23,13 @@ import {
   HStack,
   Alert,
   AlertIcon,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  AlertDialogCloseButton,
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -55,6 +62,15 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedCommentContent, setEditedCommentContent] = useState('');
 
+  const commentMathfieldRef = useRef<any>(null);
+
+  const [showAllComments, setShowAllComments] = useState(false);
+  const COMMENT_DISPLAY_LIMIT = 5;
+
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
   const fetchComments = async () => {
     setLoadingComments(true);
     const { data, error } = await supabase
@@ -75,6 +91,25 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   useEffect(() => {
     fetchComments();
   }, [problem.id, supabase]);
+
+  useEffect(() => {
+    import('mathlive').then(({ MathfieldElement }) => {
+      const mathfield = commentMathfieldRef.current;
+      if (mathfield && !(mathfield as any).$initialized) {
+        (mathfield as any).addEventListener('input', (evt: any) => {
+          setNewComment(evt.target.value);
+        });
+
+        (mathfield as any).$initialized = true;
+      }
+    });
+  }, [commentMathfieldRef.current]);
+
+  useEffect(() => {
+    if (commentMathfieldRef.current && newComment !== commentMathfieldRef.current.value) {
+      commentMathfieldRef.current.value = newComment;
+    }
+  }, [newComment]);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +141,28 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
       fetchComments();
     }
     setPostingComment(false);
+  };
+
+  const handleDeleteComment = async () => {
+    if (!commentToDeleteId) return;
+
+    setPostingComment(true);
+    setDeleteDialogOpen(false);
+
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentToDeleteId);
+
+    setPostingComment(false);
+    setCommentToDeleteId(null);
+
+    if (error) {
+      console.error('Error deleting comment:', error);
+      setCommentError('コメントの削除に失敗しました。');
+    } else {
+      fetchComments();
+    }
   };
 
   return (
@@ -149,7 +206,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
               {comments.length === 0 ? (
                 <Text color="gray.500" fontSize="sm">まだコメントはありません。</Text>
               ) : (
-                comments.map((comment) => (
+                (showAllComments ? comments : comments.slice(0, COMMENT_DISPLAY_LIMIT)).map((comment) => (
                   <ListItem key={comment.id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={1}>
                       <Text fontSize="sm" fontWeight="bold">{comment.profiles?.username || '匿名ユーザー'}</Text>
@@ -185,7 +242,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                          </HStack>
                       </VStack>
                     ) : (
-                      <Text fontSize="sm">{comment.content}</Text>
+                      <Box fontSize="sm"><InlineMath math={comment.content} /></Box>
                     )}
 
                     {user && user.id === comment.user_id && editingCommentId !== comment.id && (
@@ -195,20 +252,8 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                             setEditedCommentContent(comment.content);
                          }} variant="outline">編集</Button>
                          <Button size="xs" colorScheme="red" onClick={async () => {
-                             if (confirm('このコメントを削除してもよろしいですか？')) {
-                                setPostingComment(true);
-                                const { error } = await supabase
-                                    .from('comments')
-                                    .delete()
-                                    .eq('id', comment.id);
-                                setPostingComment(false);
-                                if (error) {
-                                    console.error('Error deleting comment:', error);
-                                    setCommentError('コメントの削除に失敗しました。');
-                                } else {
-                                    fetchComments();
-                                }
-                             }
+                            setCommentToDeleteId(comment.id);
+                            setDeleteDialogOpen(true);
                          }} isLoading={postingComment}>削除</Button>
                       </HStack>
                     )}
@@ -218,18 +263,42 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
             </List>
           )}
 
+          {!loadingComments && comments.length > COMMENT_DISPLAY_LIMIT && (
+             <Flex justify="center" mt={4}>
+               <Button size="sm" variant="link" onClick={() => setShowAllComments(!showAllComments)}>
+                 {showAllComments ? '一部を表示' : 'すべて表示'}
+               </Button>
+             </Flex>
+          )}
+
           {user ? (
              <Box mt={6} as="form" onSubmit={handlePostComment}>
                <FormControl>
                  <FormLabel htmlFor="new-comment">新しいコメント</FormLabel>
-                 <Textarea
-                   id="new-comment"
-                   value={newComment}
-                   onChange={(e) => setNewComment(e.target.value)}
-                   placeholder="コメントを入力..."
-                   size="sm"
-                   rows={3}
-                 />
+                 <Box
+                   border="1px solid"
+                   borderColor="gray.300"
+                   borderRadius={6}
+                   bg="gray.50"
+                   p={2}
+                 >
+                   {/* @ts-ignore */}
+                   <math-field
+                     ref={commentMathfieldRef}
+                     value={newComment}
+                     math-virtual-keyboard-policy="manual"
+                     style={{
+                       width: '100%',
+                       minHeight: 40,
+                       fontSize: 16,
+                       background: 'transparent',
+                       border: 'none',
+                       outline: 'none',
+                       padding: 4,
+                     }}
+                     aria-placeholder="コメントを入力..."
+                   ></math-field>
+                 </Box>
                </FormControl>
                <Button mt={2} size="sm" colorScheme="blue" type="submit" isLoading={postingComment}>
                  コメントを投稿
@@ -244,6 +313,29 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
              </Box>
           )}
         </Box>
+
+        <AlertDialog
+          isOpen={isDeleteDialogOpen}
+          leastDestructiveRef={cancelRef}
+          onClose={() => setDeleteDialogOpen(false)}
+        >
+          <AlertDialogOverlay>
+            <AlertDialogContent>
+              <AlertDialogHeader fontSize="lg" fontWeight="bold">コメントの削除</AlertDialogHeader>
+              <AlertDialogCloseButton />
+              <AlertDialogBody>
+                このコメントを完全に削除してもよろしいですか？ この操作は元に戻せません。
+              </AlertDialogBody>
+              <AlertDialogFooter>
+                <Button ref={cancelRef} onClick={() => setDeleteDialogOpen(false)}>キャンセル</Button>
+                <Button colorScheme="red" onClick={handleDeleteComment} ml={3} isLoading={postingComment}>
+                  削除
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogOverlay>
+        </AlertDialog>
+
       </VStack>
     </Container>
   )

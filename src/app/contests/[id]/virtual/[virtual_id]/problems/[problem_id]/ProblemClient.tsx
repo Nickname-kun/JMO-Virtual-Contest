@@ -108,29 +108,15 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
           // 仮想キーボードの設定
           // デフォルトのキーボード設定を取得し、不要なキーを削除
-          const customKeyboards = JSON.parse(JSON.stringify((MathfieldElement as any).keyboards)); // ディープコピー
+          // const customKeyboards = JSON.parse(JSON.stringify((MathfieldElement as any).keyboards)); // ディープコピー
 
           // 'symbols' キーボードから e, i, 積分のキーを削除 (キーのIDを確認する必要があるかもしれません)
-          const keysToRemove = ['e', 'i', '\\int_{0}^{\\infty}', '\\int']; // 削除したいキーのコマンドまたはID
+          // const keysToRemove = ['e', 'i', '\\\\int_{0}^{\\\\infty}', '\\\\int']; // 削除したいキーのコマンドまたはID
 
           // 'symbols' キーボードのレイアウトからキーをフィルタリング
-          if (customKeyboards && customKeyboards.symbols && customKeyboards.symbols.layers) {
-            Object.keys(customKeyboards.symbols.layers).forEach(layerKey => {
-              customKeyboards.symbols.layers[layerKey] = customKeyboards.symbols.layers[layerKey].filter((key: any) => {
-                // キーが文字列の場合はコマンドとして扱う
-                if (typeof key === 'string') {
-                  return !keysToRemove.includes(key);
-                }
-                // キーがオブジェクトの場合は id または command を確認
-                if (typeof key === 'object' && key !== null) {
-                  return !keysToRemove.includes(key.id) && !keysToRemove.includes(key.command);
-                }
-                return true;
-              });
-            });
-          }
+          // if (customKeyboards && customKeyboards.symbols && customKeyboards.symbols.layers) {\n          //   Object.keys(customKeyboards.symbols.layers).forEach(layerKey => {\n          //     customKeyboards.symbols.layers[layerKey] = customKeyboards.symbols.layers[layerKey].filter((key: any) => {\n          //       // キーが文字列の場合はコマンドとして扱う\n          //       if (typeof key === 'string') {\n          //         return !keysToRemove.includes(key);\n          //       }\n          //       // キーがオブジェクトの場合は id または command を確認\n          //       if (typeof key === 'object' && key !== null) {\n          //         return !keysToRemove.includes(key.id) && !keysToRemove.includes(key.command);\n          //       }\n          //       return true;\n          //     });\n          //   });\n          // }\n
 
-          (mathfield as any).keyboards = customKeyboards; // カスタムキーボード設定を適用
+          // (mathfield as any).keyboards = customKeyboards; // カスタムキーボード設定を適用
 
           (mathfield as any).$initialized = true;
         }
@@ -206,7 +192,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
       try {
         // LaTeXの分数形式などをmathjsで評価可能な形式に正規化する関数 (submission-section.tsx と同様)
         const normalizeLatex = (latex: string): string => {
-          const cleanedLatex = latex; // 元のLaTeXをそのまま使用
+          const cleanedLatex = latex.trim(); // 元のLaTeXをtrimして使用
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換

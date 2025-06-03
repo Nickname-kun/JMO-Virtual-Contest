@@ -207,21 +207,25 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
-          // _nC_k や _{n}C_{k}, _{n}C_k, _nC_{k} の形式も combinations(n,k) に変換
+          // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
           const normalizedLatex = cleanedLatex
             .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
             .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
-            // _nC_k 形式（数字が{}で囲まれていてもいなくても、\\mathrm{C} があってもなくても対応）
-            .replace(/_\{?([0-9]+)\}?(?:\\mathrm\{C\}|C)\_?\{?([0-9]+)\}?/g, "combinations($1,$2)")
-            .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-            .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
-            .replace(/\\sqrt([0-9]+)/g, 'sqrt($1)')
-            .replace(/\\sin\{([^}]+)\}/g, 'sin($1)')
-            .replace(/\\cos\{([^}]+)\}/g, 'cos($1)')
-            .replace(/\\tan\{([^}]+)\}/g, 'tan($1)')
-            .replace(/\\pi/g, 'pi')
-            .replace(/\\times/g, '*')
-            .replace(/\\cdot/g, '*');
+            // _nC_k variations including with or without braces and with C or \\mathrm{C}
+            .replace(/_([0-9]+|\{([0-9]+)\})\s*(C|\\mathrm\{C\})\s*_?([0-9]+|\{([0-9]+)\})/g, (match, nGroup, nBraced, cPart, kGroup, kBraced) => {
+              const n = nBraced || nGroup;
+              const k = kBraced || kGroup;
+              return `combinations(${n},${k})`;
+            })
+            .replace(/\\\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+            .replace(/\\\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+            .replace(/\\\\sqrt([0-9]+)/g, 'sqrt($1)')
+            .replace(/\\\\sin\{([^}]+)\}/g, 'sin($1)')
+            .replace(/\\\\cos\{([^}]+)\}/g, 'cos($1)')
+            .replace(/\\\\tan\{([^}]+)\}/g, 'tan($1)')
+            .replace(/\\\\pi/g, 'pi')
+            .replace(/\\\\times/g, '*')
+            .replace(/\\\\cdot/g, '*');
 
           return normalizedLatex;
         };

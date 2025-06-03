@@ -184,12 +184,15 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
       try {
         // LaTeXの分数形式などをmathjsで評価可能な形式に正規化する関数 (submission-section.tsx と同様)
         const normalizeLatex = (latex: string): string => {
-          const cleanedLatex = latex.trim(); // 元のLaTeXをtrimして使用
+          // MathLiveの出力に含まれる可能性のある不要な文字を除去
+          // 例: UnicodeのU+2060 (Word Joiner) や警告で示された文字など
+          let cleanedLatex = latex.trim();
+          cleanedLatex = cleanedLatex.replace(/[⁠⁡⁢⁣⁤ ​﻿⎱-⎳□]/g, ''); // 不要な制御文字や'□'を除去
           
           // コンビネーションの正規化
           // \\binom{n}{k} または \\binom nk の形式を combinations(n,k) に変換
           // _nC_k, _nCk 系の形式を combinations(n,k) に変換 (MathLive出力対応含む)
-          let normalizedLatex = cleanedLatex
+          cleanedLatex = cleanedLatex
             .replace(/\\binom\{([^}]+)\}\{([^}]+)\}/g, "combinations($1,$2)") // \\binom{n}{k} -> combinations(n,k)
             .replace(/\\binom([0-9]+)([0-9]+)/g, "combinations($1,$2)") // \\binom nk -> combinations(n,k)
             // _nC_k variations including with or without braces and with C or \\mathrm{C}
@@ -201,9 +204,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
           // 指数形式の正規化 (base^{exponent} -> pow(base, exponent))
           // キャレットの直前の要素 (変数、数字、), ], } など) を底としてマッチ
-          normalizedLatex = normalizedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
+          cleanedLatex = cleanedLatex.replace(/([a-zA-Z0-9\)\]\}])\^\{([^}]+)\}/g, 'pow($1,$2)');
 
-          normalizedLatex = normalizedLatex
+          cleanedLatex = cleanedLatex
             .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
             .replace(/\\frac([0-9]+)([0-9]+)/g, '($1)/($2)')
             .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
@@ -215,7 +218,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
             .replace(/\\times/g, '*')
             .replace(/\\cdot/g, '*');
 
-          return normalizedLatex;
+          return cleanedLatex;
         };
 
         const tolerance = 1e-9; // 許容誤差

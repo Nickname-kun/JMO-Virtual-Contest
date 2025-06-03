@@ -240,10 +240,14 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
-           if (typeof userVal === 'number' && typeof correctVal === 'number') {
+           // 両方がmathjsのBigNumberであるかを確認し、equalsメソッドで比較
+           if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
+               typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
+               return userVal.equals(correctVal);
+           } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
              return Math.abs(userVal - correctVal) < tolerance;
            } else {
-             // 数値でない場合は文字列として比較
+             // 数値でもBigNumberでもない場合は文字列として比較
              return String(userVal).trim() === String(correctVal).trim();
            }
         };

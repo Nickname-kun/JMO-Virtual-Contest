@@ -329,7 +329,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                          const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
                          const diff = mathBig.abs(mathBig.subtract(userValue, correctValue));
                          const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
-                         // console.log(`Virtual Contest BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // 必要に応じてログを追加
+                         console.log(`Virtual Contest BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // 必要に応じてログを追加
                          return isWithinTolerance;
                      } else if (typeof userValue === 'number' && typeof correctValue === 'number') {
                        return Math.abs(userValue - correctValue) < tolerance;

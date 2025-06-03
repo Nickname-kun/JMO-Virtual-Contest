@@ -300,14 +300,39 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
               isCorrect = sortedUserValues.every((userValStr, index) => {
                   const correctValStr = sortedCorrectValues[index];
-                  const userNum = parseFloat(userValStr);
-                  const correctNum = parseFloat(correctValStr);
+                  
+                   // BigNumberの許容誤差を設定
+                   const bigNumberTolerance = mathBig.bignumber('1e-10');
 
-                  if (!isNaN(userNum) && !isNaN(correctNum)) {
-                      return Math.abs(userNum - correctNum) < tolerance;
-                  } else {
-                      return userValStr === correctValStr;
-                  }
+                   let userVal: any, correctVal: any;
+
+                   try {
+                     // 文字列からBigNumberとしてパース可能か試す
+                     userVal = mathBig.bignumber(userValStr);
+                     correctVal = mathBig.bignumber(correctValStr);
+
+                     // 両方がBigNumberとして成功した場合、BigNumber比較を行う
+                      const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
+                      const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
+                      console.log(`Virtual Contest Sorted BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // ログ追加
+                      return isWithinTolerance;
+
+                   } catch (e) {
+                     // BigNumberとしてパースできない場合、数値または文字列として比較
+                      console.log(`Virtual Contest Sorted 値をBigNumberとしてパースできませんでした。 userValStr: ${userValStr}, correctValStr: ${correctValStr}. Error: ${e}`); // ログ追加
+
+                     const userNum = parseFloat(userValStr);
+                     const correctNum = parseFloat(correctValStr);
+
+                     if (!isNaN(userNum) && !isNaN(correctNum)) {
+                          // 両方数値に変換可能ならNumber型の許容誤差で比較
+                         const tolerance = 1e-9; // Number型の許容誤差
+                         return Math.abs(userNum - correctNum) < tolerance;
+                     } else {
+                          // それ以外は文字列として比較
+                         return userValStr === correctValStr;
+                     }
+                   }
               });
           }
 

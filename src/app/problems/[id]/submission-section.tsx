@@ -279,16 +279,47 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                 // 各要素が一致するか確認
                 isCorrect = sortedUserValues.every((userValStr, index) => {
                     const correctValStr = sortedCorrectValues[index];
-                    // 文字列として比較するか、数値として評価して比較するかを判断
-                    const userNum = parseFloat(userValStr);
-                    const correctNum = parseFloat(correctValStr);
+                    
+                    // BigNumberの許容誤差を設定
+                    const bigNumberTolerance = mathBig.bignumber('1e-10');
 
-                    if (!isNaN(userNum) && !isNaN(correctNum)) {
-                         // 両方数値に変換可能なら数値として比較
-                        return Math.abs(userNum - correctNum) < tolerance;
-                    } else {
-                         // それ以外は文字列として比較
-                        return userValStr === correctValStr;
+                    // 元の評価結果（BigNumberを含む可能性がある）を取得
+                    // sortedUserValuesとsortedCorrectValuesは文字列化されているため、
+                    // 比較には元のuserValuesとcorrectValuesの対応する要素を使用する
+                    // ただし、ソートによってインデックスが変わっているので、
+                    // ここで元のuserValues/correctValuesを直接参照するのは難しい。
+                    // 一旦、文字列から再度評価し直すか、評価結果をソートして対応を取る必要がある。
+                    // よりシンプルな方法として、文字列化された値がBigNumberの文字列表現であるかをチェックし、
+                    // そうであればBigNumberとして再構成して比較を行うアプローチを試す。
+                    
+                    let userVal: any, correctVal: any;
+
+                    try {
+                      // 文字列からBigNumberとしてパース可能か試す
+                      userVal = mathBig.bignumber(userValStr);
+                      correctVal = mathBig.bignumber(correctValStr);
+
+                      // 両方がBigNumberとして成功した場合、BigNumber比較を行う
+                       const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
+                       const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
+                       console.log(`Sorted BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // ログ追加
+                       return isWithinTolerance;
+
+                    } catch (e) {
+                      // BigNumberとしてパースできない場合、数値または文字列として比較
+                       console.log(`Sorted 値をBigNumberとしてパースできませんでした。 userValStr: ${userValStr}, correctValStr: ${correctValStr}. Error: ${e}`); // ログ追加
+
+                      const userNum = parseFloat(userValStr);
+                      const correctNum = parseFloat(correctValStr);
+
+                      if (!isNaN(userNum) && !isNaN(correctNum)) {
+                           // 両方数値に変換可能ならNumber型の許容誤差で比較
+                          const tolerance = 1e-9; // Number型の許容誤差
+                          return Math.abs(userNum - correctNum) < tolerance;
+                      } else {
+                           // それ以外は文字列として比較
+                          return userValStr === correctValStr;
+                      }
                     }
                 });
             }

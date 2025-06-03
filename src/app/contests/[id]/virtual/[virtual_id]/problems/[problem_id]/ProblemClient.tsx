@@ -9,7 +9,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { create, all } from 'mathjs';
+import { evaluate, factorial } from 'mathjs';
 import { renderLatex } from '@/utils/renderLatex';
 
 interface Problem {
@@ -30,10 +30,6 @@ interface Submission {
   score: number;
   created_at: string;
 }
-
-const math = create(all, { number: 'BigNumber' });
-const evaluate = math.evaluate;
-const factorial = math.factorial;
 
 function isCorrectAnswer(userInput: string, correctAnswer: string): boolean {
   try {

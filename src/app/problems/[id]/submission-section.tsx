@@ -243,7 +243,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
-           console.log(`isMatch 入力 - userVal 型: ${typeof userVal}, 値: ${userVal}, correctVal 型: ${typeof correctVal}, 値: ${correctVal}`);
+           // console.log(`isMatch 入力 - userVal 型: ${typeof userVal}, 値: ${userVal}, correctVal 型: ${typeof correctVal}, 値: ${correctVal}`); // 追加ログ
            // 両方がmathjsのBigNumberであるかを確認
            if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
                typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
@@ -251,7 +251,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
                const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
                const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
-               console.log(`BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`);
+               // console.log(`BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`);
                return isWithinTolerance;
            } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
              return Math.abs(userVal - correctVal) < tolerance;
@@ -302,12 +302,12 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
                       // 両方がBigNumberとして成功した場合、BigNumber比較を行う
                        const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
                        const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
-                       console.log(`Sorted BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // ログ追加
+                       // console.log(`Sorted BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`); // ログ追加
                        return isWithinTolerance;
 
                     } catch (e) {
                       // BigNumberとしてパースできない場合、数値または文字列として比較
-                       console.log(`Sorted 値をBigNumberとしてパースできませんでした。 userValStr: ${userValStr}, correctValStr: ${correctValStr}. Error: ${e}`); // ログ追加
+                       // console.log(`Sorted 値をBigNumberとしてパースできませんでした。 userValStr: ${userValStr}, correctValStr: ${correctValStr}. Error: ${e}`); // ログ追加
 
                       const userNum = parseFloat(userValStr);
                       const correctNum = parseFloat(correctValStr);

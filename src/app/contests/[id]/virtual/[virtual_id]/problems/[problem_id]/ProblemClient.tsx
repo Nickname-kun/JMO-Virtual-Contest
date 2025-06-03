@@ -244,19 +244,10 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
-           // mathjsのBigNumberであるかを確認
-           const isUserBigNumber = math.isBigNumber(userVal);
-           const isCorrectBigNumber = math.isBigNumber(correctVal);
-
-           if (isUserBigNumber && isCorrectBigNumber) {
-             // 両方BigNumberの場合はequals()で厳密比較
-             return userVal.equals(correctVal);
-           } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
-             // 両方標準の数値の場合は許容誤差を考慮して比較
-             const tolerance = 1e-9; // 許容誤差
+           if (typeof userVal === 'number' && typeof correctVal === 'number') {
              return Math.abs(userVal - correctVal) < tolerance;
            } else {
-             // それ以外（文字列や異なる型）の場合は文字列として比較
+             // 数値でない場合は文字列として比較
              return String(userVal).trim() === String(correctVal).trim();
            }
         };

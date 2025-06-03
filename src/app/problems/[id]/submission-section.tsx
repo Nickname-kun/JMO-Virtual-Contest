@@ -246,7 +246,9 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
            // 両方がmathjsのBigNumberであるかを確認し、equalsメソッドで比較
            if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
                typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
-               return userVal.equals(correctVal);
+               const isEqualBigNumber = userVal.equals(correctVal);
+               console.log(`BigNumber.equals() 結果: ${isEqualBigNumber}`);
+               return isEqualBigNumber;
            } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
              return Math.abs(userVal - correctVal) < tolerance;
            } else {

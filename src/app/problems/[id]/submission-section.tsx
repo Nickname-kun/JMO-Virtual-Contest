@@ -521,7 +521,7 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
             {(showAll ? submissions : submissions.slice(0, 5)).map((s) => (
               <ListItem key={s.id}>
                 <Flex align="center" gap={3} p={2} borderWidth={1} borderRadius={6} bg="gray.50">
-                  <Text fontFamily="mono" fontSize="md">{s.answer}</Text>
+                  <InlineMath math={s.answer} />
                   <Text color="gray.400" fontSize="sm">{new Date(s.created_at).toLocaleString()}</Text>
                   <Badge
                     px={3}

@@ -570,7 +570,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                 <Tbody>
                   {submissions.map((submission) => (
                     <Tr key={submission.id}>
-                      <Td>{renderLatex(submission.answer)}</Td>
+                      <Td><InlineMath math={submission.answer} /></Td>
                       <Td>{submission.status}</Td>
                       <Td>{submission.score}</Td>
                       <Td>{new Date(submission.created_at).toLocaleString()}</Td>

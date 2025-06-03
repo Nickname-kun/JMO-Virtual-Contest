@@ -236,6 +236,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
+           console.log(`Virtual Contest isMatch 入力 - userVal 型: ${typeof userVal}, 値: ${userVal}, correctVal 型: ${typeof correctVal}, 値: ${correctVal}`); // 追加ログ
            // 両方がmathjsのBigNumberであるかを確認し、equalsメソッドで比較
            if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
                typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {

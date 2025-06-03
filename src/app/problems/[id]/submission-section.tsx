@@ -22,7 +22,7 @@ import {
   Flex,
   useColorModeValue,
 } from '@chakra-ui/react'
-import { evaluate, factorial } from 'mathjs'
+import { create, all } from 'mathjs'
 
 declare global {
   namespace JSX {
@@ -43,6 +43,10 @@ interface ProblemDataForSubmission {
   correct_answers?: string[];
   requires_multiple_answers: boolean;
 }
+
+const math = create(all, { number: 'BigNumber' })
+const evaluate = math.evaluate
+const factorial = math.factorial
 
 export default function SubmissionSection({ problemId, correctAnswers, requires_multiple_answers }: { problemId: string, correctAnswers: string[] | null, requires_multiple_answers: boolean }) {
   const [answers, setAnswers] = useState<string[]>([''])

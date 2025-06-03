@@ -15,8 +15,22 @@ import {
   Flex,
   Container,
   Button,
+  Textarea,
+  FormControl,
+  FormLabel,
+  List,
+  ListItem,
+  HStack,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useUser } from '@supabase/auth-helpers-react'
+import { Comment } from '@/types/database'
+import { formatDistanceToNow } from 'date-fns'
+import { ja } from 'date-fns/locale'
 
 interface Problem {
   id: string
@@ -30,6 +44,67 @@ interface Problem {
 }
 
 function ProblemClientContent({ problem }: { problem: Problem }) {
+  const supabase = createClientComponentClient();
+  const user = useUser();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [postingComment, setPostingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*, profiles(username)')
+      .eq('problem_id', problem.id)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching comments:', error);
+      setCommentError('コメントの読み込みに失敗しました。');
+    } else {
+      setComments(data || []);
+    }
+    setLoadingComments(false);
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [problem.id, supabase]);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      setCommentError('コメントするにはログインしてください。');
+      return;
+    }
+    if (newComment.trim() === '') {
+      setCommentError('コメント内容を入力してください。');
+      return;
+    }
+
+    setPostingComment(true);
+    setCommentError(null);
+
+    const { error } = await supabase
+      .from('comments')
+      .insert({
+        problem_id: problem.id,
+        user_id: user.id,
+        content: newComment.trim(),
+      });
+
+    if (error) {
+      console.error('Error posting comment:', error);
+      setCommentError('コメントの投稿に失敗しました。');
+    } else {
+      setNewComment('');
+      fetchComments();
+    }
+    setPostingComment(false);
+  };
+
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={8} align="stretch">
@@ -40,22 +115,76 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
           問題一覧へ戻る
         </Button>
         
-        {/* 問題文（Boxラッパーを外して直接表示） */}
         <Text className="problem-text">{renderLatex(problem.content)}</Text>
 
-        {/* 図形がある場合のみ表示（ボックスなしで表示） */}
         {problem.diagram_svg && (
           <Box display="flex" justifyContent="center">
             <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
           </Box>
         )}
 
-        {/* 解答欄・提出履歴 */}
         <SubmissionSection 
           problemId={problem.id}
           correctAnswers={problem.correct_answers || null}
           requires_multiple_answers={problem.requires_multiple_answers}
         />
+
+        <Divider my={6} />
+
+        <Box>
+          <Heading as="h2" size="md" mb={4}>コメント</Heading>
+          {commentError && (
+             <Alert status="error" mb={4}>
+               <AlertIcon />
+               {commentError}
+             </Alert>
+          )}
+          {loadingComments ? (
+            <Text>コメントを読み込み中...</Text>
+          ) : (
+            <List spacing={4}>
+              {comments.length === 0 ? (
+                <Text color="gray.500" fontSize="sm">まだコメントはありません。</Text>
+              ) : (
+                comments.map((comment) => (
+                  <ListItem key={comment.id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
+                    <Flex justify="space-between" align="center" mb={1}>
+                      <Text fontSize="sm" fontWeight="bold">{comment.profiles?.username || '匿名ユーザー'}</Text>
+                      <Text fontSize="xs" color="gray.500">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ja })}</Text>
+                    </Flex>
+                    <Text fontSize="sm">{comment.content}</Text>
+                  </ListItem>
+                ))
+              )}
+            </List>
+          )}
+
+          {user ? (
+             <Box mt={6} as="form" onSubmit={handlePostComment}>
+               <FormControl>
+                 <FormLabel htmlFor="new-comment">新しいコメント</FormLabel>
+                 <Textarea
+                   id="new-comment"
+                   value={newComment}
+                   onChange={(e) => setNewComment(e.target.value)}
+                   placeholder="コメントを入力..."
+                   size="sm"
+                   rows={3}
+                 />
+               </FormControl>
+               <Button mt={2} size="sm" colorScheme="blue" type="submit" isLoading={postingComment}>
+                 コメントを投稿
+               </Button>
+             </Box>
+          ) : (
+             <Box mt={6}>
+               <Text color="gray.500" fontSize="sm">コメントを投稿するにはログインが必要です。</Text>
+               <Button as={Link} href="/auth" colorScheme="blue" size="sm" mt={2}>
+                 ログインする
+               </Button>
+             </Box>
+          )}
+        </Box>
       </VStack>
     </Container>
   )

@@ -84,4 +84,15 @@ export type Contest = {
   description: string | null;
   duration_minutes: number;
   created_at: string;
+};
+
+export type Comment = {
+  id: string;
+  problem_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles?: { // コメント投稿者のプロフィール情報を取得する場合に備えて追加
+    username: string | null;
+  };
 }; 

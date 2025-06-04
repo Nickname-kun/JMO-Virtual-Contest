@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import QuestionList from '@/components/questions/QuestionList';
 import QuestionFilter from '@/components/questions/QuestionFilter';
 import Link from 'next/link';
+import { QuestionWithDetails } from '@/types/question';
 
 export default async function QuestionsPage() {
   const supabase = createServerComponentClient({ cookies });
@@ -14,9 +15,7 @@ export default async function QuestionsPage() {
       *,
       category:categories(*),
       user:profiles(id, name, avatar_url),
-      _count {
-        answers
-      }
+      answers(count)
     `)
     .order('created_at', { ascending: false });
 
@@ -24,7 +23,18 @@ export default async function QuestionsPage() {
     console.error('Error fetching questions:', error);
   }
 
-  console.log('Fetched questions:', questions);
+  // 取得したデータをQuestionWithDetails型にマッピング
+  const questionsWithDetails: QuestionWithDetails[] = questions?.map(q => ({
+    ...q,
+    category: q.category as any, // 型アサーションまたは適切なマッピング
+    user: q.user as any, // 型アサーションまたは適切なマッピング
+    answers: [], // このselectではanswersデータ自体は取得していないため空配列
+    _count: {
+      answers: q.answers?.[0]?.count || 0, // countはanswers配列の最初の要素に格納される
+    },
+  })) || [];
+
+  console.log('Fetched questions with details:', questionsWithDetails);
 
   return (
     <Container maxW="container.xl" py={8}>
@@ -45,7 +55,7 @@ export default async function QuestionsPage() {
           </HStack>
           <QuestionFilter />
         </Box>
-        <QuestionList questions={questions || []} />
+        <QuestionList questions={questionsWithDetails} />
       </VStack>
     </Container>
   );

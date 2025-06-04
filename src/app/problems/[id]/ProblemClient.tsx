@@ -136,9 +136,6 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
       return;
     }
 
-    console.log('newComment state on submit:', newComment);
-    console.log('newComment.trim() on submit:', newComment.trim());
-
     if (newComment.trim() === '') {
       setCommentError('コメント内容を入力してください。');
       return;
@@ -302,11 +299,11 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                    borderColor="gray.300"
                    borderRadius={6}
                    bg="gray.50"
-                   p={2}
+                   p={1}
                  >
                    <Textarea
                      id="new-comment"
-                     placeholder="コメントを入力..."
+                     placeholder="コメントを入力... (LaTeX 使用可)"
                      value={newComment}
                      onChange={(e) => setNewComment(e.target.value)}
                      size="sm"

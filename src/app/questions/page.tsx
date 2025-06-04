@@ -9,7 +9,7 @@ import { QuestionWithDetails } from '@/types/question';
 export default async function QuestionsPage() {
   const supabase = createServerComponentClient({ cookies });
   
-  const { data: questions, error } = await supabase
+  const { data, error } = await supabase
     .from('questions')
     .select(`
       *,
@@ -21,10 +21,16 @@ export default async function QuestionsPage() {
 
   if (error) {
     console.error('Error fetching questions:', error);
+    // エラー時は空の配列を返すか、エラー表示を行う
+    return (
+      <Container maxW="container.xl" py={8}>
+        <Box>Error loading questions.</Box>
+      </Container>
+    );
   }
 
   // 取得したデータをQuestionWithDetails型にマッピング
-  const questionsWithDetails: QuestionWithDetails[] = questions?.map(q => ({
+  const questionsWithDetails: QuestionWithDetails[] = data?.map(q => ({
     ...q,
     category: q.category as any, // 型アサーションまたは適切なマッピング
     user: q.user as any, // 型アサーションまたは適切なマッピング

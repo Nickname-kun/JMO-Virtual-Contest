@@ -17,7 +17,7 @@ export const metadata = {
     siteName: 'JMO Virtual Contest',
     images: [
       {
-        url: '/ogp-image.png',
+        url: 'https://jmo-virtual-contest.vercel.app/ogp-image.png',
         width: 1200,
         height: 630,
         alt: 'JMO Virtual Contest OGP Image',

@@ -13,7 +13,7 @@ export const metadata = {
   openGraph: {
     title: 'JMO Virtual Contest',
     description: '日本数学オリンピック予選の過去問を解いて、実力を試しましょう。',
-    url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', // デプロイ後のURLまたは開発環境のURL
+    url: 'https://jmo-virtual-contest.vercel.app/', // サイトのURL
     siteName: 'JMO Virtual Contest',
     images: [
       {

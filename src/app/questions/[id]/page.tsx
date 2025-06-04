@@ -26,9 +26,6 @@ export default async function QuestionPage({
         *,
         user:profiles(id, username)
       ),
-      _count {
-        answers
-      }
     `
     )
     .eq('id', params.id)

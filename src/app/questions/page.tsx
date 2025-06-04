@@ -14,7 +14,7 @@ export default async function QuestionsPage() {
     .select(`
       *,
       category:categories(*),
-      user:profiles(id, name, avatar_url),
+      user:profiles(*),
       answers(count)
     `)
     .order('created_at', { ascending: false });

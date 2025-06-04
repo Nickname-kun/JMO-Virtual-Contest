@@ -5,24 +5,26 @@ import { notFound } from 'next/navigation';
 import QuestionDetail from '@/components/questions/QuestionDetail';
 import AnswerList from '@/components/questions/AnswerList';
 import AnswerForm from '@/components/questions/AnswerForm';
+import { QuestionWithDetails } from '@/types/question';
 
 export default async function QuestionPage({
   params,
 }: {
   params: { id: string };
 }) {
+  console.log('Fetching question with ID:', params.id);
   const supabase = createServerComponentClient({ cookies });
 
-  const { data: question } = await supabase
+  const { data: question, error } = await supabase
     .from('questions')
     .select(
       `
       *,
       category:categories(*),
-      user:profiles(id, name, avatar_url),
+      user:profiles(id, username),
       answers:answers(
         *,
-        user:profiles(id, name, avatar_url)
+        user:profiles(id, username)
       ),
       _count {
         answers
@@ -31,6 +33,12 @@ export default async function QuestionPage({
     )
     .eq('id', params.id)
     .single();
+
+  if (error) {
+    console.error('Error fetching question detail:', error);
+  }
+
+  console.log('Fetched question detail:', question);
 
   if (!question) {
     notFound();

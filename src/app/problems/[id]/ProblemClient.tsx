@@ -62,8 +62,6 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedCommentContent, setEditedCommentContent] = useState('');
 
-  const commentMathfieldRef = useRef<any>(null);
-
   const [showAllComments, setShowAllComments] = useState(false);
   const COMMENT_DISPLAY_LIMIT = 5;
 
@@ -130,28 +128,6 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   useEffect(() => {
     fetchComments();
   }, [problem.id, supabase]);
-
-  useEffect(() => {
-    import('mathlive').then(({ MathfieldElement }) => {
-      const mathfield = commentMathfieldRef.current;
-      if (mathfield && !(mathfield as any).$initialized) {
-        (mathfield as any).addEventListener('input', (evt: any) => {
-          console.log('Mathfield onInput event:', evt);
-          console.log('Mathfield value from event:', evt.target.value);
-          console.log('Mathfield current value:', mathfield.value);
-          setNewComment(mathfield.value);
-        });
-
-        (mathfield as any).$initialized = true;
-      }
-    });
-  }, [commentMathfieldRef.current]);
-
-  useEffect(() => {
-    if (commentMathfieldRef.current && newComment !== commentMathfieldRef.current.value) {
-      commentMathfieldRef.current.value = newComment;
-    }
-  }, [newComment]);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,22 +305,14 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                    bg="gray.50"
                    p={2}
                  >
-                   {/* @ts-ignore */}
-                   <math-field
-                     ref={commentMathfieldRef}
+                   <Textarea
+                     id="new-comment"
+                     placeholder="コメントを入力..."
                      value={newComment}
-                     math-virtual-keyboard-policy="manual"
-                     style={{
-                       width: '100%',
-                       minHeight: 40,
-                       fontSize: 16,
-                       background: 'transparent',
-                       border: 'none',
-                       outline: 'none',
-                       padding: 4,
-                     }}
-                     aria-placeholder="コメントを入力..."
-                   ></math-field>
+                     onChange={(e) => setNewComment(e.target.value)}
+                     size="sm"
+                     rows={3}
+                   />
                  </Box>
                </FormControl>
                <Button mt={2} size="sm" colorScheme="blue" type="submit" isLoading={postingComment}>

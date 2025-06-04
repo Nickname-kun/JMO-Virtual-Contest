@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default async function QuestionsPage() {
   const supabase = createServerComponentClient({ cookies });
   
-  const { data: questions } = await supabase
+  const { data: questions, error } = await supabase
     .from('questions')
     .select(`
       *,
@@ -19,6 +19,12 @@ export default async function QuestionsPage() {
       }
     `)
     .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching questions:', error);
+  }
+
+  console.log('Fetched questions:', questions);
 
   return (
     <Container maxW="container.xl" py={8}>

@@ -1,34 +1,133 @@
-export type Database = {
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
   public: {
     Tables: {
-      problems: {
-        Row: Problem;
-        Insert: Omit<Problem, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Problem, 'id'>>;
-      };
-      submissions: {
-        Row: Submission;
-        Insert: Omit<Submission, 'id' | 'submitted_at' | 'created_at'>;
-        Update: Partial<Omit<Submission, 'id'>>;
-      };
-      virtual_contests: {
-        Row: VirtualContest;
-        Insert: Omit<VirtualContest, 'id' | 'score'>;
-        Update: Partial<Omit<VirtualContest, 'id'>>;
-      };
+      categories: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          slug: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          slug: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          slug?: string
+          created_at?: string
+        }
+      }
+      questions: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          category_id: string
+          user_id: string
+          created_at: string
+          updated_at: string
+          status: string
+          view_count: number
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          category_id: string
+          user_id: string
+          created_at?: string
+          updated_at?: string
+          status?: string
+          view_count?: number
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          category_id?: string
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+          status?: string
+          view_count?: number
+        }
+      }
+      answers: {
+        Row: {
+          id: string
+          question_id: string
+          content: string
+          user_id: string
+          created_at: string
+          updated_at: string
+          is_accepted: boolean
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          content: string
+          user_id: string
+          created_at?: string
+          updated_at?: string
+          is_accepted?: boolean
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          content?: string
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+          is_accepted?: boolean
+        }
+      }
       profiles: {
-        Row: Profile;
-        Insert: Omit<Profile, 'id'>;
-        Update: Partial<Omit<Profile, 'id'>>;
-      };
-      contests: {
-        Row: Contest;
-        Insert: Omit<Contest, 'id' | 'created_at'>;
-        Update: Partial<Omit<Contest, 'id'>>;
-      };
-    };
-  };
-};
+        Row: {
+          id: string
+          name: string
+          avatar_url: string | null
+          is_admin: boolean
+        }
+        Insert: {
+          id: string
+          name: string
+          avatar_url?: string | null
+          is_admin?: boolean
+        }
+        Update: {
+          id?: string
+          name?: string
+          avatar_url?: string | null
+          is_admin?: boolean
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
+}
 
 export type Problem = {
   id: string;

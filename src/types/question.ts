@@ -7,9 +7,9 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export type QuestionWithDetails = Question & {
   category: Category;
-  user: Profile;
+  user: Omit<Profile, 'avatar_url'>;
   answers: (Answer & {
-    user: Profile;
+    user: Omit<Profile, 'avatar_url'>;
   })[];
   _count: {
     answers: number;

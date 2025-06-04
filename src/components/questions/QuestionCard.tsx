@@ -40,14 +40,14 @@ export default function QuestionCard({ question }: QuestionCardProps) {
             <HStack>
               <Avatar
                 size="sm"
-                name={question.user.name}
-                src={question.user.avatarUrl}
+                name={question.user.username}
+                // src={question.user.avatar_url} // avatar_urlは存在しないためコメントアウト
               />
-              <Text fontSize="sm">{question.user.name}</Text>
+              <Text fontSize="sm">{question.user.username}</Text>
             </HStack>
             <HStack spacing={4}>
               <Text fontSize="sm">
-                {formatDistanceToNow(new Date(question.createdAt), {
+                {formatDistanceToNow(new Date(question.created_at), {
                   addSuffix: true,
                   locale: ja,
                 })}

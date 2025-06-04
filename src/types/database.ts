@@ -99,20 +99,17 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          name: string
-          avatar_url: string | null
+          username: string
           is_admin: boolean
         }
         Insert: {
           id: string
-          name: string
-          avatar_url?: string | null
+          username: string
           is_admin?: boolean
         }
         Update: {
           id?: string
-          name?: string
-          avatar_url?: string | null
+          username?: string
           is_admin?: boolean
         }
       }

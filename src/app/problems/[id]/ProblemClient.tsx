@@ -136,7 +136,6 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
       return;
     }
 
-    console.log('Mathfield value on submit:', commentMathfieldRef.current?.value);
     console.log('newComment state on submit:', newComment);
     console.log('newComment.trim() on submit:', newComment.trim());
 

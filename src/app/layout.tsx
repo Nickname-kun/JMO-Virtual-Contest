@@ -10,6 +10,11 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'JMO Virtual Contest',
   description: '日本数学オリンピック予選の過去問を解いて、実力を試しましょう。',
+  icons: {
+    icon: [
+      { url: '/diagram-20250604.svg', type: 'image/svg+xml' }
+    ],
+  },
 }
 
 export default function RootLayout({

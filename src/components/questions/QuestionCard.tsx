@@ -10,7 +10,6 @@ import {
   Avatar,
   VStack,
   Link,
-  Button,
 } from '@chakra-ui/react';
 import { QuestionWithDetails } from '@/types/question';
 import { formatDistanceToNow } from 'date-fns';
@@ -46,27 +45,17 @@ export default function QuestionCard({ question }: QuestionCardProps) {
               />
               <Text fontSize="sm">{question.user.username}</Text>
             </HStack>
-            <VStack align="flex-end" spacing={2}>
-              <HStack spacing={4}>
-                <Text fontSize="sm" color="gray.500">
-                  {formatDistanceToNow(new Date(question.created_at), {
-                    addSuffix: true,
-                    locale: ja,
-                  })}
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  {question._count?.answers || 0} 件の回答
-                </Text>
-              </HStack>
-              <Button
-                as={NextLink}
-                href={`/questions/${question.id}`}
-                colorScheme="teal"
-                size="sm"
-              >
-                回答する
-              </Button>
-            </VStack>
+            <HStack spacing={4}>
+              <Text fontSize="sm" color="gray.500">
+                {formatDistanceToNow(new Date(question.created_at), {
+                  addSuffix: true,
+                  locale: ja,
+                })}
+              </Text>
+              <Text fontSize="sm" color="gray.500">
+                {question._count?.answers || 0} 件の回答
+              </Text>
+            </HStack>
           </HStack>
         </VStack>
       </CardBody>

@@ -156,6 +156,11 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
       setCommentError('コメントするにはログインしてください。');
       return;
     }
+
+    console.log('Mathfield value on submit:', commentMathfieldRef.current?.value);
+    console.log('newComment state on submit:', newComment);
+    console.log('newComment.trim() on submit:', newComment.trim());
+
     if (newComment.trim() === '') {
       setCommentError('コメント内容を入力してください。');
       return;

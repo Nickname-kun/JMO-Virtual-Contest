@@ -138,7 +138,8 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         (mathfield as any).addEventListener('input', (evt: any) => {
           console.log('Mathfield onInput event:', evt);
           console.log('Mathfield value from event:', evt.target.value);
-          setNewComment(evt.target.value);
+          console.log('Mathfield current value:', mathfield.value);
+          setNewComment(mathfield.value);
         });
 
         (mathfield as any).$initialized = true;

@@ -46,7 +46,7 @@ export default function Navbar() {
   return (
     <Box as="nav" bg="blue.600" color="white" px={6} py={4} boxShadow="sm">
       <Flex align="center">
-        <Heading as={Link} href="/" size="md" color="white" _hover={{ textDecoration: 'none', color: 'blue.200' }}>
+        <Heading as={Link} href="/" size="md" color="white" _hover={{ textDecoration: "none", color: "blue.200" }}>
           JMO Virtual Contest
         </Heading>
         <Spacer />

@@ -19,9 +19,11 @@ import {
   InputRightElement,
   IconButton,
   Link as ChakraLink,
+  Divider,
 } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { TwitterAuthButton } from '@/components/auth/TwitterAuthButton';
 
 export default function AuthPage() {
   const supabase = createClientComponentClient();
@@ -179,6 +181,11 @@ export default function AuthPage() {
               >
                 ログイン
               </Button>
+              <Divider my={4} />
+              <Text textAlign="center" fontSize="sm" color="black" mb={2}>
+                または
+              </Text>
+              <TwitterAuthButton />
             </Stack>
           </TabPanel>
           <TabPanel>

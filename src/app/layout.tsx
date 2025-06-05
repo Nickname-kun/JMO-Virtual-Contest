@@ -8,16 +8,17 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
+  metadataBase: new URL('https://jmo-virtual-contest.vercel.app'),
   title: 'JMO Virtual Contest',
   description: '日本数学オリンピック予選の過去問を解いて、実力を試しましょう。',
   openGraph: {
     title: 'JMO Virtual Contest',
     description: '日本数学オリンピック予選の過去問を解いて、実力を試しましょう。',
-    url: 'https://jmo-virtual-contest.vercel.app/', // サイトのURL
+    url: 'https://jmo-virtual-contest.vercel.app/',
     siteName: 'JMO Virtual Contest',
     images: [
       {
-        url: 'https://jmo-virtual-contest.vercel.app/ogp-image.png',
+        url: '/ogp-image.png',
         width: 1200,
         height: 630,
         alt: 'JMO Virtual Contest OGP Image',

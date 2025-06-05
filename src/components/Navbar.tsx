@@ -38,7 +38,7 @@ export default function Navbar() {
   }, [session, supabase]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     router.push('/');
     router.refresh();
   };

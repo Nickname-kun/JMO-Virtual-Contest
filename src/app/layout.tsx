@@ -36,7 +36,11 @@ export default function RootLayout({
     <html lang="ja">
       <head>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive.core.css" />
-        <link rel="icon" type="image/svg+xml" href="/diagram-20250604.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#5633c2" />
       </head>
       <body className={inter.className}>
         <Providers>

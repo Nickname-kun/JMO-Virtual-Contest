@@ -48,6 +48,26 @@ export default function ProfileForm({
       return;
     }
 
+    // ユーザー名の重複チェック
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username.trim())
+      .neq('id', (await supabase.auth.getUser()).data.user?.id)
+      .single();
+
+    if (existingUser) {
+      toast({
+        title: 'エラー',
+        description: 'このユーザー名は既に使用されています。別のユーザー名を選択してください。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     // クライアントサイドからSupabaseを使ってユーザー名を更新
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 

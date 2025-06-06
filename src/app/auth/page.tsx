@@ -69,6 +69,25 @@ export default function AuthPage() {
       return;
     }
 
+    // ユーザー名の重複チェック
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', signupUsername.trim())
+      .single();
+
+    if (existingUser) {
+      toast({
+        title: 'エラー',
+        description: 'このユーザー名は既に使用されています。別のユーザー名を選択してください。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({ email: signupEmail, password: signupPassword });
     if (error) {
       toast({

@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Spacer, Link as ChakraLink, Button, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure, Stack, Menu, MenuButton, MenuList, MenuItem, Text } from '@chakra-ui/react';
+import { Box, Flex, Heading, Spacer, Link as ChakraLink, Button, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure, Stack, Menu, MenuButton, MenuList, MenuItem, Text, Collapse } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -17,6 +17,7 @@ export default function Navbar() {
   const [username, setUsername] = useState<string | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,6 +71,7 @@ export default function Navbar() {
           </ChakraLink>
           {session ? (
             <>
+              {/* ユーザー名ドロップダウンメニュー (PC用) */}
               <Menu>
                 <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="whiteAlpha" variant="outline" color="white">
                   Hi, {username || session.user.email}
@@ -79,6 +81,7 @@ export default function Navbar() {
                   <MenuItem onClick={handleSignOut} bg="blue.800">ログアウト</MenuItem>
                 </MenuList>
               </Menu>
+              {/* 管理者メニュー (存在する場合) */}
               {isAdmin && (
                 <Menu>
                   <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" ml={2}>
@@ -109,16 +112,14 @@ export default function Navbar() {
           colorScheme="whiteAlpha"
           ml={2}
         />
-        <Drawer isOpen={isOpen} placement="right" onClose={onClose} finalFocusRef={btnRef}>
+        <Drawer isOpen={isOpen} placement="right" onClose={() => { onClose(); setIsUserMenuOpen(false); }} finalFocusRef={btnRef}>
           <DrawerOverlay />
           <DrawerContent bg="blue.700" color="white">
             <DrawerCloseButton />
             <DrawerHeader>メニュー</DrawerHeader>
             <DrawerBody>
               <Stack spacing={4}>
-                {session && username && (
-                   <Text fontSize="lg" fontWeight="bold">Hi, {username}</Text>
-                )}
+                {/* ログイン状態に関わらず表示するメニュー項目 */}
                 <ChakraLink as={Link} href="/" onClick={onClose} _hover={{ color: 'blue.200' }}>
                   HOME
                 </ChakraLink>
@@ -131,29 +132,48 @@ export default function Navbar() {
                 <ChakraLink as={Link} href="/rules" onClick={onClose} _hover={{ color: 'blue.200' }}>
                   ルール
                 </ChakraLink>
+
                 {session ? (
                   <>
-                    <ChakraLink as={Link} href="/profile" onClick={onClose} _hover={{ color: 'blue.200' }}>
-                      マイページ
-                    </ChakraLink>
-                    {isAdmin && (
-                      <Menu>
-                        <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" ml={2} onClick={(e) => e.stopPropagation()}>
-                          管理者メニュー
-                        </MenuButton>
-                        <MenuList bg="blue.800">
-                          <MenuItem as={Link} href="/admin/problems" onClick={onClose} bg="blue.800">問題管理</MenuItem>
-                          <MenuItem as={Link} href="/admin/contests" onClick={onClose} bg="blue.800">コンテスト管理</MenuItem>
-                          <MenuItem as={Link} href="/admin/announcements" onClick={onClose} bg="blue.800">お知らせ管理</MenuItem>
-                        </MenuList>
-                      </Menu>
-                    )}
-                    <Button onClick={() => { onClose(); handleSignOut(); }} size="sm" colorScheme="whiteAlpha" variant="outline">
-                      ログアウト
-                    </Button>
+                    {/* モバイル表示用 ユーザーメニュー（開閉可能）*/}
+                    <Flex 
+                      align="center"
+                      justify="space-between"
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      cursor="pointer"
+                      py={2}
+                      _hover={{ color: 'blue.200' }}
+                    >
+                      {username && (
+                        <Text fontSize="lg" fontWeight="bold">Hi, {username}</Text>
+                      )}
+                      <MdKeyboardArrowDown style={{ transform: `rotate(${isUserMenuOpen ? 180 : 0}deg)`, transition: 'transform 0.2s' }} />
+                    </Flex>
+                    <Collapse in={isUserMenuOpen} animateOpacity>
+                      <Stack pl={4} borderLeft="1px solid white" spacing={2}>
+                         <ChakraLink as={Link} href="/profile" onClick={() => { onClose(); setIsUserMenuOpen(false); }} _hover={{ color: 'blue.200' }}>
+                            マイページ
+                         </ChakraLink>
+                         {isAdmin && (
+                           <Menu>
+                             <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" w="full" justifyContent="flex-start" onClick={(e) => e.stopPropagation()}>
+                               管理者メニュー
+                             </MenuButton>
+                             <MenuList bg="blue.800">
+                               <MenuItem as={Link} href="/admin/problems" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">問題管理</MenuItem>
+                               <MenuItem as={Link} href="/admin/contests" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">コンテスト管理</MenuItem>
+                               <MenuItem as={Link} href="/admin/announcements" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">お知らせ管理</MenuItem>
+                             </MenuList>
+                           </Menu>
+                         )}
+                         <Button onClick={() => { onClose(); handleSignOut(); setIsUserMenuOpen(false); }} size="sm" colorScheme="red" variant="solid" w="full" justifyContent="flex-start" mt={2}>
+                             ログアウト
+                         </Button>
+                      </Stack>
+                    </Collapse>
                   </>
                 ) : (
-                  <Button as={Link} href="/auth" size="sm" colorScheme="whiteAlpha" variant="outline" onClick={onClose}>
+                  <Button as={Link} href="/auth" size="sm" colorScheme="whiteAlpha" variant="outline" onClick={onClose} w="full">
                     ログイン
                   </Button>
                 )}

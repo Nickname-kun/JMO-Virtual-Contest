@@ -7,38 +7,7 @@ import { ja } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList, Cell } from 'recharts';
-
-// problemsテーブルとcontestsテーブルの関連部分の型定義 (page.tsxのselectに合わせています)
-interface SubmissionProblem {
-  id: string;
-  title: string;
-  number: number;
-  field: string;
-}
-
-interface Submission {
-  id: string;
-  problem_id: string;
-  answer: string;
-  is_correct: boolean;
-  submitted_at: string;
-  problems: SubmissionProblem[]; // 配列として定義
-}
-
-interface VirtualContestContest {
-  id: string;
-  name: string;
-}
-
-interface VirtualContest {
-  id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  score: number;
-  contest_id: string | null;
-  contests: VirtualContestContest | null;
-}
+import { VirtualContest, VirtualContestContest, Submission, SubmissionProblem } from '@/types/database'; // 型定義をdatabase.tsからインポート
 
 interface LearningDataProps {
   submissions: Submission[];

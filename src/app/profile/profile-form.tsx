@@ -1,57 +1,93 @@
 "use client";
 
-import { Box, VStack, FormControl, FormLabel, Input, Button, useToast } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { Box, VStack, FormControl, FormLabel, Input, Button, useToast, FormHelperText } from '@chakra-ui/react';
+import { useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface ProfileFormProps {
   initialUsername: string;
-  userId: string;
+  // updateUsernameAction: (formData: FormData) => Promise<{ status: string; message: string }>; // サーバーアクションは不要になるためコメントアウトまたは削除
 }
 
 export default function ProfileForm({
   initialUsername,
-  userId,
+  // updateUsernameAction, // サーバーアクションは不要になるためコメントアウトまたは削除
 }: ProfileFormProps) {
   const [username, setUsername] = useState(initialUsername);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const supabase = createClientComponentClient(); // クライアントサイドでSupabaseクライアントを初期化
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/profile/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          username,
-        }),
-      });
+    const MAX_USERNAME_LENGTH = 15; // 最大文字数を15に変更
 
-      const result = await response.json();
-
-      toast({
-        title: result.status === 'success' ? '成功' : 'エラー',
-        description: result.message,
-        status: result.status === 'success' ? 'success' : 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
+    if (username.trim().length === 0) {
+       toast({
         title: 'エラー',
-        description: 'ユーザー名の更新に失敗しました。',
+        description: 'ユーザー名は空にできません。',
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
-    } finally {
       setIsLoading(false);
+      return;
     }
+
+    if (username.trim().length > MAX_USERNAME_LENGTH) {
+      toast({
+        title: 'エラー',
+        description: `ユーザー名は${MAX_USERNAME_LENGTH}文字以内で入力してください。`, // 最大文字数を超えた場合のエラーメッセージ
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // クライアントサイドからSupabaseを使ってユーザー名を更新
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      toast({
+        title: 'エラー',
+        description: 'ユーザー情報の取得に失敗しました。', // または適切なエラーメッセージ
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ username: username.trim() })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error updating username:', updateError);
+       toast({
+        title: 'エラー',
+        description: updateError.message, // または適切なエラーメッセージ
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+       toast({
+        title: '成功',
+        description: 'ユーザー名が更新されました！',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -66,6 +102,7 @@ export default function ProfileForm({
             onChange={(e) => setUsername(e.target.value)}
             required
           />
+          <FormHelperText>ユーザー名は15文字以内で入力してください。</FormHelperText>
         </FormControl>
         <Button type="submit" colorScheme="blue" isLoading={isLoading}>
           ユーザー名を更新

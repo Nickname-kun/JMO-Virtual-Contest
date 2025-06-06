@@ -20,6 +20,9 @@ import {
   IconButton,
   Link as ChakraLink,
   Divider,
+  FormControl,
+  FormLabel,
+  FormHelperText,
 } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
@@ -52,6 +55,20 @@ export default function AuthPage() {
       setIsLoading(false);
       return;
     }
+
+    const MAX_USERNAME_LENGTH = 15;
+    if (signupUsername.trim().length > MAX_USERNAME_LENGTH) {
+      toast({
+        title: 'エラー',
+        description: `ユーザーネームは${MAX_USERNAME_LENGTH}文字以内で入力してください。`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({ email: signupEmail, password: signupPassword });
     if (error) {
       toast({
@@ -191,12 +208,17 @@ export default function AuthPage() {
           <TabPanel>
             <Stack direction="column" spacing={4}>
               <Heading mb={4} size="md">サインアップ</Heading>
-              <Input
-                placeholder="ユーザーネーム"
-                value={signupUsername}
-                onChange={e => setSignupUsername(e.target.value)}
-                type="text"
-              />
+              <FormControl id="signup-username">
+                <FormLabel>ユーザーネーム</FormLabel>
+                <Input
+                  placeholder="ユーザーネーム"
+                  value={signupUsername}
+                  onChange={e => setSignupUsername(e.target.value)}
+                  type="text"
+                  maxLength={15}
+                />
+                <FormHelperText>ユーザーネームは15文字以内で入力してください。</FormHelperText>
+              </FormControl>
               <Input
                 placeholder="メールアドレス"
                 value={signupEmail}

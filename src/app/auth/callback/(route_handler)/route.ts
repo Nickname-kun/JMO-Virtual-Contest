@@ -35,10 +35,12 @@ export async function GET(request: Request) {
           }, { onConflict: 'id' }); // idが重複した場合は更新
 
         if (profileError) {
-          console.error('Error upserting profile:', profileError);
+          console.error('Error upserting profile for user', data.user.id, ':', profileError);
           // エラーハンドリングを適切に追加
         }
       }
+    } else if (error) {
+      console.error('Error exchanging code for session:', error);
     }
   }
 

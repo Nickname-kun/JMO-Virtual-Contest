@@ -1,28 +1,25 @@
 "use client";
 
-import { Box, Text, Spinner, VStack } from '@chakra-ui/react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@supabase/auth-helpers-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/database';
-import { redirect } from 'next/navigation';
+import { Box, Text, Spinner, VStack } from '@chakra-ui/react';
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
   const session = useSession();
-  const supabase = createClientComponentClient<Database>();
+  const router = useRouter();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        redirect('/auth');
-      }
-    };
+    if (session) {
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 1000);
 
-    handleAuthCallback();
-  }, [supabase]);
+      return () => clearTimeout(timer);
+    } else if (session === null) {
+      console.log('Session not established after callback.');
+    }
+  }, [session, router]);
 
   return (
     <Box

@@ -1,3 +1,5 @@
+"use client";
+
 import { Box, Text, Spinner, VStack } from '@chakra-ui/react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';

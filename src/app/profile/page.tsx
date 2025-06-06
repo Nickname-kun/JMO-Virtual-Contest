@@ -8,21 +8,7 @@ import LearningData from './learning-data';
 import PasswordChangeForm from './PasswordChangeForm';
 import DeleteAccountButton from './DeleteAccountButton';
 import { Suspense } from 'react';
-
-interface VirtualContestContest {
-  id: string;
-  name: string;
-}
-
-interface VirtualContest {
-  id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  score: number;
-  contest_id: string | null;
-  contests: VirtualContestContest | null;
-}
+import { VirtualContest, VirtualContestContest } from '@/types/database';
 
 export default async function ProfilePage() {
   const supabase = createServerComponentClient({ cookies });
@@ -78,16 +64,14 @@ export default async function ProfilePage() {
     .eq('user_id', userId)
     .order('start_time', { ascending: false });
 
-  // 型に合わせてデータを変換
+  // 型に合わせてデータを変換（database.tsの型に合わせる）
   const virtualContests: VirtualContest[] = virtualContestsData?.map(vc => ({
     ...vc,
-    contests: vc.contests ? {
-      id: vc.contests.id,
-      name: vc.contests.name
-    } : null
+    // Supabaseはリレーションを配列で返すため、取得したデータをそのまま利用
+    contests: vc.contests as VirtualContestContest[] | null
   })) || [];
 
-  // ユーザー名更新サーバーアクション
+  // ユーザー名更新サーバーアクション（クライアントサイドに移行したため使用しないが、削除は任意）
   const updateUsernameAction = async (formData: FormData) => {
     'use server';
     const supabaseServer = createServerComponentClient({ cookies });
@@ -122,7 +106,8 @@ export default async function ProfilePage() {
       <VStack spacing={8} align="stretch">
         <Box>
           <Heading as="h1" size="xl" mb={4}>プロフィール</Heading>
-          <ProfileForm initialUsername={userData?.username || ''} updateUsernameAction={updateUsernameAction} />
+          <Text fontSize="lg" mb={4}>現在のユーザー名: {userData?.username || '設定されていません'}</Text>
+          <ProfileForm initialUsername={userData?.username || ''} />
         </Box>
         <Box>
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>

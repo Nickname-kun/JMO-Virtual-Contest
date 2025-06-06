@@ -104,4 +104,20 @@ export type Comment = {
   profiles?: { // コメント投稿者のプロフィール情報を取得する場合に備えて追加
     username: string | null;
   };
-}; 
+};
+
+export interface VirtualContestContest {
+  id: string;
+  name: string;
+}
+
+export interface VirtualContest {
+  id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  score: number;
+  contest_id: string | null;
+  // Supabaseのリレーション取得は配列で返されるため、型を修正
+  contests: VirtualContestContest[] | null; 
+} 

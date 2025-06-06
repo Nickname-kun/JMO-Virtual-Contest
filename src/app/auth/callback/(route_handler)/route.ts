@@ -19,5 +19,9 @@ export async function GET(request: Request) {
   }
 
   // 認証後にリダイレクトするURL
-  return NextResponse.redirect(new URL('/', requestUrl.origin));
+  // Supabaseのauth-helpersがセッションクッキーを設定した後、
+  // クライアントサイドで認証状態が検知され次第、
+  // Next.jsのミドルウェアやルートガードによって適切なページにリダイレクトされる想定。
+  // ここでは単純にサイトのルートにリダイレクト。
+  return NextResponse.redirect(new URL('/', request.url));
 } 

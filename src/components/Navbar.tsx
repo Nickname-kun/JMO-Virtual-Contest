@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Spacer, Link as ChakraLink, Button, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure, Stack, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { Box, Flex, Heading, Spacer, Link as ChakraLink, Button, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure, Stack, Menu, MenuButton, MenuList, MenuItem, Text } from '@chakra-ui/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -14,6 +14,7 @@ export default function Navbar() {
   const supabase = createClientComponentClient();
   const session = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -22,16 +23,19 @@ export default function Navbar() {
       if (session?.user) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('is_admin')
+          .select('is_admin, username')
           .eq('id', session.user.id)
           .single();
-        if (!error && data?.is_admin) {
-          setIsAdmin(true);
+        if (!error && data) {
+          setIsAdmin(data.is_admin);
+          setUsername(data.username);
         } else {
           setIsAdmin(false);
+          setUsername(null);
         }
       } else {
         setIsAdmin(false);
+        setUsername(null);
       }
     };
     fetchProfile();
@@ -66,9 +70,15 @@ export default function Navbar() {
           </ChakraLink>
           {session ? (
             <>
-              <ChakraLink as={Link} href="/profile" _hover={{ color: 'blue.200' }}>
-                マイページ
-              </ChakraLink>
+              <Menu>
+                <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="whiteAlpha" variant="outline" color="white">
+                  Hi, {username || session.user.email}
+                </MenuButton>
+                <MenuList bg="blue.800">
+                  <MenuItem as={Link} href="/profile" bg="blue.800">マイページ</MenuItem>
+                  <MenuItem onClick={handleSignOut} bg="blue.800">ログアウト</MenuItem>
+                </MenuList>
+              </Menu>
               {isAdmin && (
                 <Menu>
                   <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" ml={2}>
@@ -81,9 +91,6 @@ export default function Navbar() {
                   </MenuList>
                 </Menu>
               )}
-              <Button onClick={handleSignOut} size="sm" colorScheme="whiteAlpha" variant="outline">
-                ログアウト
-              </Button>
             </>
           ) : (
             <Button as={Link} href="/auth" size="sm" colorScheme="whiteAlpha" variant="outline">
@@ -109,6 +116,9 @@ export default function Navbar() {
             <DrawerHeader>メニュー</DrawerHeader>
             <DrawerBody>
               <Stack spacing={4}>
+                {session && username && (
+                   <Text fontSize="lg" fontWeight="bold">Hi, {username}</Text>
+                )}
                 <ChakraLink as={Link} href="/" onClick={onClose} _hover={{ color: 'blue.200' }}>
                   HOME
                 </ChakraLink>

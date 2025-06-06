@@ -229,6 +229,11 @@ export default function AuthPage() {
               >
                 サインアップ
               </Button>
+              <Divider my={4} />
+              <Text textAlign="center" fontSize="sm" color="black" mb={2}>
+                または
+              </Text>
+              <TwitterAuthButton />
             </Stack>
           </TabPanel>
         </TabPanels>

@@ -1,5 +1,5 @@
 import { Button } from '@chakra-ui/react';
-import { FaTwitter } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database';
 
@@ -26,7 +26,7 @@ export const TwitterAuthButton = () => {
 
   return (
     <Button
-      leftIcon={<FaTwitter />}
+      leftIcon={<FaXTwitter />}
       bgColor="#1DA1F2"
       color="white"
       _hover={{
@@ -35,7 +35,7 @@ export const TwitterAuthButton = () => {
       onClick={handleTwitterLogin}
       w="full"
     >
-      Twitterでログイン
+      Xでログイン
     </Button>
   );
 }; 

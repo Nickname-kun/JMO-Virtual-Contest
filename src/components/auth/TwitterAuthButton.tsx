@@ -12,6 +12,7 @@ export const TwitterAuthButton = () => {
         provider: 'twitter',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email',
         },
       });
 

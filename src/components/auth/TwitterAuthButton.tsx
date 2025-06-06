@@ -27,15 +27,15 @@ export const TwitterAuthButton = () => {
   return (
     <Button
       leftIcon={<FaXTwitter />}
-      bgColor="#1DA1F2"
+      bgColor="#000000"
       color="white"
       _hover={{
-        bgColor: "#1A94E0",
+        bgColor: "#333333",
       }}
       onClick={handleTwitterLogin}
       w="full"
     >
-      Xでログイン
+      Twitterでログイン
     </Button>
   );
 }; 

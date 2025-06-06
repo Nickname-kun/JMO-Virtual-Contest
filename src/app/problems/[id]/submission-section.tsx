@@ -23,6 +23,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { create, all } from 'mathjs'
+import { BigNumber } from 'bignumber.js'
 
 declare global {
   namespace JSX {
@@ -243,22 +244,20 @@ export default function SubmissionSection({ problemId, correctAnswers, requires_
 
         // 数値的な比較、または文字列としての完全一致
         const isMatch = (userVal: any, correctVal: any): boolean => {
-           // console.log(`isMatch 入力 - userVal 型: ${typeof userVal}, 値: ${userVal}, correctVal 型: ${typeof correctVal}, 値: ${correctVal}`); // 追加ログ
-           // 両方がmathjsのBigNumberであるかを確認
-           if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
-               typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
-               // BigNumberの場合、許容誤差内で比較
-               const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
-               const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
-               const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
-               // console.log(`BigNumber 差の絶対値: ${diff.toString()}, 許容誤差 ${bigNumberTolerance.toString()}, 結果: ${isWithinTolerance}`);
-               return isWithinTolerance;
-           } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
-             return Math.abs(userVal - correctVal) < tolerance;
-           } else {
-             // 数値でもBigNumberでもない場合は文字列として比較
-             return String(userVal).trim() === String(correctVal).trim();
-           }
+          // 両方がmathjsのBigNumberであるかを確認
+          if (typeof userVal === 'object' && userVal !== null && typeof userVal.equals === 'function' &&
+              typeof correctVal === 'object' && correctVal !== null && typeof correctVal.equals === 'function') {
+              // BigNumberの場合、許容誤差内で比較
+              const bigNumberTolerance = mathBig.bignumber('1e-10'); // BigNumberの許容誤差を設定
+              const diff = mathBig.abs(mathBig.subtract(userVal, correctVal));
+              const isWithinTolerance = mathBig.smallerEq(diff, bigNumberTolerance) as boolean;
+              return isWithinTolerance;
+          } else if (typeof userVal === 'number' && typeof correctVal === 'number') {
+            return Math.abs(userVal - correctVal) < tolerance;
+          } else {
+            // 数値でもBigNumberでもない場合は文字列として比較
+            return String(userVal).trim() === String(correctVal).trim();
+          }
         };
 
         // === 新しい採点ロジック ===

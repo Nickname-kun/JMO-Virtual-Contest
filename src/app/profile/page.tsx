@@ -1,39 +1,48 @@
+import { Box, Heading, Text, VStack, FormControl, FormLabel, Input, Button, Container } from '@chakra-ui/react';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Box, Heading, Text, VStack, FormControl, FormLabel, Input, Button } from '@chakra-ui/react';
 import FeedbackToast from './FeedbackToast';
-import ProfileForm from './profile-form'; // 後で作成するProfileFormをインポート
-import LearningData from './learning-data'; // LearningDataコンポーネントをインポート
-import PasswordChangeForm from './PasswordChangeForm'; // パスワード変更フォームをインポート
-import DeleteAccountButton from './DeleteAccountButton'; // アカウント削除ボタンをインポート
+import ProfileForm from './profile-form';
+import LearningData from './learning-data';
+import PasswordChangeForm from './PasswordChangeForm';
+import DeleteAccountButton from './DeleteAccountButton';
 import { Suspense } from 'react';
+
+interface VirtualContestContest {
+  id: string;
+  name: string;
+}
+
+interface VirtualContest {
+  id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  score: number;
+  contest_id: string | null;
+  contests: VirtualContestContest | null;
+}
 
 export default async function ProfilePage() {
   const supabase = createServerComponentClient({ cookies });
+  const session = await supabase.auth.getSession();
 
-  const { data: {
-    session
-  } } = await supabase.auth.getSession();
-
-  if (!session) {
+  if (!session.data.session) {
     redirect('/auth');
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('username, is_admin') // 必要に応じて他のカラムも取得
-    .eq('id', session.user.id)
+  const userId = session.data.session.user.id;
+
+  // ユーザー情報の取得
+  const { data: userData } = await supabase
+    .from('users')
+    .select('username')
+    .eq('id', userId)
     .single();
 
-  if (profileError || !profile) {
-    console.error('Error fetching profile:', profileError);
-    // エラー表示やリダイレクトなどを検討
-    return <Box>プロフィールの読み込みに失敗しました。</Box>; // エラー表示を追加
-  }
-
-  // ユーザーの提出履歴を取得（関連する問題情報も結合）
-  const { data: submissionsData, error: submissionsError } = await supabase
+  // 提出履歴の取得
+  const { data: submissions } = await supabase
     .from('submissions')
     .select(`
       id,
@@ -41,20 +50,18 @@ export default async function ProfilePage() {
       answer,
       is_correct,
       submitted_at,
-      problems!inner (
+      problems (
         id,
         title,
         number,
         field
       )
     `)
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .order('submitted_at', { ascending: false });
 
-  if (submissionsError) throw submissionsError;
-
-  // ユーザーのバーチャルコンテスト履歴を取得（関連するコンテスト情報も結合）
-  const { data: virtualContestsData, error: virtualContestsError } = await supabase
+  // バーチャルコンテスト履歴の取得
+  const { data: virtualContests } = await supabase
     .from('virtual_contests')
     .select(`
       id,
@@ -68,80 +75,21 @@ export default async function ProfilePage() {
         name
       )
     `)
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .order('start_time', { ascending: false });
 
-  if (virtualContestsError) throw virtualContestsError;
-
-  // Server Action for updating username - Called directly from Client Component
-  // sessionは直接参照せず、Server Action内でcookiesからsupabaseクライアントを作成して取得
-  const updateUsername = async (formData: FormData): Promise<{ status: string; message: string }> => {
-    'use server';
-
-    // Server Action内で改めてcookiesからsupabaseクライアントを作成し、セッションを取得
-    const supabaseServer = createServerComponentClient({ cookies });
-     const { data: { session: serverSession } } = await supabaseServer.auth.getSession();
-
-    if (!serverSession) {
-      return { status: 'error', message: '認証されていません。', };
-    }
-
-    const newUsername = formData.get('username') as string;
-    const userId = serverSession.user.id;
-
-    if (!newUsername || newUsername.trim() === '') {
-        return JSON.parse(JSON.stringify({ status: 'error', message: 'ユーザー名は空にできません。' }));
-    }
-
-    const { error } = await supabaseServer
-      .from('profiles')
-      .update({ username: newUsername })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error updating username:', error);
-       return JSON.parse(JSON.stringify({ status: 'error', message: error.message }));
-    } else {
-      console.log('Username updated successfully!');
-       return JSON.parse(JSON.stringify({ status: 'success', message: 'ユーザー名が更新されました！' }));
-    }
-  };
-
   return (
-    <Box p={8} maxW="container.md" mx="auto">
-      <Suspense fallback={<div>Loading...</div>}>
-        <FeedbackToast />
-      </Suspense>
-      <VStack spacing={6} align="start">
-        <Heading as="h1" size="xl">マイページ</Heading>
-        <Text fontSize="lg">現在のユーザー: {profile?.username || session.user.email} さん</Text>
-
-        <Box mt={8} w="full">
-          <Heading as="h2" size="lg" mb={4}>プロフィール編集</Heading>
-          <Suspense fallback={<div>Loading...</div>}>
-            <ProfileForm initialProfile={profile} updateUsernameAction={updateUsername} />
-          </Suspense>
+    <Container maxW="container.lg" py={8}>
+      <VStack spacing={8} align="stretch">
+        <Box>
+          <Heading as="h1" size="xl" mb={4}>プロフィール</Heading>
+          <ProfileForm initialUsername={userData?.username || ''} userId={userId} />
         </Box>
-
-        <Suspense fallback={<div>Loading...</div>}>
-          <PasswordChangeForm />
-        </Suspense>
-
-        <Box mt={8} w="full">
-          <Heading as="h2" size="lg" mb={4}>アカウント削除</Heading>
-          <Suspense fallback={<div>Loading...</div>}>
-            <DeleteAccountButton />
-          </Suspense>
-        </Box>
-
-        <Box mt={8} w="full">
+        <Box>
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>
-          <Suspense fallback={<div>Loading...</div>}>
-            <LearningData submissions={submissionsData || []} virtualContests={virtualContestsData || []} />
-          </Suspense>
+          <LearningData submissions={submissions || []} virtualContests={virtualContests || []} />
         </Box>
-
       </VStack>
-    </Box>
+    </Container>
   );
 } 

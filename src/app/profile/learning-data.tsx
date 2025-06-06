@@ -37,7 +37,7 @@ interface VirtualContest {
   status: string;
   score: number;
   contest_id: string | null;
-  contests: VirtualContestContest[]; // 配列として定義
+  contests: VirtualContestContest | null;
 }
 
 interface LearningDataProps {
@@ -223,9 +223,9 @@ export default function LearningData({
               <Tr key={vc.id}>
                 <Td>{format(new Date(vc.start_time), 'yyyy/MM/dd HH:mm', { locale: ja })}</Td>
                 <Td>
-                  {vc.contest_id ? (
+                  {vc.contest_id && vc.contests ? (
                     <ChakraLink as={Link} href={`/contests/${vc.contest_id}/virtual/${vc.id}`}>
-                      {Array.isArray(vc.contests) && vc.contests.length > 0 ? vc.contests[0].name : 'N/A'}
+                      {vc.contests.name || 'N/A'}
                     </ChakraLink>
                   ) : 'N/A'}
                 </Td>

@@ -36,7 +36,7 @@ export default async function ProfilePage() {
 
   // ユーザー情報の取得
   const { data: userData } = await supabase
-    .from('users')
+    .from('profiles')
     .select('username')
     .eq('id', userId)
     .single();
@@ -61,7 +61,7 @@ export default async function ProfilePage() {
     .order('submitted_at', { ascending: false });
 
   // バーチャルコンテスト履歴の取得
-  const { data: virtualContests } = await supabase
+  const { data: virtualContestsData } = await supabase
     .from('virtual_contests')
     .select(`
       id,
@@ -70,7 +70,7 @@ export default async function ProfilePage() {
       status,
       score,
       contest_id,
-      contests!inner (
+      contests (
         id,
         name
       )
@@ -78,16 +78,67 @@ export default async function ProfilePage() {
     .eq('user_id', userId)
     .order('start_time', { ascending: false });
 
+  // 型に合わせてデータを変換
+  const virtualContests: VirtualContest[] = virtualContestsData?.map(vc => ({
+    ...vc,
+    contests: vc.contests ? {
+      id: vc.contests.id,
+      name: vc.contests.name
+    } : null
+  })) || [];
+
+  // ユーザー名更新サーバーアクション
+  const updateUsernameAction = async (formData: FormData) => {
+    'use server';
+    const supabaseServer = createServerComponentClient({ cookies });
+    const { data: { session: serverSession } } = await supabaseServer.auth.getSession();
+
+    if (!serverSession) {
+      return { status: 'error', message: '認証されていません。', };
+    }
+
+    const newUsername = formData.get('username') as string;
+    const userId = serverSession.user.id;
+
+    if (!newUsername || newUsername.trim() === '') {
+        return { status: 'error', message: 'ユーザー名は空にできません。', };
+    }
+
+    const { error } = await supabaseServer
+      .from('profiles')
+      .update({ username: newUsername })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating username:', error);
+       return { status: 'error', message: error.message };
+    } else {
+       return { status: 'success', message: 'ユーザー名が更新されました！' };
+    }
+  };
+
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={8} align="stretch">
         <Box>
           <Heading as="h1" size="xl" mb={4}>プロフィール</Heading>
-          <ProfileForm initialUsername={userData?.username || ''} userId={userId} />
+          <ProfileForm initialUsername={userData?.username || ''} updateUsernameAction={updateUsernameAction} />
         </Box>
         <Box>
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>
           <LearningData submissions={submissions || []} virtualContests={virtualContests || []} />
+        </Box>
+        <Box>
+          <Heading as="h2" size="lg" mb={4}>パスワード変更</Heading>
+          <Suspense fallback={<div>Loading...</div>}>
+            <PasswordChangeForm />
+          </Suspense>
+        </Box>
+        <Box>
+          <Heading as="h2" size="lg" mb={4}>アカウント削除</Heading>
+          <Suspense fallback={<div>Loading...</div>}>
+            <DeleteAccountButton />
+          </Suspense>
         </Box>
       </VStack>
     </Container>

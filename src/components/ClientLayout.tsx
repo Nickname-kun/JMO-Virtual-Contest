@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import FeedbackToast from '@/app/profile/FeedbackToast';
 import { useLoading } from '@/contexts/LoadingContext';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
 
 export default function ClientLayout({
   children,
@@ -19,26 +19,35 @@ export default function ClientLayout({
   const pathname = usePathname();
   const { isLoading } = useLoading();
   const supabase = createClientComponentClient();
-  const user = useUser();
+  const session = useSession();
 
   useEffect(() => {
     const createProfileIfMissing = async () => {
-      if (user) {
+      console.log('Checking profile for session:', session);
+      if (session?.user) {
         // Check if profile exists
         const { data, error } = await supabase
           .from('profiles')
           .select('id')
-          .eq('id', user.id)
+          .eq('id', session.user.id)
           .single();
 
+        console.log('Profile check result:', { data, error });
+
         if (error && error.code === 'PGRST116') { // PGRST116 indicates no row found
+          console.log('Profile not found, creating new profile');
+          console.log('User metadata:', session.user.user_metadata);
+          
+          const username = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
+          console.log('Generated username:', username);
+
           // Profile doesn't exist, create it
           const { error: insertError } = await supabase
             .from('profiles')
             .insert([
               {
-                id: user.id,
-                username: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+                id: session.user.id,
+                username: username,
                 is_admin: false,
               },
             ]);
@@ -46,7 +55,7 @@ export default function ClientLayout({
           if (insertError) {
             console.error('Error creating profile:', insertError);
           } else {
-            console.log('Profile created for user:', user.id);
+            console.log('Profile created successfully for user:', session.user.id);
           }
         } else if (error) {
           console.error('Error checking profile:', error);
@@ -55,7 +64,7 @@ export default function ClientLayout({
     };
 
     createProfileIfMissing();
-  }, [user, supabase]);
+  }, [session, supabase]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

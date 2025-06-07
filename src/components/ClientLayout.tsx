@@ -18,14 +18,14 @@ export default function ClientLayout({
   const { isLoading } = useLoading();
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
       {isLoading && <LoadingOverlay />}
-      <main>{children}</main>
+      <main style={{ flexGrow: 1 }}>{children}</main>
       <Footer />
       <Suspense fallback={<div>Loading...</div>}>
         <FeedbackToast />
       </Suspense>
-    </>
+    </div>
   );
 } 

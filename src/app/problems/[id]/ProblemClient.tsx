@@ -47,7 +47,19 @@ interface Problem {
   has_diagram: boolean
   diagram_svg: string
   requires_multiple_answers: boolean
-  // ... other fields
+}
+
+interface Explanation {
+  id: string
+  problem_id: string
+  user_id: string
+  content: string
+  is_official: boolean
+  created_at: string
+  updated_at: string
+  profiles?: {
+    username: string | null
+  }
 }
 
 function ProblemClientContent({ problem }: { problem: Problem }) {
@@ -58,6 +70,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [loadingComments, setLoadingComments] = useState(true);
   const [postingComment, setPostingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedCommentContent, setEditedCommentContent] = useState('');
@@ -184,15 +197,34 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
     }
   };
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+        setIsAdmin(data?.is_admin || false);
+      }
+    };
+    checkAdminStatus();
+  }, [user, supabase]);
+
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={8} align="stretch">
         <Heading as="h1" size="xl">
           {problem.title}
         </Heading>
-        <Button as={Link} href="/problems" colorScheme="gray" variant="outline" size="sm" alignSelf="flex-start">
-          問題一覧へ戻る
-        </Button>
+        <HStack spacing={4}>
+          <Button as={Link} href="/problems" colorScheme="gray" variant="outline" size="sm">
+            問題一覧へ戻る
+          </Button>
+          <Button as={Link} href={`/problems/${problem.id}/explanations`} colorScheme="blue" size="sm">
+            解説を見る
+          </Button>
+        </HStack>
         
         <Text className="problem-text">{renderLatex(problem.content)}</Text>
 
@@ -211,7 +243,6 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         <Divider my={6} />
 
         <Box>
-          <Heading as="h2" size="md" mb={4}>コメント</Heading>
           {commentError && (
              <Alert status="error" mb={4}>
                <AlertIcon />

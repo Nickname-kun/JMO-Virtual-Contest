@@ -38,8 +38,8 @@ export default function ClientLayout({
             .insert([
               {
                 id: user.id,
-                username: user.email ? user.email.split('@')[0] : null, // 例: メールアドレスからユーザー名を生成
-                is_admin: false, // デフォルトで非管理者に設定
+                username: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+                is_admin: false,
               },
             ]);
 

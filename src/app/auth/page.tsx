@@ -229,13 +229,13 @@ export default function AuthPage() {
               <Heading mb={4} size="md">サインアップ</Heading>
               <FormControl id="signup-username">
                 <FormLabel>ユーザーネーム</FormLabel>
-                <Input
-                  placeholder="ユーザーネーム"
-                  value={signupUsername}
-                  onChange={e => setSignupUsername(e.target.value)}
-                  type="text"
+              <Input
+                placeholder="ユーザーネーム"
+                value={signupUsername}
+                onChange={e => setSignupUsername(e.target.value)}
+                type="text"
                   maxLength={15}
-                />
+              />
                 <FormHelperText>ユーザーネームは15文字以内で入力してください。</FormHelperText>
               </FormControl>
               <Input

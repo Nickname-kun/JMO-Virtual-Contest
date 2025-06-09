@@ -98,13 +98,13 @@ export default function ProfileForm({
         isClosable: true,
       });
     } else {
-       toast({
+    toast({
         title: '成功',
         description: 'ユーザー名が更新されました！',
         status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+      duration: 5000,
+      isClosable: true,
+    });
     }
 
     setIsLoading(false);

@@ -219,8 +219,8 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
         </Heading>
         <HStack spacing={4}>
           <Button as={Link} href="/problems" colorScheme="gray" variant="outline" size="sm">
-            問題一覧へ戻る
-          </Button>
+          問題一覧へ戻る
+        </Button>
           <Button as={Link} href={`/problems/${problem.id}/explanations`} colorScheme="blue" size="sm">
             解説を見る
           </Button>

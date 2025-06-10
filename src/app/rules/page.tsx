@@ -15,9 +15,9 @@ export default function RulesPage() {
         <ListItem>各問題は1回だけ解答を提出できます（やり直しバーチャルは何度でも可能）。</ListItem>
         <ListItem>解答は数式入力欄（math-field）で入力し、LaTeX形式で保存されます。</ListItem>
         <ListItem>
-          <Text fontWeight="bold" color="red.500">注意：</Text>判定は入力された文字列そのものに対して行われます。数学的に同値であっても表現が異なると不正解となる場合があります。解答は、分数を約分したり、不必要に平方根を用いないなど、数学的に自然で一般的な形で入力してください。
+          <Text fontWeight="bold" color="red.500">注意：</Text>判定は数学的に同値であっても表現が異なると不正解となる場合があります。解答を送信する際は分数は約分する、不必要に平方根を用いないなど、数学的に自然で一般的な形で入力してください。
         </ListItem>
-        <ListItem>バーチャル中に「やめる」「完了する」ボタンで途中終了・採点が可能です。</ListItem>
+        <ListItem>バーチャル中に「やめる」ボタンを押すと、バーチャルコンテスト自体が無効になり、データは保存されません。「完了する」ボタンを押すと採点が可能です。</ListItem>
         <ListItem>バーチャル履歴・採点結果はマイページからいつでも確認できます。</ListItem>
       </List>
       <Heading as="h2" size="md" mt={8} mb={2}>注意事項</Heading>

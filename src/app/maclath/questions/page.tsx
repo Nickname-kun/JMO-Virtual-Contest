@@ -35,7 +35,11 @@ export default function QuestionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [tabIndex, setTabIndex] = useState(0); // 0: 回答募集中, 1: 解決済み
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1); // 現在のページ
+  const [totalQuestions, setTotalQuestions] = useState(0); // 総質問数
   const supabase = createClientComponentClient();
+
+  const PAGE_SIZE = 10; // 1ページあたりの質問数
 
   // tabIndexに基づいて現在のステータスを決定
   const currentStatus = tabIndex === 0 ? 'open' : 'resolved';
@@ -43,7 +47,7 @@ export default function QuestionsPage() {
   useEffect(() => {
     fetchCategories();
     fetchQuestions();
-  }, [selectedCategory, currentStatus]);
+  }, [selectedCategory, currentStatus, currentPage]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -61,7 +65,28 @@ export default function QuestionsPage() {
 
   const fetchQuestions = async () => {
     setLoading(true);
-    let query = supabase
+
+    // まず、総質問数を取得
+    let countQuery = supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true }); // count: 'exact' と head: true を使用
+
+    if (selectedCategory !== 'all') {
+      countQuery = countQuery.filter('question_categories.category_id', 'eq', selectedCategory);
+    }
+    countQuery = countQuery.eq('status', currentStatus);
+
+    const { count, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error('Error fetching questions count:', countError);
+      setLoading(false);
+      return;
+    }
+    setTotalQuestions(count || 0);
+
+    // 次に、現在のページに表示する質問データを取得
+    let dataQuery = supabase
       .from('questions')
       .select(`
         *,
@@ -71,16 +96,20 @@ export default function QuestionsPage() {
       .order('created_at', { ascending: false });
 
     if (selectedCategory !== 'all') {
-      query = query.filter('question_categories.category_id', 'eq', selectedCategory);
+      dataQuery = dataQuery.filter('question_categories.category_id', 'eq', selectedCategory);
     }
+    dataQuery = dataQuery.eq('status', currentStatus);
 
-    // tabIndexに基づいてステータスでフィルタリング
-    query = query.eq('status', currentStatus);
+    // ページネーションを適用
+    const from = (currentPage - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    dataQuery = dataQuery.range(from, to);
 
-    const { data, error } = await query;
+    const { data, error: dataError } = await dataQuery;
 
-    if (error) {
-      console.error('Error fetching questions:', error);
+    if (dataError) {
+      console.error('Error fetching questions data:', dataError);
+      setLoading(false);
       return;
     }
 
@@ -88,11 +117,46 @@ export default function QuestionsPage() {
     setLoading(false);
   };
 
+  const totalPages = Math.ceil(totalQuestions / PAGE_SIZE);
+
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5; // 表示する最大ページ数
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      const startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+      if (startPage > 1) {
+        pageNumbers.push(1);
+        if (startPage > 2) {
+          pageNumbers.push('...');
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pageNumbers.push('...');
+        }
+        pageNumbers.push(totalPages);
+      }
+    }
+    return pageNumbers;
+  };
+
   return (
     <Box maxW="container.md" mx="auto" px={4} py={8}>
       <Flex justify="space-between" align="center" mb={6}>
         <Heading as="h1" size="xl">質問一覧</Heading>
-        <Button as={Link} href="/questions/new" colorScheme="blue">
+        <Button as={Link} href="/maclath/questions/new" colorScheme="blue">
           新規質問
         </Button>
       </Flex>
@@ -103,6 +167,7 @@ export default function QuestionsPage() {
           onChange={(e) => setSelectedCategory(e.target.value)}
           width={{ base: "full", md: "64" }}
           mb={4}
+          borderColor="blue.500"
         >
           <option value="all">全てのカテゴリ</option>
           {categories.map((category) => (
@@ -114,9 +179,15 @@ export default function QuestionsPage() {
 
         {/* ステータスフィルターをTabsに置き換え */}
         <Tabs index={tabIndex} onChange={setTabIndex} isFitted variant="enclosed">
-          <TabList>
-            <Tab>回答募集中</Tab>
-            <Tab>解決済み</Tab>
+          <TabList borderColor="transparent">
+            <Tab
+              _selected={{ color: 'red.800', borderColor: 'red.500', borderBottomColor: 'red.800' }}
+              borderColor="blue.500"
+            >回答募集中</Tab>
+            <Tab
+              _selected={{ color: 'red.800', borderColor: 'red.500', borderBottomColor: 'red.800' }}
+              borderColor="blue.500"
+            >解決済み</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -130,7 +201,7 @@ export default function QuestionsPage() {
                     <Box
                       key={question.id}
                       as={Link}
-                      href={`/questions/${question.id}`}
+                      href={`/maclath/questions/${question.id}`}
                       p={5}
                       borderWidth="1px"
                       borderColor="gray.200"
@@ -182,6 +253,37 @@ export default function QuestionsPage() {
                   ))}
                 </VStack>
               )}
+              {totalPages > 1 && (
+                <Flex justify="center" mt={8} gap={2}>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    isDisabled={currentPage === 1}
+                    variant="outline"
+                    colorScheme="purple"
+                  >
+                    前へ
+                  </Button>
+                  {getPageNumbers().map((page, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                      variant={page === currentPage ? 'solid' : 'outline'}
+                      colorScheme={page === currentPage ? 'purple' : 'gray'}
+                      isDisabled={typeof page !== 'number'}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    isDisabled={currentPage === totalPages}
+                    variant="outline"
+                    colorScheme="purple"
+                  >
+                    次へ
+                  </Button>
+                </Flex>
+              )}
             </TabPanel>
             <TabPanel p={0}>
               {loading ? (
@@ -194,7 +296,7 @@ export default function QuestionsPage() {
                     <Box
                       key={question.id}
                       as={Link}
-                      href={`/questions/${question.id}`}
+                      href={`/maclath/questions/${question.id}`}
                       p={5}
                       borderWidth="1px"
                       borderColor="gray.200"
@@ -245,6 +347,37 @@ export default function QuestionsPage() {
                     </Box>
                   ))}
                 </VStack>
+              )}
+              {totalPages > 1 && (
+                <Flex justify="center" mt={8} gap={2}>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    isDisabled={currentPage === 1}
+                    variant="outline"
+                    colorScheme="purple"
+                  >
+                    前へ
+                  </Button>
+                  {getPageNumbers().map((page, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                      variant={page === currentPage ? 'solid' : 'outline'}
+                      colorScheme={page === currentPage ? 'purple' : 'gray'}
+                      isDisabled={typeof page !== 'number'}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    isDisabled={currentPage === totalPages}
+                    variant="outline"
+                    colorScheme="purple"
+                  >
+                    次へ
+                  </Button>
+                </Flex>
               )}
             </TabPanel>
           </TabPanels>

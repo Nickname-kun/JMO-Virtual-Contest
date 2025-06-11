@@ -9,6 +9,7 @@ import FeedbackToast from '@/app/profile/FeedbackToast';
 import { useLoading } from '@/contexts/LoadingContext';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Box, useTheme } from '@chakra-ui/react';
 
 export default function ClientLayout({
   children,
@@ -20,6 +21,9 @@ export default function ClientLayout({
   const { isLoading } = useLoading();
   const supabase = createClientComponentClient();
   const session = useSession();
+  const theme = useTheme();
+
+  const isMaclathRelatedPage = pathname.startsWith('/maclath');
 
   useEffect(() => {
     const createProfileIfMissing = async () => {
@@ -64,13 +68,25 @@ export default function ClientLayout({
     };
 
     createProfileIfMissing();
-  }, [session, supabase]);
+
+    // body の背景色を動的に設定
+    if (isMaclathRelatedPage) {
+      document.body.style.backgroundColor = theme.colors.purple['100'];
+    } else {
+      document.body.style.backgroundColor = theme.colors.white;
+    }
+
+    // クリーンアップ関数
+    return () => {
+      document.body.style.backgroundColor = ''; // 背景色をリセット
+    };
+  }, [session, supabase, isMaclathRelatedPage, theme.colors.purple, theme.colors.white]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
       {isLoading && <LoadingOverlay />}
-      <main style={{ flexGrow: 1 }}>{children}</main>
+      <Box as="main" flexGrow={1} bg={isMaclathRelatedPage ? 'purple.100' : 'white'}>{children}</Box>
       <Footer />
       <Suspense fallback={<div>Loading...</div>}>
         <FeedbackToast />

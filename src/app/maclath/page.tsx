@@ -25,7 +25,7 @@ export default function MaclathHomePage() {
           日々の学習で生まれた疑問を共有し、協力して解決する場です。
           質問を投稿したり、他の人の質問に回答して、一緒に学びを深めましょう！
         </Text>
-        <Button as={Link} href="/questions" colorScheme="blue" size="lg">
+        <Button as={Link} href="/maclath/questions" colorScheme="blue" size="lg">
           質問一覧を見る
         </Button>
       </VStack>

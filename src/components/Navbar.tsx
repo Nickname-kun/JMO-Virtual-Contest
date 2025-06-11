@@ -2,7 +2,7 @@
 
 import { Box, Flex, Heading, Spacer, Link as ChakraLink, Button, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure, Stack, Menu, MenuButton, MenuList, MenuItem, Text, Collapse, Tag, HStack } from '@chakra-ui/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSession } from '@supabase/auth-helpers-react';
 import { useEffect, useState, useRef } from 'react';
@@ -11,6 +11,7 @@ import { MdMenu, MdKeyboardArrowDown } from 'react-icons/md';
 import { FiBell } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import Image from 'next/image';
 
 type Notification = {
   id: string;
@@ -24,6 +25,7 @@ type Notification = {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClientComponentClient();
   const session = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -36,6 +38,8 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { isOpen: isNotificationsOpen, onOpen: onNotificationsOpen, onClose: onNotificationsClose } = useDisclosure();
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
+
+  const isMaclathPage = pathname.startsWith('/maclath');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -106,6 +110,23 @@ export default function Navbar() {
     };
   }, [session, supabase]);
 
+  const handleNotificationClick = async (notification: Notification) => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notification.id);
+
+    if (error) {
+      console.error('Error marking notification as read:', error);
+    } else {
+      setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => prev > 0 ? prev - 1 : 0);
+    }
+
+    router.push(`/maclath/questions/${notification.related_entity_id}`);
+    onNotificationsClose();
+  };
+
   const handleMarkAllAsRead = async () => {
     if (!session?.user) return;
 
@@ -130,37 +151,49 @@ export default function Navbar() {
   };
 
   return (
-    <Box as="nav" bg="blue.600" color="white" px={6} py={4} boxShadow="sm">
-      <Flex align="center">
-        <Heading as={Link} href="/" size="md" color="white" _hover={{ textDecoration: "none", color: "blue.200" }}>
-          JMO Virtual Contest
-        </Heading>
+    <Box as="nav" bg={isMaclathPage ? "#fffff7" : "blue.600"} color={isMaclathPage ? "blue.800" : "white"} px={6} py={4} boxShadow="sm" height="64px" borderBottom={isMaclathPage ? "1px solid" : "none"} borderColor={isMaclathPage ? "blue.200" : "transparent"}>
+      <Flex align="center" height="100%">
+        {isMaclathPage ? (
+          <Flex align="center" mr={2} height="100%">
+            <Image
+              src="/Maclathロゴ.svg"
+              alt="Maclath Logo"
+              width={238}
+              height={48}
+              style={{ objectFit: 'contain' }}
+            />
+          </Flex>
+        ) : (
+          <Heading as={Link} href="/" size="md" color="white" _hover={{ textDecoration: "none", color: "blue.200" }} mr={2}>
+            JMO Virtual Contest
+          </Heading>
+        )}
         <Spacer />
         <Flex gap={4} display={{ base: 'none', md: 'flex' }} alignItems="center">
-          <ChakraLink as={Link} href="/" _hover={{ color: 'blue.200' }}>
+          <ChakraLink as={Link} href="/" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             HOME
           </ChakraLink>
-          <ChakraLink as={Link} href="/maclath" _hover={{ color: 'blue.200' }}>
+          <ChakraLink as={Link} href="/maclath" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             Maclath
           </ChakraLink>
-          <ChakraLink as={Link} href="/problems" _hover={{ color: 'blue.200' }}>
+          <ChakraLink as={Link} href="/problems" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             問題一覧
           </ChakraLink>
-          <ChakraLink as={Link} href="/contests" _hover={{ color: 'blue.200' }}>
+          <ChakraLink as={Link} href="/contests" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             コンテスト一覧
           </ChakraLink>
-          <ChakraLink as={Link} href="/rules" _hover={{ color: 'blue.200' }}>
+          <ChakraLink as={Link} href="/rules" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             ルール
           </ChakraLink>
           {session ? (
             <HStack spacing={4}>
               <Menu>
-                <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="whiteAlpha" variant="outline" color="white">
+                <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline" color={isMaclathPage ? "blue.800" : "white"}>
                   Hi, {username || session.user.email}
                 </MenuButton>
-                <MenuList bg="blue.800">
-                  <MenuItem as={Link} href="/profile" bg="blue.800">マイページ</MenuItem>
-                  <MenuItem onClick={handleSignOut} bg="blue.800">ログアウト</MenuItem>
+                <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
+                  <MenuItem as={Link} href="/profile" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>マイページ</MenuItem>
+                  <MenuItem onClick={handleSignOut} bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>ログアウト</MenuItem>
                 </MenuList>
               </Menu>
               <Box position="relative">
@@ -168,8 +201,8 @@ export default function Navbar() {
                   aria-label="通知"
                   icon={<FiBell size="20px" />}
                   variant="ghost"
-                  color="white"
-                  _hover={{ color: 'blue.200' }}
+                  color={isMaclathPage ? "blue.800" : "white"}
+                  _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}
                   onClick={onNotificationsOpen}
                   ref={notificationButtonRef}
                 />
@@ -192,17 +225,17 @@ export default function Navbar() {
                   <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" ml={2}>
                     管理者メニュー
                   </MenuButton>
-                  <MenuList bg="blue.800">
-                    <MenuItem as={Link} href="/admin/problems" bg="blue.800">問題管理</MenuItem>
-                    <MenuItem as={Link} href="/admin/contests" bg="blue.800">コンテスト管理</MenuItem>
-                    <MenuItem as={Link} href="/admin/announcements" bg="blue.800">お知らせ管理</MenuItem>
-                    <MenuItem as={Link} href="/admin/categories" bg="blue.800">カテゴリ管理</MenuItem>
+                  <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
+                    <MenuItem as={Link} href="/admin/problems" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>問題管理</MenuItem>
+                    <MenuItem as={Link} href="/admin/contests" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>コンテスト管理</MenuItem>
+                    <MenuItem as={Link} href="/admin/announcements" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>お知らせ管理</MenuItem>
+                    <MenuItem as={Link} href="/admin/categories" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>カテゴリ管理</MenuItem>
                   </MenuList>
                 </Menu>
               )}
             </HStack>
           ) : (
-            <Button as={Link} href="/auth" size="sm" colorScheme="whiteAlpha" variant="outline">
+            <Button as={Link} href="/auth" size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline">
               ログイン
             </Button>
           )}
@@ -214,29 +247,29 @@ export default function Navbar() {
           display={{ base: 'flex', md: 'none' }}
           onClick={onOpen}
           variant="ghost"
-          colorScheme="whiteAlpha"
+          colorScheme={isMaclathPage ? "blue" : "whiteAlpha"}
           ml={2}
         />
         <Drawer isOpen={isOpen} placement="right" onClose={() => { onClose(); setIsUserMenuOpen(false); }} finalFocusRef={btnRef}>
           <DrawerOverlay />
-          <DrawerContent bg="blue.700" color="white">
+          <DrawerContent bg={isMaclathPage ? "#fffff7" : "blue.700"} color={isMaclathPage ? "blue.800" : "white"}>
             <DrawerCloseButton />
             <DrawerHeader>メニュー</DrawerHeader>
             <DrawerBody>
               <Stack spacing={4}>
-                <ChakraLink as={Link} href="/" onClick={onClose} _hover={{ color: 'blue.200' }}>
+                <ChakraLink as={Link} href="/" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   HOME
                 </ChakraLink>
-                <ChakraLink as={Link} href="/maclath" onClick={onClose} _hover={{ color: 'blue.200' }}>
+                <ChakraLink as={Link} href="/maclath/questions" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   Maclath
                 </ChakraLink>
-                <ChakraLink as={Link} href="/problems" onClick={onClose} _hover={{ color: 'blue.200' }}>
+                <ChakraLink as={Link} href="/problems" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   問題一覧
                 </ChakraLink>
-                <ChakraLink as={Link} href="/contests" onClick={onClose} _hover={{ color: 'blue.200' }}>
+                <ChakraLink as={Link} href="/contests" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   コンテスト一覧
                 </ChakraLink>
-                <ChakraLink as={Link} href="/rules" onClick={onClose} _hover={{ color: 'blue.200' }}>
+                <ChakraLink as={Link} href="/rules" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   ルール
                 </ChakraLink>
 
@@ -248,18 +281,18 @@ export default function Navbar() {
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                       cursor="pointer"
                       py={2}
-                      _hover={{ color: 'blue.200' }}
+                      _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}
                     >
                       {username && (
-                        <Text fontSize="lg" fontWeight="bold">Hi, {username}</Text>
+                        <Text fontSize="lg" fontWeight="bold" color={isMaclathPage ? "blue.800" : "white"}>Hi, {username}</Text>
                       )}
-                      <MdKeyboardArrowDown style={{ transform: `rotate(${isUserMenuOpen ? 180 : 0}deg)`, transition: 'transform 0.2s' }} />
+                      <MdKeyboardArrowDown style={{ transform: `rotate(${isUserMenuOpen ? 180 : 0}deg)`, transition: 'transform 0.2s', color: isMaclathPage ? 'blue.800' : 'white' }} />
                     </Flex>
-                    <Flex align="center" py={2} _hover={{ color: 'blue.200' }}
+                    <Flex align="center" py={2} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}
                       cursor="pointer"
                       onClick={() => { onNotificationsOpen(); onClose(); }}
                     >
-                      <FiBell size="20px" style={{ color: 'white' }} />
+                      <FiBell size="20px" style={{ color: isMaclathPage ? 'blue.800' : 'white' }} />
                       <Text ml={2}>通知</Text>
                       {unreadCount > 0 && (
                         <Tag
@@ -275,30 +308,30 @@ export default function Navbar() {
                     </Flex>
                     <Collapse in={isUserMenuOpen} animateOpacity>
                       <Stack pl={4} borderLeft="1px solid white" spacing={2}>
-                         <ChakraLink as={Link} href="/profile" onClick={() => { onClose(); setIsUserMenuOpen(false); }} _hover={{ color: 'blue.200' }}>
+                         <ChakraLink as={Link} href="/profile" onClick={() => { onClose(); setIsUserMenuOpen(false); }} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }} color={isMaclathPage ? 'blue.800' : 'white'}>
                       マイページ
                     </ChakraLink>
+                         <Button onClick={() => { onClose(); handleSignOut(); setIsUserMenuOpen(false); }} variant="ghost" color={isMaclathPage ? 'blue.800' : 'white'} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }} w="full" justifyContent="flex-start" mt={2}>
+                      ログアウト
+                    </Button>
                     {isAdmin && (
                       <Menu>
-                             <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme="teal" variant="solid" w="full" justifyContent="flex-start" onClick={(e) => e.stopPropagation()}>
+                             <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme={isMaclathPage ? "blue" : "teal"} variant="solid" w="full" justifyContent="flex-start" onClick={(e) => e.stopPropagation()}>
                           管理者メニュー
                         </MenuButton>
-                        <MenuList bg="blue.800">
-                               <MenuItem as={Link} href="/admin/problems" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">問題管理</MenuItem>
-                               <MenuItem as={Link} href="/admin/contests" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">コンテスト管理</MenuItem>
-                               <MenuItem as={Link} href="/admin/announcements" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">お知らせ管理</MenuItem>
-                               <MenuItem as={Link} href="/admin/categories" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg="blue.800">カテゴリ管理</MenuItem>
+                        <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
+                               <MenuItem as={Link} href="/admin/problems" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>問題管理</MenuItem>
+                               <MenuItem as={Link} href="/admin/contests" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>コンテスト管理</MenuItem>
+                               <MenuItem as={Link} href="/admin/announcements" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>お知らせ管理</MenuItem>
+                               <MenuItem as={Link} href="/admin/categories" onClick={() => { onClose(); setIsUserMenuOpen(false); }} bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>カテゴリ管理</MenuItem>
                         </MenuList>
                       </Menu>
                     )}
-                         <Button onClick={() => { onClose(); handleSignOut(); setIsUserMenuOpen(false); }} size="sm" colorScheme="red" variant="solid" w="full" justifyContent="flex-start" mt={2}>
-                      ログアウト
-                    </Button>
                       </Stack>
                     </Collapse>
                   </>
                 ) : (
-                  <Button as={Link} href="/auth" size="sm" colorScheme="whiteAlpha" variant="outline" onClick={onClose} w="full">
+                  <Button as={Link} href="/auth" size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline" onClick={onClose} w="full">
                     ログイン
                   </Button>
                 )}
@@ -333,15 +366,7 @@ export default function Navbar() {
                       borderRadius="md"
                       _hover={{ bg: "blue.400" }}
                       cursor="pointer"
-                      onClick={async () => {
-                        await supabase.from('notifications').update({ is_read: true }).eq('id', notification.id);
-                        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n));
-                        setUnreadCount(prev => prev > 0 ? prev - 1 : 0);
-                        onNotificationsClose();
-                        if (notification.type === 'new_answer' || notification.type === 'best_answer') {
-                          router.push(`/questions/${notification.related_entity_id}`);
-                        }
-                      }}
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       <Text fontWeight={notification.is_read ? "normal" : "bold"}>{notification.message}</Text>
                       <Text fontSize="xs" color="gray.300">

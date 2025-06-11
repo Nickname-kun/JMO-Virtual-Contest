@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { Box, Heading, Button, Textarea, VStack, Flex, Text, FormHelperText, FormControl, FormLabel } from '@chakra-ui/react';
 import { renderLatex } from '@/utils/renderLatex';
+import { useToast } from '@chakra-ui/react';
 
 export default function AnswerPage({
   params,
@@ -16,6 +17,7 @@ export default function AnswerPage({
   const [preview, setPreview] = useState(false);
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const toast = useToast();
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,14 +43,26 @@ export default function AnswerPage({
 
     if (error) {
       console.error('Error submitting answer:', error);
-      alert('回答の投稿に失敗しました');
-      setSubmitting(false);
-      return;
+      toast({
+        title: '回答の投稿に失敗しました',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: '回答を投稿しました',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      router.push(`/maclath/questions/${params.id}`); // パスを更新
     }
+  };
 
-    setNewAnswer('');
-    setSubmitting(false);
-    router.push(`/questions/${params.id}`); // 回答後、質問詳細ページに戻る
+  const handleUploadImage = async (file: File) => {
+    // ... existing code ...
   };
 
   return (

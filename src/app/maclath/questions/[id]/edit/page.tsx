@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Box, Flex, Heading, Button, Input, Textarea, VStack, Text, FormControl, FormLabel, Stack, FormHelperText, Checkbox } from '@chakra-ui/react';
+import { Box, Flex, Heading, Button, Input, Textarea, VStack, Text, FormControl, FormLabel, Stack, FormHelperText, Container, Alert, AlertIcon } from '@chakra-ui/react';
 import { renderLatex } from '@/utils/renderLatex';
 
 type Category = {
@@ -12,18 +12,30 @@ type Category = {
   name: string;
 };
 
-export default function NewQuestionPage() {
+type Question = {
+  id: string;
+  title: string;
+  content: string;
+  user_id: string;
+  question_categories: {
+    category_id: string;
+  }[];
+};
+
+export default function EditQuestionPage({ params }: { params: { id: string } }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const supabase = createClientComponentClient();
   const router = useRouter();
 
   useEffect(() => {
     fetchCategories();
+    fetchQuestion();
   }, []);
 
   const fetchCategories = async () => {
@@ -37,6 +49,36 @@ export default function NewQuestionPage() {
     }
     
     setCategories(data || []);
+  };
+
+  const fetchQuestion = async () => {
+    const { data: question, error: questionError } = await supabase
+      .from('questions')
+      .select(`
+        *,
+        question_categories (
+          category_id
+        )
+      `)
+      .eq('id', params.id)
+      .single();
+
+    if (questionError) {
+      alert('質問の取得に失敗しました');
+      router.push('/questions');
+      return;
+    }
+
+    if (question.status === 'resolved') {
+      alert('解決済みの質問は編集できません');
+      router.push(`/questions/${params.id}`);
+      return;
+    }
+
+    setTitle(question.title);
+    setContent(question.content);
+    setSelectedCategoryIds(question.question_categories.map((qc: any) => qc.category_id));
+    setInitialLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,27 +95,36 @@ export default function NewQuestionPage() {
       return;
     }
 
-    const { data: questionData, error: questionError } = await supabase
+    // 質問の更新
+    const { error: questionError } = await supabase
       .from('questions')
-      .insert([
-        {
-          title,
-          content,
-          user_id: user.id,
-        },
-      ])
-      .select();
+      .update({
+        title,
+        content,
+      })
+      .eq('id', params.id);
 
     if (questionError) {
-      alert('質問の作成に失敗しました');
+      alert('質問の更新に失敗しました');
       setLoading(false);
       return;
     }
 
-    const newQuestionId = questionData[0].id;
+    // 既存のカテゴリ紐付けを削除
+    const { error: deleteError } = await supabase
+      .from('question_categories')
+      .delete()
+      .eq('question_id', params.id);
 
+    if (deleteError) {
+      alert('カテゴリの更新に失敗しました');
+      setLoading(false);
+      return;
+    }
+
+    // 新しいカテゴリ紐付けを作成
     const categoryInserts = selectedCategoryIds.map(categoryId => ({
-      question_id: newQuestionId,
+      question_id: params.id,
       category_id: categoryId,
     }));
 
@@ -89,15 +140,23 @@ export default function NewQuestionPage() {
       }
     }
 
-    router.push('/questions');
+    router.push(`/maclath/questions/${params.id}`);
   };
+
+  if (initialLoading) {
+    return (
+      <Box maxW="container.md" mx="auto" px={4} py={8}>
+        <Text>読み込み中...</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box maxW="container.md" mx="auto" px={4} py={8}>
       <Flex justify="space-between" align="center" mb={6}>
-        <Heading as="h1" size="xl">新規質問</Heading>
-        <Button as={Link} href="/questions" variant="link" colorScheme="blue">
-          質問一覧に戻る
+        <Heading as="h1" size="xl">質問を編集</Heading>
+        <Button as={Link} href={`/maclath/questions/${params.id}`} variant="link" colorScheme="blue">
+          質問に戻る
         </Button>
       </Flex>
 
@@ -180,16 +239,16 @@ export default function NewQuestionPage() {
         </FormControl>
 
         <Flex justify="flex-end" gap={4}>
-          <Button as={Link} href="/questions" variant="outline" colorScheme="gray">
+          <Button as={Link} href={`/maclath/questions/${params.id}`} variant="outline" colorScheme="gray">
             キャンセル
           </Button>
           <Button
             type="submit"
             colorScheme="blue"
             isLoading={loading}
-            loadingText="送信中..."
+            loadingText="更新中..."
           >
-            投稿
+            更新
           </Button>
         </Flex>
       </VStack>

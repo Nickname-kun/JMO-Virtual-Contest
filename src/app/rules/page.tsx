@@ -9,6 +9,32 @@ export default function RulesPage() {
       <Text fontSize="md" mb={4}>
         JMO Virtual Contest（日本数学オリンピック予選バーチャルコンテスト）は、過去のJMO予選問題を本番形式で体験できる学習サイトです。ご利用にあたって、以下のルール・注意事項をご確認ください。
       </Text>
+
+      <Heading as="h2" size="md" mt={8} mb={2}>ナビゲーションバー</Heading>
+      <List spacing={2} mb={4} pl={4} styleType="disc">
+        <ListItem>
+          <Text fontWeight="bold">HOME:</Text> トップページに戻ります。JMO Virtual Contestの紹介や最新のお知らせを確認できます。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">Maclath:</Text> 競技数学版のQ&Aコミュニティ「Maclath」の質問一覧ページへ移動します。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">問題一覧:</Text> 過去のJMO予選問題の一覧を見ることができます。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">コンテスト一覧:</Text> バーチャルコンテストの一覧を見ることができます。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">ルール:</Text> このページです。サービスのご利用方法やルール、プライバシーポリシーなどを確認できます。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">ユーザーメニュー（ログイン時）:</Text> ログイン中のユーザー名が表示されます。クリックすると「マイページ」や「ログアウト」などのメニューが表示されます。管理者の場合は「管理者メニュー」も表示されます。
+        </ListItem>
+        <ListItem>
+          <Text fontWeight="bold">ログイン（未ログイン時）:</Text> ログインページへ移動します。
+        </ListItem>
+      </List>
+
       <Heading as="h2" size="md" mt={8} mb={2}>基本ルール</Heading>
       <List spacing={2} mb={4} pl={4} styleType="disc">
         <ListItem>本番と同じ制限時間（例：180分）でバーチャルコンテストを開始できます。</ListItem>

@@ -18,6 +18,7 @@ interface InitialContestData {
   name: string;
   description: string | null;
   duration_minutes: number;
+  year: number;
   border_a: number | null;
   border_b: number | null;
   border_c: number | null;
@@ -41,7 +42,7 @@ export default function EditContestPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("contests")
-        .select("id, name, description, duration_minutes, border_a, border_b, border_c") // 必要なカラムのみ取得
+        .select("id, name, description, duration_minutes, year, border_a, border_b, border_c") // year を追加
         .eq("id", contestId)
         .single();
       if (error || !data) {
@@ -53,6 +54,7 @@ export default function EditContestPage() {
           name: data.name,
           description: data.description || null, // nullを許容
           duration_minutes: data.duration_minutes || 180, // デフォルト値設定
+          year: data.year, // year の値を取得してセット
           border_a: data.border_a,
           border_b: data.border_b,
           border_c: data.border_c,
@@ -76,6 +78,7 @@ export default function EditContestPage() {
           name: updatedData.name,
           description: updatedData.description,
           duration_minutes: updatedData.duration_minutes,
+          year: updatedData.year, // year の値を更新に含める
           border_a: updatedData.border_a,
           border_b: updatedData.border_b,
           border_c: updatedData.border_c,

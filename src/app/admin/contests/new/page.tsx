@@ -29,6 +29,7 @@ export default function NewContestPage() {
     name: '',
     description: '',
     duration_minutes: 180, // デフォルト値
+    year: new Date().getFullYear(), // 新しくyearフィールドを追加
     border_a: '',
     border_b: '',
     border_c: '',
@@ -40,9 +41,6 @@ export default function NewContestPage() {
     setError(null);
     setLoading(true);
 
-    // 現在時刻を取得してISO文字列に変換
-    const now = new Date().toISOString();
-
     const { data, error } = await supabase
       .from('contests')
       .insert([
@@ -50,6 +48,7 @@ export default function NewContestPage() {
           name: formData.name,
           description: formData.description,
           duration_minutes: formData.duration_minutes,
+          year: formData.year, // yearフィールドを追加
           border_a: formData.border_a ? parseInt(formData.border_a) : null,
           border_b: formData.border_b ? parseInt(formData.border_b) : null,
           border_c: formData.border_c ? parseInt(formData.border_c) : null,
@@ -91,10 +90,10 @@ export default function NewContestPage() {
     }));
   };
 
-  const handleNumberChange = (_: string, valueAsNumber: number) => {
+  const handleNumberChange = (name: string) => (_: string, valueAsNumber: number) => {
     setFormData((prev) => ({
       ...prev,
-      duration_minutes: valueAsNumber,
+      [name]: valueAsNumber,
     }));
   };
 
@@ -120,8 +119,14 @@ export default function NewContestPage() {
             <Textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
           </FormControl>
           <FormControl isRequired>
+            <FormLabel>開催年度</FormLabel>
+            <NumberInput min={1900} value={formData.year} onChange={handleNumberChange("year")}>
+              <NumberInputField name="year" />
+            </NumberInput>
+          </FormControl>
+          <FormControl isRequired>
             <FormLabel>試験時間 (分)</FormLabel>
-            <NumberInput min={1} value={formData.duration_minutes} onChange={handleNumberChange}>
+            <NumberInput min={1} value={formData.duration_minutes} onChange={handleNumberChange("duration_minutes")}>
               <NumberInputField name="duration_minutes" />
             </NumberInput>
           </FormControl>

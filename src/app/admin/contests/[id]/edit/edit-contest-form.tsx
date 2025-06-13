@@ -11,6 +11,7 @@ interface EditContestFormProps {
     name: string;
     description: string | null;
     duration_minutes: number;
+    year: number;
     border_a: number | null;
     border_b: number | null;
     border_c: number | null;
@@ -37,10 +38,10 @@ export default function EditContestForm({ initialData, onUpdate }: EditContestFo
   };
 
   const handleNumberInputChange = (name: string, valueString: string) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: valueString === '' ? null : parseInt(valueString, 10),
-    });
+    }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -61,6 +62,12 @@ export default function EditContestForm({ initialData, onUpdate }: EditContestFo
         <FormControl id="description">
           <FormLabel>概要</FormLabel>
           <Textarea name="description" value={formData.description || ''} onChange={handleChange} />
+        </FormControl>
+        <FormControl id="year" isRequired>
+          <FormLabel>開催年度</FormLabel>
+          <NumberInput value={formData.year} onChange={(val) => handleNumberInputChange('year', val)} min={1900}>
+            <NumberInputField name="year" />
+          </NumberInput>
         </FormControl>
         <FormControl id="duration_minutes" isRequired>
           <FormLabel>開催時間 (分)</FormLabel>

@@ -25,8 +25,23 @@ export default function NewQuestionPage() {
   const toast = useToast();
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'ログインが必要です',
+          description: '質問を投稿するにはログインしてください。',
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        });
+        router.push('/auth');
+      }
+    };
+
+    checkAuth();
     fetchCategories();
-  }, []);
+  }, [supabase, router, toast]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase

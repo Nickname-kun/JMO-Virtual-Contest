@@ -30,11 +30,13 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  IconButton,
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { renderLatex } from '@/utils/renderLatex'
 import { formatDistanceToNow } from 'date-fns'
 import { ja } from 'date-fns/locale'
+import { FiTrash2 } from 'react-icons/fi'
 
 interface Problem {
   id: string
@@ -71,6 +73,7 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
   const [explanationToDeleteId, setExplanationToDeleteId] = useState<string | null>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const [deletingExplanation, setDeletingExplanation] = useState(false)
+  const [explanationAuthors, setExplanationAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean } }>({});
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -107,6 +110,28 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
     fetchExplanations()
   }, [problem.id, supabase])
 
+  useEffect(() => {
+    const fetchExplanationAuthors = async () => {
+      const authorIds = explanations.map(explanation => explanation.user_id);
+      if (authorIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, is_admin')
+          .in('id', authorIds);
+        
+        if (profiles) {
+          const authorsMap = profiles.reduce((acc, profile) => ({
+            ...acc,
+            [profile.id]: { username: profile.username, is_admin: profile.is_admin }
+          }), {});
+          setExplanationAuthors(authorsMap);
+        }
+      }
+    };
+
+    fetchExplanationAuthors();
+  }, [explanations, supabase]);
+
   const handleToggleOfficial = async (explanationId: string, currentStatus: boolean) => {
     if (!isAdmin) return
 
@@ -135,8 +160,67 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
     }
   }
 
+  const handleUpdateExplanation = async (explanationId: string, newContent: string) => {
+    if (!user || newContent.trim() === '') return;
+
+    const { error } = await supabase
+      .from('explanations')
+      .update({ content: newContent.trim() })
+      .eq('id', explanationId)
+      .eq('user_id', user.id); // 投稿者のみ更新可能
+
+    if (error) {
+      console.error('Error updating explanation:', error);
+      toast({
+        title: 'エラー',
+        description: '解説の更新に失敗しました。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: '成功',
+        description: '解説を更新しました。',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      setEditingExplanationId(null);
+      // 更新後、解説一覧を再取得して表示を更新
+      const { data, error: fetchError } = await supabase
+        .from('explanations')
+        .select('*, profiles(username)')
+        .eq('problem_id', problem.id)
+        .order('created_at', { ascending: true });
+
+      if (fetchError) {
+        console.error('Error fetching explanations after update:', fetchError);
+      } else {
+        setExplanations(data || []);
+      }
+    }
+  };
+
   const handleDeleteExplanation = async () => {
     if (!explanationToDeleteId) return
+
+    const explanation = explanations.find(exp => exp.id === explanationToDeleteId);
+    if (!explanation) return;
+
+    if (!isAdmin && user?.id !== explanation.user_id) {
+      toast({
+        title: '権限がありません',
+        description: 'この解説を削除する権限がありません。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setDeletingExplanation(false);
+      setExplanationToDeleteId(null);
+      setDeleteDialogOpen(false);
+      return;
+    }
 
     setDeletingExplanation(true)
     setDeleteDialogOpen(false)
@@ -226,15 +310,36 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
             ) : (
               <Accordion allowMultiple>
                 {explanations.map((explanation) => (
-                  <AccordionItem key={explanation.id}>
+                  <AccordionItem key={explanation.id} borderWidth="1px" borderRadius="lg" shadow="md" mb={4} p={4} bg="white">
                     <h2>
-                      <AccordionButton>
-                        <Box as="span" flex='1' textAlign='left'>
-                          <HStack spacing={2}>
-                            <Text fontWeight="bold">{explanation.title}</Text>
-                            <Text fontSize="sm" color="gray.600">by {explanation.profiles?.username || '匿名ユーザー'}</Text>
+                      <AccordionButton _expanded={{ bg: 'gray.100' }} py={4}>
+                        <Box flex="1" textAlign="left">
+                          <HStack spacing={2} alignItems="center" flexWrap="wrap">
+                            <Text fontWeight="semibold" fontSize="md" mb={{ base: 1, md: 0 }}>
+                              {explanation.title}
+                            </Text>
                             {explanation.is_official && (
-                              <Badge colorScheme="blue" size="sm">公式解説</Badge>
+                              <Badge colorScheme="green" mb={{ base: 1, md: 0 }}>公式解説</Badge>
+                            )}
+                            <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
+                              by {explanationAuthors[explanation.user_id]?.username || '不明'}
+                            </Text>
+                            <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
+                              {formatDistanceToNow(new Date(explanation.created_at), { addSuffix: true, locale: ja })}
+                            </Text>
+                            {(isAdmin || user?.id === explanation.user_id) && (
+                              <IconButton
+                                aria-label="解説を削除"
+                                icon={<FiTrash2 />}
+                                size="sm"
+                                variant="ghost"
+                                colorScheme="red"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExplanationToDeleteId(explanation.id);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              />
                             )}
                           </HStack>
                         </Box>
@@ -242,84 +347,51 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
                       </AccordionButton>
                     </h2>
                     <AccordionPanel pb={4}>
-                      {editingExplanationId === explanation.id ? (
-                        <VStack align="stretch" spacing={2}>
+                      <Box p={4} borderRadius="md" bg="gray.50">
+                        {renderLatex(explanation.content)}
+                      </Box>
+                      <HStack mt={4} justifyContent="flex-end">
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleToggleOfficial(explanation.id, explanation.is_official)}
+                            colorScheme={explanation.is_official ? 'orange' : 'green'}
+                          >
+                            {explanation.is_official ? '公式解説解除' : '公式解説に設定'}
+                          </Button>
+                        )}
+                        {user && explanation.user_id === user.id && (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setEditingExplanationId(explanation.id)
+                              setEditedExplanationContent(explanation.content)
+                            }}
+                            colorScheme="blue"
+                          >
+                            編集
+                          </Button>
+                        )}
+                      </HStack>
+                      {editingExplanationId === explanation.id && (
+                        <Box mt={4}>
                           <Textarea
                             value={editedExplanationContent}
                             onChange={(e) => setEditedExplanationContent(e.target.value)}
+                            placeholder="解説を編集"
                             size="sm"
-                            rows={6}
+                            mb={2}
                           />
-                          <HStack justify="flex-end">
-                            <Button size="xs" onClick={() => setEditingExplanationId(null)} variant="outline">キャンセル</Button>
-                            <Button size="xs" colorScheme="blue" onClick={async () => {
-                              if (editedExplanationContent.trim() === '') return;
-                              const { error: updateError } = await supabase
-                                .from('explanations')
-                                .update({ content: editedExplanationContent.trim() })
-                                .eq('id', explanation.id)
-
-                              if (updateError) {
-                                console.error('Error updating explanation:', updateError)
-                                toast({
-                                  title: 'エラー',
-                                  description: '解説の更新に失敗しました。',
-                                  status: 'error',
-                                  duration: 5000,
-                                  isClosable: true,
-                                })
-                              } else {
-                                setEditingExplanationId(null)
-                                const { data, error } = await supabase
-                                  .from('explanations')
-                                  .select('*, profiles(username)')
-                                  .eq('problem_id', problem.id)
-                                  .order('created_at', { ascending: true })
-
-                                if (error) {
-                                  console.error('Error fetching explanations after update:', error)
-                                } else {
-                                  setExplanations(data || [])
-                                }
-                              }
-                            }}>
-                              保存
+                          <HStack justifyContent="flex-end">
+                            <Button size="sm" onClick={() => setEditingExplanationId(null)}>
+                              キャンセル
+                            </Button>
+                            <Button size="sm" colorScheme="green" onClick={() => handleUpdateExplanation(explanation.id, editedExplanationContent)}>
+                              更新
                             </Button>
                           </HStack>
-                        </VStack>
-                      ) : (
-                        <Box>{renderLatex(explanation.content)}</Box>
+                        </Box>
                       )}
-
-                      <Flex justify="flex-end" mt={2}>
-                        {user && user.id === explanation.user_id && editingExplanationId !== explanation.id && (
-                          <HStack spacing={2}>
-                            <Button size="xs" onClick={() => {
-                              setEditingExplanationId(explanation.id)
-                              setEditedExplanationContent(explanation.content)
-                            }} variant="outline">編集</Button>
-                            <Button size="xs" colorScheme="red" onClick={() => {
-                              setExplanationToDeleteId(explanation.id)
-                              setDeleteDialogOpen(true)
-                            }}>削除</Button>
-                          </HStack>
-                        )}
-
-                        {isAdmin && editingExplanationId !== explanation.id && (
-                          <Button
-                            size="xs"
-                            ml={user && user.id === explanation.user_id ? 2 : 0}
-                            colorScheme={explanation.is_official ? "gray" : "blue"}
-                            onClick={() =>
-                              handleToggleOfficial(explanation.id, explanation.is_official)
-                            }
-                          >
-                            {explanation.is_official
-                              ? "公式解説を解除"
-                              : "公式解説として設定"}
-                          </Button>
-                        )}
-                      </Flex>
                     </AccordionPanel>
                   </AccordionItem>
                 ))}
@@ -329,7 +401,6 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
         )}
       </VStack>
 
-      {/* 削除確認ダイアログ */}
       <AlertDialog
         isOpen={isDeleteDialogOpen}
         leastDestructiveRef={cancelRef}
@@ -337,14 +408,17 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
       >
         <AlertDialogOverlay>
           <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">解説の削除</AlertDialogHeader>
-            <AlertDialogCloseButton />
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              解説の削除
+            </AlertDialogHeader>
             <AlertDialogBody>
-              この解説を完全に削除してもよろしいですか？ この操作は元に戻せません。
+              本当にこの解説を削除しますか？この操作は元に戻せません。
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setDeleteDialogOpen(false)} disabled={deletingExplanation}>キャンセル</Button>
-              <Button colorScheme="red" onClick={handleDeleteExplanation} ml={3} isLoading={deletingExplanation}>
+              <Button ref={cancelRef} onClick={() => setDeleteDialogOpen(false)}>
+                キャンセル
+              </Button>
+              <Button colorScheme="red" onClick={handleDeleteExplanation} ml={3}>
                 削除
               </Button>
             </AlertDialogFooter>

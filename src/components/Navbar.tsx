@@ -42,26 +42,22 @@ export default function Navbar() {
   const isMaclathPage = pathname.startsWith('/maclath');
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchUserProfile = async () => {
       if (session?.user) {
-        const { data, error } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('is_admin, username')
+          .select('username, is_admin')
           .eq('id', session.user.id)
           .single();
-        if (!error && data) {
-          setIsAdmin(data.is_admin);
-          setUsername(data.username);
-        } else {
-          setIsAdmin(false);
-          setUsername(null);
+        
+        if (profile) {
+          setUsername(profile.username);
+          setIsAdmin(profile.is_admin);
         }
-      } else {
-        setIsAdmin(false);
-        setUsername(null);
       }
     };
-    fetchProfile();
+
+    fetchUserProfile();
   }, [session, supabase]);
 
   useEffect(() => {
@@ -189,7 +185,7 @@ export default function Navbar() {
             <HStack spacing={4}>
               <Menu>
                 <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline" color={isMaclathPage ? "blue.800" : "white"}>
-                  Hi, {username || session.user.email}
+                  Hi, <Text as="span" color={isAdmin ? "rgb(102, 0, 153)" : undefined}>{username || session.user.email}</Text>
                 </MenuButton>
                 <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
                   <MenuItem as={Link} href="/profile" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>マイページ</MenuItem>

@@ -82,6 +82,8 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
+  const [commentAuthors, setCommentAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean } }>({});
+
   const renderCommentContent = (content: string) => {
     const elements: JSX.Element[] = [];
     let lastIndex = 0;
@@ -141,6 +143,28 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   useEffect(() => {
     fetchComments();
   }, [problem.id, supabase]);
+
+  useEffect(() => {
+    const fetchCommentAuthors = async () => {
+      const authorIds = comments.map(comment => comment.user_id);
+      if (authorIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, is_admin')
+          .in('id', authorIds);
+        
+        if (profiles) {
+          const authorsMap = profiles.reduce((acc, profile) => ({
+            ...acc,
+            [profile.id]: { username: profile.username, is_admin: profile.is_admin }
+          }), {});
+          setCommentAuthors(authorsMap);
+        }
+      }
+    };
+
+    fetchCommentAuthors();
+  }, [comments, supabase]);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,7 +283,9 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                 (showAllComments ? comments : comments.slice(0, COMMENT_DISPLAY_LIMIT)).map((comment) => (
                   <ListItem key={comment.id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={1}>
-                      <Text fontSize="sm" fontWeight="bold">{comment.profiles?.username || '匿名ユーザー'}</Text>
+                      <Text fontSize="sm" fontWeight="bold" color={commentAuthors[comment.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
+                        {commentAuthors[comment.user_id]?.username || '匿名ユーザー'}
+                      </Text>
                       <Text fontSize="xs" color="gray.500">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ja })}</Text>
                     </Flex>
                     

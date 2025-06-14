@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { Box, Heading, Button, Textarea, VStack, Flex, Text, FormHelperText, FormControl, FormLabel } from '@chakra-ui/react';
@@ -18,6 +18,24 @@ export default function AnswerPage({
   const supabase = createClientComponentClient();
   const router = useRouter();
   const toast = useToast();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'ログインが必要です',
+          description: '回答を投稿するにはログインしてください。',
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        });
+        router.push('/auth');
+      }
+    };
+
+    checkAuth();
+  }, [supabase, router, toast]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,10 +6,12 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Box, Flex, Heading, Button, Text, VStack, Textarea, Tag, TagLabel, Wrap, WrapItem, HStack, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure } from '@chakra-ui/react';
+import { Box, Flex, Heading, Button, Text, VStack, Textarea, Tag, TagLabel, Wrap, WrapItem, HStack, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, useDisclosure, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { renderLatex } from '@/utils/renderLatex';
 import React, { useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
+import { FiHeart, FiTrash2 } from 'react-icons/fi';
+import { AiFillHeart } from 'react-icons/ai';
 
 type Question = {
   id: string;
@@ -37,6 +39,13 @@ type Answer = {
   profiles: {
     username: string;
   };
+  likes_count: number;
+  is_liked: boolean;
+};
+
+type RawAnswer = Omit<Answer, 'likes_count' | 'is_liked'> & {
+  likes_count: { count: number }[];
+  is_liked: { user_id: string }[] | null;
 };
 
 export default function QuestionDetailPage({
@@ -49,6 +58,7 @@ export default function QuestionDetailPage({
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const supabase = createClientComponentClient();
   const router = useRouter();
   const toast = useToast();
@@ -60,12 +70,24 @@ export default function QuestionDetailPage({
   const [selectedAnswerIdForBestAnswer, setSelectedAnswerIdForBestAnswer] = useState<string | null>(null);
 
   const { isOpen: isDeleteAlertOpen, onOpen: onDeleteAlertOpen, onClose: onDeleteAlertClose } = useDisclosure();
+  const { isOpen: isAnswerDeleteAlertOpen, onOpen: onAnswerDeleteAlertOpen, onClose: onAnswerDeleteAlertClose } = useDisclosure();
+  const [answerToDeleteId, setAnswerToDeleteId] = useState<string | null>(null);
+
+  const bestAnswerText = useBreakpointValue({
+    base: "BA",
+    md: "ベストアンサー",
+  });
 
   useEffect(() => {
     fetchQuestion();
     fetchAnswers();
     checkOwnership();
     fetchIsAdmin();
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    checkAuth();
   }, [params.id, question]);
 
   const checkOwnership = async () => {
@@ -111,11 +133,16 @@ export default function QuestionDetailPage({
   };
 
   const fetchAnswers = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+
     const { data, error } = await supabase
       .from('answers')
       .select(`
         *,
-        profiles:user_id (username)
+        profiles:user_id (username),
+        likes_count:answer_likes(count),
+        is_liked:answer_likes!left(user_id)
       `)
       .eq('question_id', params.id)
       .order('created_at', { ascending: true });
@@ -125,7 +152,14 @@ export default function QuestionDetailPage({
       return;
     }
 
-    setAnswers(data || []);
+    // いいねの情報を整形
+    const formattedAnswers = data.map((answer: RawAnswer) => ({
+      ...answer,
+      likes_count: answer.likes_count[0]?.count || 0,
+      is_liked: answer.is_liked?.some(like => like.user_id === userId) || false
+    }));
+
+    setAnswers(formattedAnswers);
   };
 
   const handleDeleteQuestion = () => {
@@ -134,6 +168,17 @@ export default function QuestionDetailPage({
 
   const confirmDeleteQuestion = async () => {
     onDeleteAlertClose();
+
+    if (!isOwner && !isAdmin) {
+      toast({
+        title: '権限がありません',
+        description: 'この質問を削除する権限がありません。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from('questions')
@@ -202,6 +247,52 @@ export default function QuestionDetailPage({
     onBestAnswerAlertOpen();
   };
 
+  const handleDeleteAnswer = (answerId: string) => {
+    if (!isAdmin) {
+      toast({
+        title: '権限がありません',
+        description: '回答を削除する権限がありません。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+    setAnswerToDeleteId(answerId);
+    onAnswerDeleteAlertOpen();
+  };
+
+  const confirmDeleteAnswer = async () => {
+    onAnswerDeleteAlertClose();
+    if (!answerToDeleteId) return;
+
+    const { error } = await supabase
+      .from('answers')
+      .delete()
+      .eq('id', answerToDeleteId);
+
+    if (error) {
+      console.error('Error deleting answer:', error);
+      toast({
+        title: '回答の削除に失敗しました',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    toast({
+      title: '回答を削除しました',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+    fetchAnswers(); // 回答リストを更新
+    setAnswerToDeleteId(null);
+  };
+
   const confirmSelectBestAnswer = async () => {
     onBestAnswerAlertClose();
     if (!question || !selectedAnswerIdForBestAnswer) return;
@@ -245,6 +336,58 @@ export default function QuestionDetailPage({
       isClosable: true,
     });
     setSelectedAnswerIdForBestAnswer(null);
+  };
+
+  const handleLike = async (answerId: string) => {
+    if (!isLoggedIn) {
+      toast({
+        title: 'ログインが必要です',
+        description: '「いいね」するにはログインしてください。',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
+      router.push('/auth');
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const answer = answers.find(a => a.id === answerId);
+    if (!answer) return;
+
+    if (answer.is_liked) {
+      // いいねを削除
+      const { error } = await supabase
+        .from('answer_likes')
+        .delete()
+        .eq('answer_id', answerId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error removing like:', error);
+        return;
+      }
+    } else {
+      // いいねを追加
+      const { error } = await supabase
+        .from('answer_likes')
+        .insert([
+          {
+            answer_id: answerId,
+            user_id: user.id,
+          },
+        ]);
+
+      if (error) {
+        console.error('Error adding like:', error);
+        return;
+      }
+    }
+
+    // 回答一覧を更新
+    fetchAnswers();
   };
 
   if (loading) {
@@ -351,15 +494,41 @@ export default function QuestionDetailPage({
                 })}
               >
                 <Flex justify="space-between" align="center" mb={3}>
-                  <HStack spacing={2}>
-                    <Text fontWeight="semibold">回答者: {answer.profiles?.username || '不明'}</Text>
+                  <HStack spacing={2} flexWrap="wrap">
+                    <Text fontWeight="semibold" mb={{ base: 1, md: 0 }}>回答者: {answer.profiles?.username || '不明'}</Text>
                     {question?.best_answer_id === answer.id && (
-                      <Tag size="sm" colorScheme="green" bg="green.600" color="white">ベストアンサー</Tag>
+                      <Tag size="sm" colorScheme="green" bg="green.600" color="white" mb={{ base: 1, md: 0 }}>
+                        <TagLabel whiteSpace="nowrap">{bestAnswerText}</TagLabel>
+                      </Tag>
                     )}
                   </HStack>
-                  <Text fontSize="sm" color="gray.300">
-                    {formatDistanceToNow(new Date(answer.created_at), { addSuffix: true, locale: ja })}
-                  </Text>
+                  <HStack spacing={4} flexWrap="wrap">
+                    {isAdmin && (
+                      <IconButton
+                        aria-label="回答を削除"
+                        icon={<FiTrash2 />}
+                        variant="ghost"
+                        color="gray.300"
+                        _hover={{ color: "red.500" }}
+                        onClick={() => handleDeleteAnswer(answer.id)}
+                        mb={{ base: 1, md: 0 }}
+                      />
+                    )}
+                    <HStack spacing={1} mb={{ base: 1, md: 0 }}>
+                      <IconButton
+                        aria-label="いいね"
+                        icon={answer.is_liked ? <AiFillHeart /> : <FiHeart />}
+                        variant="ghost"
+                        color={answer.is_liked ? "red.300" : "white"}
+                        _hover={{ color: answer.is_liked ? "red.200" : "gray.300" }}
+                        onClick={() => handleLike(answer.id)}
+                      />
+                      <Text fontSize="sm">{answer.likes_count}</Text>
+                    </HStack>
+                    <Text fontSize="sm" color="gray.300" mb={{ base: 1, md: 0 }}>
+                      {formatDistanceToNow(new Date(answer.created_at), { addSuffix: true, locale: ja })}
+                    </Text>
+                  </HStack>
                 </Flex>
                 <Box mt={3} p={4} whiteSpace="pre-wrap" sx={{ '& *': { color: 'white' } }}>
                   {renderLatex(answer.content)}
@@ -403,9 +572,15 @@ export default function QuestionDetailPage({
               </Flex>
             </Box>
           ))}
-          <Button as={Link} href={`/maclath/questions/${params.id}/answer`} colorScheme="teal" size="lg" mt={4}>
-            質問に回答する
-          </Button>
+          {isLoggedIn ? (
+            <Button as={Link} href={`/maclath/questions/${params.id}/answer`} colorScheme="teal" size="lg" mt={4}>
+              質問に回答する
+            </Button>
+          ) : (
+            <Button as={Link} href="/auth" colorScheme="teal" size="lg" mt={4} variant="outline">
+              ログインして質問に回答する
+            </Button>
+          )}
         </VStack>
       </Box>
 
@@ -446,19 +621,19 @@ export default function QuestionDetailPage({
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              この回答をベストアンサーに設定しますか？
+              ベストアンサーを設定
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              ベストアンサーに設定すると、この質問は自動的に「解決済み」になります。この操作は元に戻せません。
+              この回答をベストアンサーに設定し、質問を解決済みにしますか？
             </AlertDialogBody>
 
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onBestAnswerAlertClose}>
                 キャンセル
               </Button>
-              <Button colorScheme="purple" onClick={confirmSelectBestAnswer} ml={3}>
-                ベストアンサーに設定
+              <Button colorScheme="green" onClick={confirmSelectBestAnswer} ml={3}>
+                設定
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -487,6 +662,33 @@ export default function QuestionDetailPage({
                 キャンセル
               </Button>
               <Button colorScheme="red" onClick={confirmDeleteQuestion} ml={3} variant="link">
+                削除
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={isAnswerDeleteAlertOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onAnswerDeleteAlertClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              回答の削除
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              本当にこの回答を削除しますか？この操作は元に戻せません。
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onAnswerDeleteAlertClose}>
+                キャンセル
+              </Button>
+              <Button colorScheme="red" onClick={confirmDeleteAnswer} ml={3}>
                 削除
               </Button>
             </AlertDialogFooter>

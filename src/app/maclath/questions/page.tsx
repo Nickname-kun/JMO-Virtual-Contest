@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Box, Flex, Heading, Button, Select, Text, VStack, Tag, TagLabel, Wrap, WrapItem, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@chakra-ui/react';
 
 type Question = {
   id: string;
@@ -37,7 +39,10 @@ export default function QuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1); // 現在のページ
   const [totalQuestions, setTotalQuestions] = useState(0); // 総質問数
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const supabase = createClientComponentClient();
+  const router = useRouter();
+  const toast = useToast();
 
   const PAGE_SIZE = 10; // 1ページあたりの質問数
 
@@ -45,9 +50,14 @@ export default function QuestionsPage() {
   const currentStatus = tabIndex === 0 ? 'open' : 'resolved';
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    checkAuth();
     fetchCategories();
     fetchQuestions();
-  }, [selectedCategory, currentStatus, currentPage]);
+  }, [selectedCategory, currentStatus, currentPage, supabase]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -156,9 +166,15 @@ export default function QuestionsPage() {
     <Box maxW="container.md" mx="auto" px={4} py={8}>
       <Flex justify="space-between" align="center" mb={6}>
         <Heading as="h1" size="xl">質問一覧</Heading>
-        <Button as={Link} href="/maclath/questions/new" colorScheme="blue">
-          新規質問
-        </Button>
+        {isLoggedIn ? (
+          <Button as={Link} href="/maclath/questions/new" colorScheme="blue">
+            新規質問
+          </Button>
+        ) : (
+          <Button as={Link} href="/auth" colorScheme="blue" variant="outline">
+            ログインして質問を投稿
+          </Button>
+        )}
       </Flex>
 
       <Box mb={6}>

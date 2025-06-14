@@ -322,7 +322,9 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
                               <Badge colorScheme="green" mb={{ base: 1, md: 0 }}>公式解説</Badge>
                             )}
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
-                              by {explanationAuthors[explanation.user_id]?.username || '不明'}
+                              by <Text as="span" color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
+                                {explanationAuthors[explanation.user_id]?.username || '不明'}
+                              </Text>
                             </Text>
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
                               {formatDistanceToNow(new Date(explanation.created_at), { addSuffix: true, locale: ja })}

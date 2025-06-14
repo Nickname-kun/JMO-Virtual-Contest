@@ -495,7 +495,12 @@ export default function QuestionDetailPage({
               >
                 <Flex justify="space-between" align="center" mb={3}>
                   <HStack spacing={2} flexWrap="wrap">
-                    <Text fontWeight="semibold" mb={{ base: 1, md: 0 }}>回答者: {answer.profiles?.username || '不明'}</Text>
+                    <Text 
+                      fontWeight="semibold" 
+                      mb={{ base: 1, md: 0 }}
+                    >
+                      回答者: {answer.profiles?.username || '不明'}
+                    </Text>
                     {question?.best_answer_id === answer.id && (
                       <Tag size="sm" colorScheme="green" bg="green.600" color="white" mb={{ base: 1, md: 0 }}>
                         <TagLabel whiteSpace="nowrap">{bestAnswerText}</TagLabel>

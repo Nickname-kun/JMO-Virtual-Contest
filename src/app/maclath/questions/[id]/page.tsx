@@ -425,35 +425,10 @@ export default function QuestionDetailPage({
 
       {/* 質問の詳細 */}
       <Box mb={8} p={6} borderWidth="1px" borderRadius="lg" boxShadow="lg" borderColor="gray.200" bg="whiteAlpha.900">
-        <Flex justify="space-between" align="flex-start" mb={4}>
-          <Heading as="h1" size="xl" fontWeight="semibold">{question.title}</Heading>
-          <Flex gap={2}>
-            {(isOwner || isAdmin) && question.status !== 'resolved' && (
-              <Button
-                onClick={handleResolveQuestion}
-                colorScheme="green"
-                size="sm"
-                variant="link"
-              >
-                解決済みにする
-              </Button>
-            )}
-            {(isOwner || isAdmin) && question.status !== 'resolved' && (
-              <>
-                <Button as={Link} href={`/maclath/questions/${params.id}/edit`} variant="link" colorScheme="blue" size="sm">
-                  編集
-                </Button>
-                <Button
-                  colorScheme="red"
-                  size="sm"
-                  onClick={handleDeleteQuestion}
-                  variant="link"
-                >
-                  削除
-                </Button>
-              </>
-            )}
-          </Flex>
+        <Flex justify="space-between" align="start" mb={4}>
+          <Heading as="h1" size="xl" color="gray.800">
+            {question.title}
+          </Heading>
         </Flex>
 
         <Flex fontSize="sm" color="gray.600" mb={4} align="center">
@@ -489,6 +464,26 @@ export default function QuestionDetailPage({
         <Box whiteSpace="pre-wrap" p={4} borderRadius="md" bg="gray.100" boxShadow="sm">
           {renderLatex(question.content)}
         </Box>
+
+        {isOwner && (
+          <Flex mt={4} justifyContent="flex-end" width="100%" fontSize="sm">
+            {question.status === 'open' ? (
+              <Button variant="link" colorScheme="green" onClick={handleResolveQuestion} mr={2}>
+                解決済みにする
+              </Button>
+            ) : (
+              <Tag size="md" colorScheme="green" mr={2}>
+                <TagLabel>解決済み</TagLabel>
+              </Tag>
+            )}
+            <Button as={Link} href={`/maclath/questions/${question.id}/edit`} variant="link" colorScheme="blue" mr={2}>
+              編集
+            </Button>
+            <Button variant="link" colorScheme="red" onClick={handleDeleteQuestion}>
+              削除
+            </Button>
+          </Flex>
+        )}
 
         {question.referenced_problem && (
           <Box p={4} borderWidth="1px" borderRadius="md" bg="blue.50" mt={4}>

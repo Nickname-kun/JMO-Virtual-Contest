@@ -9,9 +9,10 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 interface VirtualStartButtonProps {
   contestId: string;
   durationMinutes: number;
+  problemCount: number;
 }
 
-export default function VirtualStartButton({ contestId, durationMinutes }: VirtualStartButtonProps) {
+export default function VirtualStartButton({ contestId, durationMinutes, problemCount }: VirtualStartButtonProps) {
   const router = useRouter();
   const session = useSession();
   const [loading, setLoading] = useState(false);
@@ -73,10 +74,10 @@ export default function VirtualStartButton({ contestId, durationMinutes }: Virtu
       size="lg"
       onClick={startCountdown}
       isLoading={loading}
-      isDisabled={countdown !== null}
+      isDisabled={countdown !== null || problemCount === 0}
       mt={4}
     >
-      {countdown !== null ? `開始まで ${countdown} 秒` : 'バーチャル開始'}
+      {countdown !== null ? `開始まで ${countdown} 秒` : problemCount === 0 ? '問題がありません' : 'バーチャル開始'}
     </Button>
   );
 } 

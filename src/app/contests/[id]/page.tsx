@@ -23,6 +23,17 @@ export default async function ContestPage({ params }: { params: { id: string } }
     return <Text>コンテストが見つかりませんでした。</Text>;
   }
 
+  // コンテストに紐づく問題数を取得
+  const { count: problemCount, error: problemCountError } = await supabase
+    .from('problems')
+    .select('id', { count: 'exact' })
+    .eq('contest_id', params.id);
+
+  if (problemCountError) {
+    console.error('Error fetching problem count:', problemCountError);
+    return <Text>問題数の取得に失敗しました。</Text>;
+  }
+
   return (
     <Container maxW="container.md" py={8}>
       <Heading as="h1" size="xl" mb={4}>
@@ -52,7 +63,7 @@ export default async function ContestPage({ params }: { params: { id: string } }
         ※ JMOおよびJJMOの問題の著作権は数学オリンピック財団に帰属します。
       </Text>
 
-      <VirtualStartButton contestId={contest.id} durationMinutes={contest.duration_minutes} />
+      <VirtualStartButton contestId={contest.id} durationMinutes={contest.duration_minutes} problemCount={problemCount || 0} />
     </Container>
   );
 } 

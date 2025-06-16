@@ -167,9 +167,9 @@ export default function QuestionsPage() {
       <Flex justify="space-between" align="center" mb={6}>
         <Heading as="h1" size="xl">質問一覧</Heading>
         {isLoggedIn ? (
-          <Button as={Link} href="/maclath/questions/new" colorScheme="blue">
-            新規質問
-          </Button>
+        <Button as={Link} href="/maclath/questions/new" colorScheme="blue">
+          新規質問
+        </Button>
         ) : (
           <Button as={Link} href="/auth" colorScheme="blue" variant="outline">
             ログインして質問を投稿

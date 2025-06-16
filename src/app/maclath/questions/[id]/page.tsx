@@ -21,6 +21,7 @@ type Question = {
   user_id: string;
   status: 'open' | 'resolved';
   best_answer_id: string | null;
+  referenced_problem_id: string | null;
   profiles: {
     username: string;
   };
@@ -29,6 +30,14 @@ type Question = {
       name: string;
     };
   }[];
+  referenced_problem?: {
+    id: string;
+    title: string;
+    number: number;
+    contest: {
+      name: string;
+    };
+  };
 };
 
 type Answer = {
@@ -117,7 +126,16 @@ export default function QuestionDetailPage({
       .select(`
         *,
         profiles:user_id (username),
-        question_categories (categories (name))
+        question_categories (categories (name)),
+        referenced_problem:referenced_problem_id (
+          id,
+          title,
+          number,
+          contest:contest_id (
+            id,
+            name
+          )
+        )
       `)
       .eq('id', params.id)
       .single();
@@ -471,6 +489,16 @@ export default function QuestionDetailPage({
         <Box whiteSpace="pre-wrap" p={4} borderRadius="md" bg="gray.100" boxShadow="sm">
           {renderLatex(question.content)}
         </Box>
+
+        {question.referenced_problem && (
+          <Box p={4} borderWidth="1px" borderRadius="md" bg="blue.50" mt={4}>
+            <Text fontSize="sm" color="blue.700">
+              参照元の問題: <Link href={`/problems/${question.referenced_problem.id}`} color="blue.600" style={{ textDecoration: 'underline' }}>
+                {question.referenced_problem.contest.name} 問題{question.referenced_problem.number}
+              </Link>
+            </Text>
+          </Box>
+        )}
       </Box>
 
       {/* 回答一覧 */}
@@ -531,8 +559,8 @@ export default function QuestionDetailPage({
                       <Text fontSize="sm">{answer.likes_count}</Text>
                     </HStack>
                     <Text fontSize="sm" color="gray.300" mb={{ base: 1, md: 0 }}>
-                      {formatDistanceToNow(new Date(answer.created_at), { addSuffix: true, locale: ja })}
-                    </Text>
+                    {formatDistanceToNow(new Date(answer.created_at), { addSuffix: true, locale: ja })}
+                  </Text>
                   </HStack>
                 </Flex>
                 <Box mt={3} p={4} whiteSpace="pre-wrap" sx={{ '& *': { color: 'white' } }}>
@@ -578,9 +606,9 @@ export default function QuestionDetailPage({
             </Box>
           ))}
           {isLoggedIn ? (
-            <Button as={Link} href={`/maclath/questions/${params.id}/answer`} colorScheme="teal" size="lg" mt={4}>
-              質問に回答する
-            </Button>
+          <Button as={Link} href={`/maclath/questions/${params.id}/answer`} colorScheme="teal" size="lg" mt={4}>
+            質問に回答する
+          </Button>
           ) : (
             <Button as={Link} href="/auth" colorScheme="teal" size="lg" mt={4} variant="outline">
               ログインして質問に回答する

@@ -4,13 +4,25 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Box, Flex, Heading, Button, Input, Textarea, VStack, Text, FormControl, FormLabel, Stack, FormHelperText, Checkbox } from '@chakra-ui/react';
+import { Box, Flex, Heading, Button, Input, Textarea, VStack, Text, FormControl, FormLabel, Stack, FormHelperText, Checkbox, Select } from '@chakra-ui/react';
 import { renderLatex } from '@/utils/renderLatex';
 import { useToast } from '@chakra-ui/react';
 
 type Category = {
   id: string;
   name: string;
+};
+
+type Contest = {
+  id: string;
+  name: string;
+};
+
+type Problem = {
+  id: string;
+  title: string;
+  number: number;
+  contest_id: string;
 };
 
 export default function NewQuestionPage() {
@@ -20,6 +32,11 @@ export default function NewQuestionPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [isReferencingProblem, setIsReferencingProblem] = useState(false);
+  const [contests, setContests] = useState<Contest[]>([]);
+  const [selectedContestId, setSelectedContestId] = useState<string>('');
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [selectedProblemId, setSelectedProblemId] = useState<string>('');
   const supabase = createClientComponentClient();
   const router = useRouter();
   const toast = useToast();
@@ -41,6 +58,7 @@ export default function NewQuestionPage() {
 
     checkAuth();
     fetchCategories();
+    fetchContests();
   }, [supabase, router, toast]);
 
   const fetchCategories = async () => {
@@ -55,6 +73,41 @@ export default function NewQuestionPage() {
     
     setCategories(data || []);
   };
+
+  const fetchContests = async () => {
+    const { data, error } = await supabase
+      .from('contests')
+      .select('*')
+      .order('year', { ascending: false });
+    
+    if (error) {
+      return;
+    }
+    
+    setContests(data || []);
+  };
+
+  const fetchProblems = async (contestId: string) => {
+    const { data, error } = await supabase
+      .from('problems')
+      .select('*')
+      .eq('contest_id', contestId)
+      .order('number', { ascending: true });
+    
+    if (error) {
+      return;
+    }
+    
+    setProblems(data || []);
+  };
+
+  useEffect(() => {
+    if (selectedContestId) {
+      fetchProblems(selectedContestId);
+    } else {
+      setProblems([]);
+    }
+  }, [selectedContestId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +129,6 @@ export default function NewQuestionPage() {
       return;
     }
 
-    // カテゴリが選択されているか確認
     if (selectedCategoryIds.length === 0) {
       toast({
         title: '入力エラー',
@@ -96,6 +148,7 @@ export default function NewQuestionPage() {
           title,
           content,
           user_id: user.id,
+          referenced_problem_id: selectedProblemId || null,
         },
       ])
       .select();
@@ -182,6 +235,57 @@ export default function NewQuestionPage() {
                   .join(', ') 
               : 'なし'}
           </FormHelperText>
+        </FormControl>
+
+        <FormControl>
+          <Checkbox
+            isChecked={isReferencingProblem}
+            onChange={(e) => setIsReferencingProblem(e.target.checked)}
+            colorScheme="blue"
+            mb={4}
+          >
+            サイト内の問題を参照する
+          </Checkbox>
+
+          {isReferencingProblem && (
+            <VStack spacing={4} align="stretch" mb={4}>
+              <Select
+                placeholder="コンテストを選択"
+                value={selectedContestId}
+                onChange={(e) => setSelectedContestId(e.target.value)}
+                isDisabled={!isReferencingProblem}
+              >
+                {contests.map((contest) => (
+                  <option key={contest.id} value={contest.id}>
+                    {contest.name}
+                  </option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="問題を選択"
+                value={selectedProblemId}
+                onChange={(e) => setSelectedProblemId(e.target.value)}
+                isDisabled={!selectedContestId}
+              >
+                {problems.map((problem) => (
+                  <option key={problem.id} value={problem.id}>
+                    問題{problem.number}: {problem.title}
+                  </option>
+                ))}
+              </Select>
+
+              {selectedProblemId && (
+                <Box p={4} borderWidth="1px" borderRadius="md" bg="blue.50">
+                  <Text fontSize="sm" color="blue.700">
+                    参照先: <Link href={`/problems/${selectedProblemId}`} color="blue.600" textDecoration="underline">
+                      {contests.find(c => c.id === selectedContestId)?.name} 問題{problems.find(p => p.id === selectedProblemId)?.number}
+                    </Link>
+                  </Text>
+                </Box>
+              )}
+            </VStack>
+          )}
         </FormControl>
 
         <FormControl>

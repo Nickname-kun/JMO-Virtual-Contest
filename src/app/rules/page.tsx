@@ -1,4 +1,4 @@
-import { Box, Heading, Text, List, ListItem } from '@chakra-ui/react';
+import { Box, Heading, Text, List, ListItem, Link as ChakraLink } from '@chakra-ui/react';
 
 export default function RulesPage() {
   return (
@@ -35,6 +35,10 @@ export default function RulesPage() {
         </ListItem>
       </List>
 
+      <Text fontSize="md" mb={4}>
+        プライバシーポリシーは<ChakraLink href="/privacy-policy" color="blue.500" fontWeight="bold">こちら</ChakraLink>もご確認ください。
+      </Text>
+
       <Heading as="h2" size="md" mt={8} mb={2}>基本ルール</Heading>
       <List spacing={2} mb={4} pl={4} styleType="disc">
         <ListItem>本番と同じ制限時間（例：180分）でバーチャルコンテストを開始できます。</ListItem>
@@ -53,18 +57,6 @@ export default function RulesPage() {
         <ListItem>不具合・要望はGitHubまたは管理者までご連絡ください。</ListItem>
         <ListItem>もし、正解となるはずの入力形式で不正解になる場合や、他の正解候補（別解）を見つけた場合は、GitHubまたは管理者までお知らせいただけますと幸いです。</ListItem>
       </List>
-      <Heading as="h2" size="md" mt={8} mb={2}>プライバシーポリシー</Heading>
-      <Text fontSize="md" mb={4}>
-        本サービスでは、円滑なサービス提供のために以下の情報を収集・利用します。
-      </Text>
-      <List spacing={2} mb={4} pl={4} styleType="disc">
-        <ListItem>ユーザーアカウント情報（メールアドレス、パスワードのハッシュ）：ログイン、ユーザー識別のために利用します。</ListItem>
-        <ListItem>コンテスト参加・解答情報：バーチャルコンテストの記録、採点、結果表示のために利用します。</ListItem>
-        <ListItem>サービス利用に関する情報（アクセスログなど）：サービス改善、不正利用防止のために利用します。</ListItem>
-      </List>
-      <Text fontSize="md" mb={4}>
-        収集した情報は、本サービスの提供および改善の目的以外には利用しません。法令に基づく場合を除き、ご本人の同意なく第三者に提供することはありません。
-      </Text>
       <Heading as="h2" size="md" mt={8} mb={2}>推奨環境</Heading>
       <List spacing={2} mb={4} pl={4} styleType="disc">
         <ListItem>最新のGoogle Chrome、Firefox、Edge等のモダンブラウザ</ListItem>

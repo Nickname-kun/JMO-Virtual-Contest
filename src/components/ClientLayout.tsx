@@ -9,7 +9,7 @@ import FeedbackToast from '@/app/profile/FeedbackToast';
 import { useLoading } from '@/contexts/LoadingContext';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Box, useTheme } from '@chakra-ui/react';
+import { Box, useTheme, Text } from '@chakra-ui/react';
 
 export default function ClientLayout({
   children,
@@ -88,6 +88,14 @@ export default function ClientLayout({
       {isLoading && <LoadingOverlay />}
       <Box as="main" flexGrow={1} bg={isMaclathRelatedPage ? 'purple.100' : 'white'}>{children}</Box>
       <Footer />
+      <Box bg="gray.800" py={4} textAlign="center">
+        <Text fontSize="sm" color="gray.300" mb={1}>
+          ※ JMOおよびJJMOの問題の著作権は数学オリンピック財団に帰属します。
+        </Text>
+        <Text fontSize="sm" color="gray.400">
+          &copy; {new Date().getFullYear()}, JMO Virtual Contest
+        </Text>
+      </Box>
       <Suspense fallback={<div>Loading...</div>}>
         <FeedbackToast />
       </Suspense>

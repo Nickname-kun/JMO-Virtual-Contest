@@ -231,6 +231,11 @@ export default function EditProblemPage() {
           selectedText = '';
         }
         break;
+      case 'space':
+        prefix = '&nbsp;';
+        suffix = '';
+        selectedText = '';
+        break;
       // 他の書式設定のケースもここに追加
     }
 
@@ -302,13 +307,15 @@ export default function EditProblemPage() {
           </FormControl>
           <FormControl isRequired>
             <FormLabel>問題文</FormLabel>
-            <HStack spacing={2} mb={2}>
-              <Button size="sm" onClick={() => insertMarkdown('bold')}>太字</Button>
-              <Button size="sm" onClick={() => insertMarkdown('italic')}>斜体</Button>
-              <Button size="sm" onClick={() => insertMarkdown('list')}>リスト</Button>
-              {/* 他の書式設定ボタンもここに追加 */}
-            </HStack>
-            <Text fontSize="sm" color="gray.500" mt={1}>Markdown記法が利用可能です（太字: **太字**, 斜体: *斜体*, リスト: - リスト項目）</Text>
+            <Box mb={4}>
+              <Button onClick={() => insertMarkdown('bold')} mr={2}>太字</Button>
+              <Button onClick={() => insertMarkdown('italic')} mr={2}>斜体</Button>
+              <Button onClick={() => insertMarkdown('list')} mr={2}>リスト</Button>
+              <Button onClick={() => insertMarkdown('space')} mr={2}>空白</Button>
+              <Text fontSize="sm" color="gray.600" mt={2}>
+                Markdown記法が利用可能です (太字: **太字**, 斜体: *斜体*, リスト: - リスト項目)
+              </Text>
+            </Box>
             <Textarea
               name="content"
               ref={contentTextareaRef}

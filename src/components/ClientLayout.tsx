@@ -42,7 +42,7 @@ export default function ClientLayout({
           console.log('Profile not found, creating new profile');
           console.log('User metadata:', session.user.user_metadata);
           
-          const username = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
+          const username = session.user.user_metadata?.username || session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
           console.log('Generated username:', username);
 
           // Profile doesn't exist, create it

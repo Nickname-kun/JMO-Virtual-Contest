@@ -178,7 +178,7 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
               ml={4}
               onClick={() => setQuitDialogOpen(true)}
             >
-              やめる
+              あきらめる
             </Button>
             <Button
               leftIcon={<MdCheck />}
@@ -232,17 +232,17 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              バーチャルコンテストをやめますか？
+              バーチャルコンテストをあきらめますか？
             </AlertDialogHeader>
             <AlertDialogBody>
-              この操作は取り消せません。本当にやめてよろしいですか？
+              この操作は取り消せません。本当にあきらめてよろしいですか？
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={quitCancelRef} onClick={() => setQuitDialogOpen(false)}>
                 キャンセル
               </Button>
               <Button colorScheme="red" onClick={handleQuit} ml={3} isLoading={loading}>
-                やめる
+                あきらめる
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

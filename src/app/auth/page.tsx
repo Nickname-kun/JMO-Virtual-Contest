@@ -88,7 +88,13 @@ export default function AuthPage() {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({ email: signupEmail, password: signupPassword });
+    const { data, error } = await supabase.auth.signUp({
+      email: signupEmail,
+      password: signupPassword,
+      options: {
+        data: { username: signupUsername.trim() }
+      }
+    });
     if (error) {
       toast({
         title: 'エラー',
@@ -98,13 +104,6 @@ export default function AuthPage() {
         isClosable: true,
       });
     } else {
-      if (data.user) {
-        await supabase.from('profiles').insert({
-          id: data.user.id,
-          is_admin: false,
-          username: signupUsername.trim(),
-        });
-      }
       toast({
         title: '確認メールを送信しました',
         description: 'メールを確認してください',

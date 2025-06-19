@@ -597,7 +597,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
             mb={{ base: 2, md: 0 }}
             mr={{ base: 0, md: 4 }}
           >
-            バーチャルコンテストをやめる
+            バーチャルコンテストをあきらめる
           </Button>
           <Button onClick={() => setFinishDialogOpen(true)} colorScheme="green" size="sm">
             バーチャルコンテストを完了する
@@ -664,12 +664,12 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              バーチャルコンテストを終了しますか？
+              バーチャルコンテストをあきらめますか？
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              途中で終了すると、その時点での解答状況が保存されますが、コンテストは中断扱いとなります。
-              本当に終了しますか？
+              途中であきらめると、今回のバーチャルコンテストデータは完全に削除されます。
+              本当にあきらめますか？
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -677,7 +677,7 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
                 キャンセル
               </Button>
               <Button colorScheme="red" onClick={handleQuit} ml={3} isLoading={loading}>
-                終了する
+                あきらめる
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

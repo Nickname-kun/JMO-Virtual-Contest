@@ -41,33 +41,50 @@ export default function DeleteAccountButton() {
 
     setIsLoading(true);
     try {
+      // ユーザー情報取得
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        // すでにセッションが切れている等の場合はそのままリダイレクト
+        router.push('/');
+        return;
+      }
+      // 提出データを削除
+      await supabase.from('submissions').delete().eq('user_id', userData.user.id);
+      // バーチャルコンテスト履歴を削除
+      await supabase.from('virtual_contests').delete().eq('user_id', userData.user.id);
       // プロフィールデータを削除
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', userData.user.id);
 
       if (profileError) throw profileError;
 
-      // アカウントを削除
-      const { error: deleteError } = await (supabase.auth as any).deleteUser();
-
-      if (deleteError) throw deleteError;
-
       toast({
-        title: 'アカウントを削除しました',
+        title: 'アカウントデータを削除しました',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
 
+      // サインアウト
+      await supabase.auth.signOut();
+
       // トップページにリダイレクト
       router.push('/');
-    } catch (error) {
+
+      // 管理者に通知を送信
+      await supabase.from('notifications').insert({
+        user_id: '83eb3c48-9ad6-4725-8d83-da0abe6efb6d',
+        type: 'user_deleted',
+        message: `${userData.user.email} がアカウントを削除しました`,
+        related_entity_id: userData.user.id
+      });
+    } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
         title: 'エラー',
-        description: 'アカウントの削除に失敗しました。',
+        description: error?.message || String(error),
         status: 'error',
         duration: 3000,
         isClosable: true,

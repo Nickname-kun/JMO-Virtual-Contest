@@ -10,8 +10,8 @@ export default async function Home() {
     .select('*')
     .order('name', { ascending: false });
 
-  // 最新2件のみ表示
-  const latestContests = contests ? contests.slice(0, 2) : [];
+  // 最新4件のみ表示
+  const latestContests = contests ? contests.slice(0, 4) : [];
 
   // お知らせを取得
   const { data: announcements } = await supabase

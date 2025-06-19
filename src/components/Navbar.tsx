@@ -231,7 +231,7 @@ export default function Navbar() {
               )}
             </HStack>
           ) : (
-            <Button as={Link} href="/auth" size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline">
+            <Button as={Link} href="/auth" size="sm" bg="white" color="blue.600" _hover={{ bg: 'blue.50', color: 'blue.800', borderColor: 'blue.200' }} borderWidth={1} borderColor="blue.200" variant="outline">
               ログイン
             </Button>
           )}
@@ -327,7 +327,7 @@ export default function Navbar() {
                     </Collapse>
                   </>
                 ) : (
-                  <Button as={Link} href="/auth" size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline" onClick={onClose} w="full">
+                  <Button as={Link} href="/auth" size="sm" bg="white" color="blue.600" _hover={{ bg: 'blue.50', color: 'blue.800', borderColor: 'blue.200' }} borderWidth={1} borderColor="blue.200" variant="outline" onClick={onClose} w="full">
                     ログイン
                   </Button>
                 )}

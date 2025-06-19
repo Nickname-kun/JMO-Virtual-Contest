@@ -10,8 +10,8 @@ export default async function Home() {
     .select('*')
     .order('name', { ascending: false });
 
-  // 最新3件のみ表示
-  const latestContests = contests ? contests.slice(0, 3) : [];
+  // 最新2件のみ表示
+  const latestContests = contests ? contests.slice(0, 2) : [];
 
   // お知らせを取得
   const { data: announcements } = await supabase
@@ -26,10 +26,15 @@ export default async function Home() {
       <Heading as="h1" size="xl" mb={4} textAlign="center">
         JMO Virtual Contestとは？
       </Heading>
-      <Text fontSize="lg" color="gray.700" mb={10} textAlign="center">
+      <Text fontSize="lg" color="gray.700" mb={4} textAlign="center">
         JMO Virtual Contestは、日本数学オリンピック予選の過去問をバーチャルで体験できる学習サイトです。<br />
         本番さながらの形式で腕試しをしたり、過去問を解いて実力を高めましょう。
       </Text>
+      <Box textAlign="center" mb={10}>
+        <Button as={Link} href="/rules" colorScheme="teal" variant="outline" size="md">
+          ルール・ご利用ガイドページはこちら
+        </Button>
+      </Box>
 
       {/* お知らせセクション */}
       <Box mb={10}>

@@ -23,7 +23,7 @@ export default async function ProfilePage() {
   // ユーザー情報の取得
   const { data: userData } = await supabase
     .from('profiles')
-    .select('username')
+    .select('username, is_public')
     .eq('id', userId)
     .single();
 
@@ -107,7 +107,7 @@ export default async function ProfilePage() {
         <Box>
           <Heading as="h1" size="xl" mb={4}>プロフィール</Heading>
           <Text fontSize="lg" mb={4}>現在のユーザー名: {userData?.username || '設定されていません'}</Text>
-          <ProfileForm initialUsername={userData?.username || ''} />
+          <ProfileForm initialUsername={userData?.username || ''} initialIsPublic={userData?.is_public ?? false} />
         </Box>
         <Box>
           <Heading as="h2" size="lg" mb={4}>学習データ</Heading>

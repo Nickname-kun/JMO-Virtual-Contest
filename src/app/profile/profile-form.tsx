@@ -1,31 +1,38 @@
 "use client";
 
-import { Box, VStack, FormControl, FormLabel, Input, Button, useToast, FormHelperText } from '@chakra-ui/react';
+import { Box, VStack, FormControl, FormLabel, Input, Button, useToast, FormHelperText, Checkbox, Textarea } from '@chakra-ui/react';
 import { useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface ProfileFormProps {
   initialUsername: string;
-  // updateUsernameAction: (formData: FormData) => Promise<{ status: string; message: string }>; // サーバーアクションは不要になるためコメントアウトまたは削除
+  initialIsPublic: boolean;
+  initialAffiliation?: string;
+  initialBio?: string;
 }
 
 export default function ProfileForm({
   initialUsername,
-  // updateUsernameAction, // サーバーアクションは不要になるためコメントアウトまたは削除
+  initialIsPublic,
+  initialAffiliation = '',
+  initialBio = '',
 }: ProfileFormProps) {
   const [username, setUsername] = useState(initialUsername);
+  const [isPublic, setIsPublic] = useState(initialIsPublic);
+  const [affiliation, setAffiliation] = useState(initialAffiliation);
+  const [bio, setBio] = useState(initialBio);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
-  const supabase = createClientComponentClient(); // クライアントサイドでSupabaseクライアントを初期化
+  const supabase = createClientComponentClient();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
 
-    const MAX_USERNAME_LENGTH = 15; // 最大文字数を15に変更
+    const MAX_USERNAME_LENGTH = 15;
 
     if (username.trim().length === 0) {
-       toast({
+      toast({
         title: 'エラー',
         description: 'ユーザー名は空にできません。',
         status: 'error',
@@ -39,7 +46,7 @@ export default function ProfileForm({
     if (username.trim().length > MAX_USERNAME_LENGTH) {
       toast({
         title: 'エラー',
-        description: `ユーザー名は${MAX_USERNAME_LENGTH}文字以内で入力してください。`, // 最大文字数を超えた場合のエラーメッセージ
+        description: `ユーザー名は${MAX_USERNAME_LENGTH}文字以内で入力してください。`,
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -49,7 +56,7 @@ export default function ProfileForm({
     }
 
     // ユーザー名の重複チェック
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser } = await supabase
       .from('profiles')
       .select('id')
       .eq('username', username.trim())
@@ -68,13 +75,12 @@ export default function ProfileForm({
       return;
     }
 
-    // クライアントサイドからSupabaseを使ってユーザー名を更新
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
       toast({
         title: 'エラー',
-        description: 'ユーザー情報の取得に失敗しました。', // または適切なエラーメッセージ
+        description: 'ユーザー情報の取得に失敗しました。',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -85,26 +91,26 @@ export default function ProfileForm({
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ username: username.trim() })
+      .update({ username: username.trim(), is_public: isPublic, affiliation: affiliation.trim(), bio: bio.trim() })
       .eq('id', user.id);
 
     if (updateError) {
       console.error('Error updating username:', updateError);
-       toast({
+      toast({
         title: 'エラー',
-        description: updateError.message, // または適切なエラーメッセージ
+        description: updateError.message,
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
     } else {
-    toast({
+      toast({
         title: '成功',
-        description: 'ユーザー名が更新されました！',
+        description: 'プロフィールが更新されました！',
         status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
+        duration: 5000,
+        isClosable: true,
+      });
     }
 
     setIsLoading(false);
@@ -124,8 +130,40 @@ export default function ProfileForm({
           />
           <FormHelperText>ユーザー名は15文字以内で入力してください。</FormHelperText>
         </FormControl>
+        {isPublic && (
+          <>
+            <FormControl id="affiliation">
+              <FormLabel>所属</FormLabel>
+              <Input
+                type="text"
+                name="affiliation"
+                value={affiliation}
+                onChange={(e) => setAffiliation(e.target.value)}
+                placeholder="学校名・会社名など"
+              />
+            </FormControl>
+            <FormControl id="bio">
+              <FormLabel>自己紹介</FormLabel>
+              <Textarea
+                name="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="自己紹介を入力してください"
+                rows={3}
+              />
+            </FormControl>
+          </>
+        )}
+        <FormControl id="is_public">
+          <Checkbox
+            isChecked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+          >
+            プロフィールを公開する
+          </Checkbox>
+        </FormControl>
         <Button type="submit" colorScheme="blue" isLoading={isLoading}>
-          ユーザー名を更新
+          プロフィールを更新
         </Button>
       </VStack>
     </form>

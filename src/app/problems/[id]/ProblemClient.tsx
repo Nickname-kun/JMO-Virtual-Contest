@@ -82,7 +82,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const [commentAuthors, setCommentAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean } }>({});
+  const [commentAuthors, setCommentAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean; is_public?: boolean } }>({});
 
   const renderCommentContent = (content: string) => {
     const elements: JSX.Element[] = [];
@@ -150,13 +150,13 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, username, is_admin')
+          .select('id, username, is_admin, is_public')
           .in('id', authorIds);
         
         if (profiles) {
           const authorsMap = profiles.reduce((acc, profile) => ({
             ...acc,
-            [profile.id]: { username: profile.username, is_admin: profile.is_admin }
+            [profile.id]: { username: profile.username, is_admin: profile.is_admin, is_public: profile.is_public }
           }), {});
           setCommentAuthors(authorsMap);
         }
@@ -284,7 +284,9 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                   <ListItem key={comment.id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={1}>
                       <Text fontSize="sm" fontWeight="bold" color={commentAuthors[comment.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
-                        {commentAuthors[comment.user_id]?.username || '匿名ユーザー'}
+                        {commentAuthors[comment.user_id]?.is_public
+                          ? <Link href={`/profile/${comment.user_id}`} style={{ textDecoration: 'none' }}><span style={{ borderBottom: '1px dashed transparent', transition: 'border-bottom 0.2s' }} onMouseOver={e => (e.currentTarget.style.borderBottom = '1px solid')} onMouseOut={e => (e.currentTarget.style.borderBottom = '1px dashed transparent')}>{commentAuthors[comment.user_id]?.username || '匿名ユーザー'}</span></Link>
+                          : commentAuthors[comment.user_id]?.username || '匿名ユーザー'}
                       </Text>
                       <Text fontSize="xs" color="gray.500">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ja })}</Text>
                     </Flex>

@@ -31,6 +31,7 @@ import {
   AccordionPanel,
   AccordionIcon,
   IconButton,
+  Link as ChakraLink,
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { renderLatex } from '@/utils/renderLatex'
@@ -73,7 +74,7 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
   const [explanationToDeleteId, setExplanationToDeleteId] = useState<string | null>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const [deletingExplanation, setDeletingExplanation] = useState(false)
-  const [explanationAuthors, setExplanationAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean } }>({});
+  const [explanationAuthors, setExplanationAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean; is_public?: boolean } }>({});
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -116,13 +117,13 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
       if (authorIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, username, is_admin')
+          .select('id, username, is_admin, is_public')
           .in('id', authorIds);
         
         if (profiles) {
           const authorsMap = profiles.reduce((acc, profile) => ({
             ...acc,
-            [profile.id]: { username: profile.username, is_admin: profile.is_admin }
+            [profile.id]: { username: profile.username, is_admin: profile.is_admin, is_public: profile.is_public }
           }), {});
           setExplanationAuthors(authorsMap);
         }
@@ -322,9 +323,23 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
                               <Badge colorScheme="green" mb={{ base: 1, md: 0 }}>公式解説</Badge>
                             )}
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
-                              by <Text as="span" color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
-                                {explanationAuthors[explanation.user_id]?.username || '不明'}
-                              </Text>
+                              by {explanationAuthors[explanation.user_id]?.is_public
+                                ? (
+                                  <ChakraLink
+                                    as={Link}
+                                    href={`/profile/${explanation.user_id}`}
+                                    color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}
+                                    _hover={{ textDecoration: 'underline' }}
+                                    display="inline"
+                                  >
+                                    {explanationAuthors[explanation.user_id]?.username || '不明'}
+                                  </ChakraLink>
+                                )
+                                : (
+                                  <Text as="span" color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
+                                    {explanationAuthors[explanation.user_id]?.username || '不明'}
+                                  </Text>
+                                )}
                             </Text>
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
                               {formatDistanceToNow(new Date(explanation.created_at), { addSuffix: true, locale: ja })}

@@ -17,6 +17,7 @@ type Question = {
   status: 'open' | 'resolved';
   profiles: {
     username: string;
+    is_admin: boolean;
   };
   question_categories: {
     categories: {
@@ -100,7 +101,7 @@ export default function QuestionsPage() {
       .from('questions')
       .select(`
         *,
-        profiles:user_id (username),
+        profiles:user_id (username, is_admin),
         question_categories!inner (categories (name, id))
       `)
       .order('created_at', { ascending: false });
@@ -235,7 +236,11 @@ export default function QuestionsPage() {
                         <Box>
                           <Heading as="h2" size="md" mb={1} fontWeight="semibold">{question.title}</Heading>
                           <Text fontSize="sm" color="gray.600">
-                            投稿者: {question.profiles?.username || '不明'}
+                            投稿者: <Link href={`/profile/${question.user_id}`}>
+                              <span style={{ color: question.profiles?.is_admin ? "rgb(102, 0, 153)" : undefined }}>
+                                {question.profiles?.username || '不明'}
+                              </span>
+                            </Link>
                           </Text>
                         </Box>
                         <Tag
@@ -330,7 +335,11 @@ export default function QuestionsPage() {
                         <Box>
                           <Heading as="h2" size="md" mb={1} fontWeight="semibold">{question.title}</Heading>
                           <Text fontSize="sm" color="gray.600">
-                            投稿者: {question.profiles?.username || '不明'}
+                            投稿者: <Link href={`/profile/${question.user_id}`}>
+                              <span style={{ color: question.profiles?.is_admin ? "rgb(102, 0, 153)" : undefined }}>
+                                {question.profiles?.username || '不明'}
+                              </span>
+                            </Link>
                           </Text>
                         </Box>
                         <Tag

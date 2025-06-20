@@ -9,6 +9,10 @@ interface ProfileFormProps {
   initialIsPublic: boolean;
   initialAffiliation?: string;
   initialBio?: string;
+  initialTwitter?: string;
+  initialGithub?: string;
+  initialWebsite?: string;
+  initialOmc?: string;
 }
 
 export default function ProfileForm({
@@ -16,11 +20,19 @@ export default function ProfileForm({
   initialIsPublic,
   initialAffiliation = '',
   initialBio = '',
+  initialTwitter = '',
+  initialGithub = '',
+  initialWebsite = '',
+  initialOmc = '',
 }: ProfileFormProps) {
   const [username, setUsername] = useState(initialUsername);
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [affiliation, setAffiliation] = useState(initialAffiliation);
   const [bio, setBio] = useState(initialBio);
+  const [twitter, setTwitter] = useState(initialTwitter);
+  const [github, setGithub] = useState(initialGithub);
+  const [website, setWebsite] = useState(initialWebsite);
+  const [omc, setOmc] = useState(initialOmc);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
   const supabase = createClientComponentClient();
@@ -91,7 +103,16 @@ export default function ProfileForm({
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ username: username.trim(), is_public: isPublic, affiliation: affiliation.trim(), bio: bio.trim() })
+      .update({
+        username: username.trim(),
+        is_public: isPublic,
+        affiliation: affiliation.trim(),
+        bio: bio.trim(),
+        twitter: twitter.trim(),
+        github: github.trim(),
+        website: website.trim(),
+        omc: omc.trim(),
+      })
       .eq('id', user.id);
 
     if (updateError) {
@@ -150,6 +171,46 @@ export default function ProfileForm({
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="自己紹介を入力してください"
                 rows={3}
+              />
+            </FormControl>
+            <FormControl id="twitter">
+              <FormLabel>X（Twitter）</FormLabel>
+              <Input
+                type="text"
+                name="twitter"
+                value={twitter}
+                onChange={(e) => setTwitter(e.target.value)}
+                placeholder="@username または URL"
+              />
+            </FormControl>
+            <FormControl id="github">
+              <FormLabel>GitHub</FormLabel>
+              <Input
+                type="text"
+                name="github"
+                value={github}
+                onChange={(e) => setGithub(e.target.value)}
+                placeholder="ユーザー名 または URL"
+              />
+            </FormControl>
+            <FormControl id="website">
+              <FormLabel>個人ウェブサイト</FormLabel>
+              <Input
+                type="text"
+                name="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="https://example.com"
+              />
+            </FormControl>
+            <FormControl id="omc">
+              <FormLabel>OMC</FormLabel>
+              <Input
+                type="text"
+                name="omc"
+                value={omc}
+                onChange={(e) => setOmc(e.target.value)}
+                placeholder="ユーザー名 または URL"
               />
             </FormControl>
           </>

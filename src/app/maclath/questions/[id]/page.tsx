@@ -24,6 +24,7 @@ type Question = {
   referenced_problem_id: string | null;
   profiles: {
     username: string;
+    is_admin: boolean;
   };
   question_categories: {
     categories: {
@@ -47,6 +48,7 @@ type Answer = {
   user_id: string;
   profiles: {
     username: string;
+    is_admin: boolean;
   };
   likes_count: number;
   is_liked: boolean;
@@ -125,7 +127,7 @@ export default function QuestionDetailPage({
       .from('questions')
       .select(`
         *,
-        profiles:user_id (username),
+        profiles:user_id (username, is_admin),
         question_categories (categories (name)),
         referenced_problem:referenced_problem_id (
           id,
@@ -158,7 +160,7 @@ export default function QuestionDetailPage({
       .from('answers')
       .select(`
         *,
-        profiles:user_id (username),
+        profiles:user_id (username, is_admin),
         likes_count:answer_likes(count),
         is_liked:answer_likes!left(user_id)
       `)
@@ -432,8 +434,12 @@ export default function QuestionDetailPage({
         </Flex>
 
         <Flex fontSize="sm" color="gray.600" mb={4} align="center">
-          <Text as="span" mr={4}>
-            投稿者: {question.profiles?.username || '不明'}
+          <Text as="span" mr={4} color="gray.600">
+            投稿者: <Link href={`/profile/${question.user_id}`}>
+              <span style={{ color: question.profiles?.is_admin ? "rgb(102, 0, 153)" : undefined }}>
+                {question.profiles?.username || '不明'}
+              </span>
+            </Link>
           </Text>
           <Tag
             size="md"
@@ -522,7 +528,15 @@ export default function QuestionDetailPage({
                       fontWeight="semibold" 
                       mb={{ base: 1, md: 0 }}
                     >
-                      回答者: {answer.profiles?.username || '不明'}
+                      回答者: <Link href={`/profile/${answer.user_id}`}>
+                        <span style={answer.profiles?.is_admin ? {
+                          color: "rgb(102, 0, 153)",
+                          WebkitTextStroke: "0.2px white",
+                          fontWeight: "bold"
+                        } : {}}>
+                          {answer.profiles?.username || '不明'}
+                        </span>
+                      </Link>
                     </Text>
                     {question?.best_answer_id === answer.id && (
                       <Tag size="sm" colorScheme="green" bg="green.600" color="white" mb={{ base: 1, md: 0 }}>

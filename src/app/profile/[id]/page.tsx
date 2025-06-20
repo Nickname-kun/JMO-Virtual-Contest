@@ -1,9 +1,11 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { Box, Heading, Text, VStack, Container, Tag, List, ListItem, Link as ChakraLink } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, Container, Tag, List, ListItem, Link as ChakraLink, HStack, Icon } from '@chakra-ui/react';
 import Link from 'next/link';
 import LearningData from '../learning-data';
+import { FaXTwitter, FaGithub, FaGlobe } from 'react-icons/fa6';
+import SnsLinks from './SnsLinks';
 
 export default async function PublicProfilePage({ params }: { params: { id: string } }) {
   const supabase = createServerComponentClient({ cookies });
@@ -13,7 +15,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
   // プロフィール情報を取得
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('username, is_public, created_at, is_admin, affiliation, bio')
+    .select('username, is_public, created_at, is_admin, affiliation, bio, twitter, github, website, omc')
     .eq('id', id)
     .single();
 
@@ -96,6 +98,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
         <Text color="gray.500" fontSize="sm" mb={2}>
           登録日: {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
         </Text>
+        <SnsLinks twitter={profile.twitter} github={profile.github} website={profile.website} omc={profile.omc} />
         {/* 学習データ（分野別正答率・バーチャルコンテスト履歴・ランク分布グラフなど） */}
         <Box mt={8} textAlign="left">
           <LearningData submissions={submissions as any[] || []} virtualContests={virtualContests as any[] || []} />

@@ -1,7 +1,10 @@
-import { Box, Heading, Text, SimpleGrid, VStack, Button, Divider, Flex } from '@chakra-ui/react';
+import { Box, Heading, Text, SimpleGrid, VStack, Button, Divider, Flex, IconButton } from '@chakra-ui/react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState, useEffect } from 'react';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import MaclathQuestionsCarousel from "./components/MaclathQuestionsCarousel";
 
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies });
@@ -19,6 +22,14 @@ export default async function Home() {
     .select('title, content, created_at')
     .order('created_at', { ascending: false })
     .limit(5); // 最新5件を取得
+
+  // Maclath新着質問（最新5件）を取得
+  const { data: questions } = await supabase
+    .from('questions')
+    .select('id, title, created_at, profiles(username)')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(5);
 
   return (
     <Box maxW="4xl" mx="auto" py={10} px={4}>
@@ -72,6 +83,21 @@ export default async function Home() {
           ) : (
             <Text color="gray.700">現在、新しいお知らせはありません。</Text>
           )}
+        </Box>
+      </Box>
+
+      {/* Maclath新着質問セクション（カルーセル） */}
+      <Box mb={10}>
+        <Heading as="h2" size="md" mb={4} textAlign="center">
+          Maclath新着質問
+        </Heading>
+        <Box bg="white" borderRadius="xl" boxShadow="md" p={{ base: 4, md: 6 }} borderWidth={1}>
+          <MaclathQuestionsCarousel questions={questions || []} />
+          <Box mt={4} textAlign="center">
+            <Button as={Link} href="/maclath/questions" colorScheme="purple" variant="ghost" size="sm">
+              もっと見る
+            </Button>
+          </Box>
         </Box>
       </Box>
 

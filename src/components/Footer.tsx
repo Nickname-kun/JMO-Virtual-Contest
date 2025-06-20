@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Text, Container, Link as ChakraLink, Flex, VStack, SimpleGrid, Heading, HStack } from '@chakra-ui/react';
+import { Box, Text, Container, Link as ChakraLink, Flex, VStack, SimpleGrid, Heading, HStack, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import Link from 'next/link';
 import { FaXTwitter } from 'react-icons/fa6';
 import { MdEmail } from 'react-icons/md';
@@ -12,17 +12,28 @@ export default function Footer() {
         {/* 新しい上部の横並びメニュー */}
         <HStack spacing={8} justify="center" mb={8} wrap="wrap">
           <ChakraLink as={Link} href="/">
-            <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>ホーム</Text>
-          </ChakraLink>
-          <ChakraLink as={Link} href="/contests">
-            <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>コンテスト</Text>
+            <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>HOME</Text>
           </ChakraLink>
           <ChakraLink as={Link} href="/problems">
             <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>問題一覧</Text>
           </ChakraLink>
-          <ChakraLink as={Link} href="/maclath/questions">
-            <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>Maclath</Text>
+          <ChakraLink as={Link} href="/contests">
+            <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>コンテスト</Text>
           </ChakraLink>
+          {/* COMMUNITY ドロップダウン */}
+          <Menu>
+            <MenuButton as={ChakraLink} px={0} bg="none" _hover={{ color: "white", textDecoration: 'none' }} _active={{ bg: 'none' }} _focus={{ boxShadow: 'none' }}>
+              <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>Community</Text>
+            </MenuButton>
+            <MenuList bg="blue.800">
+              <MenuItem as={Link} href="/users" bg="blue.800" color="white">
+                ユーザーリスト
+              </MenuItem>
+              <MenuItem as={Link} href="/maclath" bg="blue.800" color="white">
+                Maclath
+              </MenuItem>
+            </MenuList>
+          </Menu>
           <ChakraLink as={Link} href="/announcements">
             <Text fontSize="md" color="gray.200" _hover={{ color: "white" }}>お知らせ</Text>
           </ChakraLink>

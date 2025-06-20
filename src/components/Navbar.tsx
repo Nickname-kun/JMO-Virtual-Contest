@@ -169,15 +169,25 @@ export default function Navbar() {
           <ChakraLink as={Link} href="/" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             HOME
           </ChakraLink>
-          <ChakraLink as={Link} href="/maclath" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
-            Maclath
-          </ChakraLink>
           <ChakraLink as={Link} href="/problems" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             問題一覧
           </ChakraLink>
           <ChakraLink as={Link} href="/contests" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             コンテスト一覧
           </ChakraLink>
+          <Menu>
+            <MenuButton as={ChakraLink} px={0} bg="none" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200', textDecoration: 'none' }} _active={{ bg: 'none' }} _focus={{ boxShadow: 'none' }}>
+              Community
+            </MenuButton>
+            <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
+              <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                ユーザーリスト
+              </MenuItem>
+              <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                Maclath
+              </MenuItem>
+            </MenuList>
+          </Menu>
           <ChakraLink as={Link} href="/rules" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
             ルール
           </ChakraLink>
@@ -256,15 +266,25 @@ export default function Navbar() {
                 <ChakraLink as={Link} href="/" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   HOME
                 </ChakraLink>
-                <ChakraLink as={Link} href="/maclath/questions" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
-                  Maclath
-                </ChakraLink>
                 <ChakraLink as={Link} href="/problems" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   問題一覧
                 </ChakraLink>
                 <ChakraLink as={Link} href="/contests" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   コンテスト一覧
                 </ChakraLink>
+                <Menu>
+                  <MenuButton as={ChakraLink} px={0} bg="none" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200', textDecoration: 'none' }} _active={{ bg: 'none' }} _focus={{ boxShadow: 'none' }}>
+                    COMMUNITY
+                  </MenuButton>
+                  <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
+                    <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                      ユーザーリスト
+                    </MenuItem>
+                    <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                      Maclath
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
                 <ChakraLink as={Link} href="/rules" onClick={onClose} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}>
                   ルール
                 </ChakraLink>

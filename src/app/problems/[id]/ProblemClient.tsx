@@ -250,7 +250,7 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
           </Button>
         </HStack>
         
-        <Text className="problem-text">{renderLatex(problem.content)}</Text>
+        <Box as="div" className="problem-text">{renderLatex(problem.content)}</Box>
 
         {problem.diagram_svg && (
           <Box display="flex" justifyContent="center">

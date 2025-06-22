@@ -20,6 +20,7 @@
     "@supabase/supabase-js": "^2.49.5",
     "@swc/cli": "^0.7.7",
     "@swc/core": "^1.11.29",
+    "bignumber.js": "^9.3.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^7.6.16",
     "katex": "^0.16.22",
@@ -40,6 +41,7 @@
     "remark-rehype": "^11.1.2"
   },
   "devDependencies": {
+    "@types/bignumber.js": "^4.0.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

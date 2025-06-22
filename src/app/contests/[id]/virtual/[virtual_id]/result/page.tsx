@@ -50,7 +50,8 @@ export default function VirtualContestResultPage({ params }: { params: { id: str
       const { data: problemsData } = await supabase
         .from('problems')
         .select('id, title, difficulty, contest_id')
-        .eq('contest_id', vcData.contest_id);
+        .eq('contest_id', vcData.contest_id)
+        .order('number', { ascending: true });
       setProblems(problemsData || []);
       // 3. 提出一覧取得
       const { data: submissionsData } = await supabase

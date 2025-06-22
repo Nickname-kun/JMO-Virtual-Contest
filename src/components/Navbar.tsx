@@ -180,10 +180,10 @@ export default function Navbar() {
               Community
             </MenuButton>
             <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
-              <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+              <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"} onClick={onClose}>
                 ユーザーリスト
               </MenuItem>
-              <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+              <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"} onClick={onClose}>
                 Maclath
               </MenuItem>
             </MenuList>
@@ -274,13 +274,13 @@ export default function Navbar() {
                 </ChakraLink>
                 <Menu>
                   <MenuButton as={ChakraLink} px={0} bg="none" _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200', textDecoration: 'none' }} _active={{ bg: 'none' }} _focus={{ boxShadow: 'none' }}>
-                    COMMUNITY
+                    Community
                   </MenuButton>
                   <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
-                    <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                    <MenuItem as={Link} href="/users" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"} onClick={onClose}>
                       ユーザーリスト
                     </MenuItem>
-                    <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>
+                    <MenuItem as={Link} href="/maclath" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"} onClick={onClose}>
                       Maclath
                     </MenuItem>
                   </MenuList>

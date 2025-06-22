@@ -27,7 +27,7 @@ export default function ClientLayout({
 
   useEffect(() => {
     const createProfileIfMissing = async () => {
-      console.log('Checking profile for session:', session);
+      // console.log('Checking profile for session:', session);
       if (session?.user) {
         // Check if profile exists
         const { data, error } = await supabase
@@ -36,14 +36,14 @@ export default function ClientLayout({
           .eq('id', session.user.id)
           .single();
 
-        console.log('Profile check result:', { data, error });
+        // console.log('Profile check result:', { data, error });
 
         if (error && error.code === 'PGRST116') { // PGRST116 indicates no row found
-          console.log('Profile not found, creating new profile');
-          console.log('User metadata:', session.user.user_metadata);
+          // console.log('Profile not found, creating new profile');
+          // console.log('User metadata:', session.user.user_metadata);
           
           const username = session.user.user_metadata?.username || session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || `user_${session.user.id.slice(0, 8)}`;
-          console.log('Generated username:', username);
+          // console.log('Generated username:', username);
 
           // Profile doesn't exist, create it
           const { error: insertError } = await supabase
@@ -57,12 +57,12 @@ export default function ClientLayout({
             ]);
 
           if (insertError) {
-            console.error('Error creating profile:', insertError);
+            // console.error('Error creating profile:', insertError);
           } else {
-            console.log('Profile created successfully for user:', session.user.id);
+            // console.log('Profile created successfully for user:', session.user.id);
           }
         } else if (error) {
-          console.error('Error checking profile:', error);
+          // console.error('Error checking profile:', error);
         }
       }
     };
@@ -96,9 +96,7 @@ export default function ClientLayout({
           &copy; {new Date().getFullYear()}, JMO Virtual Contest
         </Text>
       </Box>
-      <Suspense fallback={<div>Loading...</div>}>
-        <FeedbackToast />
-      </Suspense>
+      <FeedbackToast />
     </div>
   );
 } 

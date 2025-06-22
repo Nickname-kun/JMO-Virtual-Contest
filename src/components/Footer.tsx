@@ -57,17 +57,17 @@ export default function Footer() {
           {/* カラム 2: お問い合わせ */}
           <VStack align="start" spacing={2}>
             <Heading as="h4" size="md" color="white">お問い合わせ</Heading>
-            <Text fontSize="sm" color="gray.400">
+            <Box as="p" fontSize="sm" color="gray.400">
               <FaXTwitter style={{ display: 'inline-block', marginRight: '5px' }} /> X (旧Twitter): 東北大学作問サークル（<ChakraLink href="https://twitter.com/tohoku_sakumon" isExternal color="blue.300">@tohoku_sakumon</ChakraLink>）
-              <Box height="1" />
+              <br />
               または
-              <Box height="1" />
+              <br />
               <ChakraLink href="https://twitter.com/kubositato_toi" isExternal color="blue.300">@kubositato_toi</ChakraLink>
               ／ <ChakraLink href="https://twitter.com/Nickname0628" isExternal color="blue.300">@Nickname0628</ChakraLink>
-            </Text>
-            <Text fontSize="sm" color="gray.400">
+            </Box>
+            <Box as="p" fontSize="sm" color="gray.400">
               <MdEmail style={{ display: 'inline-block', marginRight: '5px' }} /> Email: <ChakraLink href="mailto:bunkeimathlove@gmail.com" isExternal color="blue.300">bunkeimathlove@gmail.com</ChakraLink>
-            </Text>
+            </Box>
           </VStack>
         </SimpleGrid>
       </Container>

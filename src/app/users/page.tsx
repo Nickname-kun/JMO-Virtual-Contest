@@ -71,7 +71,7 @@ export default function UsersPage() {
       </Heading>
       {error && <Text color="red.500" mb={4}>{error}</Text>}
       <Box overflowX="auto" borderRadius="md" boxShadow="md" bg="white">
-        <Table variant="simple">
+        <Table variant="simple" whiteSpace="nowrap">
           <Thead>
             <Tr>
               <Th>ユーザー名</Th>
@@ -94,6 +94,7 @@ export default function UsersPage() {
                       <Text
                         as="span"
                         style={user.is_admin ? { color: "rgb(102, 0, 153)", WebkitTextStroke: "0.2px white", fontWeight: "bold" } : {}}
+                        _hover={{ textDecoration: "underline", cursor: "pointer" }}
                       >
                         {user.username || user.id}
                       </Text>

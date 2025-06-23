@@ -10,12 +10,21 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // 認証が必要なパスを指定
-  if (
-    req.nextUrl.pathname.startsWith('/admin') &&
-    !session
-  ) {
-    return NextResponse.redirect(new URL('/auth', req.url))
+  // /admin配下は認証必須
+  if (req.nextUrl.pathname.startsWith('/admin')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth', req.url))
+    }
+    // 管理者判定
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', session.user.id)
+      .single()
+    if (error || !profile?.is_admin) {
+      // 管理者でなければトップページへ
+      return NextResponse.redirect(new URL('/', req.url))
+    }
   }
 
   return res

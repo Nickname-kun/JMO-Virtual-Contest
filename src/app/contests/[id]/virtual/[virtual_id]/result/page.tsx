@@ -158,6 +158,11 @@ export default function VirtualContestResultPage({ params }: { params: { id: str
           );
         })}
       </VStack>
+      <Box textAlign="center" mt={8}>
+        <Button as={require('next/link').default} href="/" colorScheme="teal" size="lg">
+          ホームに戻る
+        </Button>
+      </Box>
     </Container>
   );
 } 

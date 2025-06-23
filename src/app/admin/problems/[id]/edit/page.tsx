@@ -359,11 +359,9 @@ export default function EditProblemPage() {
               {formData.correct_answers.map((answer, index) => (
                 <Flex key={index} gap={2} align="center">
                   <math-field
-                    {...{
-                      ref: (el: any) => { mathfieldRefs.current[index] = el },
-                      value: answer,
-                      style: { width: '100%', height: '40px', border: 'none' }
-                    } as any}
+                    value={answer}
+                    onInput={(evt: any) => handleCorrectAnswerChange(index, evt.target.value)}
+                    style={{ width: '100%', height: '40px', border: 'none' }}
                   />
                   {formData.correct_answers.length > 1 && (
                     <Button size="sm" onClick={() => handleRemoveCorrectAnswer(index)}>

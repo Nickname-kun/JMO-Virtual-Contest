@@ -20,14 +20,27 @@ export default function MaclathHomePage() {
         <Heading as="h1" size="2xl" color="teal.600">
           ようこそ Maclath へ！
         </Heading>
-        <Text fontSize="lg" color="gray.700">
-          ここは競技数学版の「みんなの教室」。
-          日々の学習で生まれた疑問を共有し、協力して解決する場です。
-          質問を投稿したり、他の人の質問に回答して、一緒に学びを深めましょう！
+        <Text fontSize="md" color="teal.500" fontWeight="bold">
+          みんなで作る、競技数学のQ&Aコミュニティ
         </Text>
-        <Button as={Link} href="/maclath/questions" colorScheme="blue" size="lg">
-          質問一覧を見る
-        </Button>
+        <Text fontSize="lg" color="gray.700">
+          ここは競技数学版の「みんなの教室」。<br />
+          日々の学習で生まれた疑問を共有し、協力して解決する場です。<br />
+          質問も回答も、気軽にどうぞ！
+        </Text>
+        <Text fontSize="md" color="gray.600">
+          ・どんな疑問でもOK<br />
+          ・回答は1行でも歓迎<br />
+          ・過去の質問も検索できます
+        </Text>
+        <VStack spacing={4}>
+          <Button as={Link} href="/maclath/questions" colorScheme="blue" size="lg">
+            質問一覧を見る
+          </Button>
+          <Button as={Link} href="/maclath/questions/new" colorScheme="teal" variant="outline" size="md">
+            質問を投稿する
+          </Button>
+        </VStack>
       </VStack>
     </Box>
   );

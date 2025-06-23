@@ -236,6 +236,21 @@ export default function EditProblemPage() {
         suffix = '';
         selectedText = '';
         break;
+      case 'diagram':
+        prefix = '[DIAGRAM]';
+        suffix = '';
+        selectedText = '';
+        break;
+      case 'indent':
+        prefix = '> ';
+        suffix = '';
+        if (!selectedText) selectedText = '字下げしたい文章';
+        break;
+      case 'newline':
+        prefix = '<span class="narrow-break"></span>';
+        suffix = '';
+        selectedText = '';
+        break;
       // 他の書式設定のケースもここに追加
     }
 
@@ -312,8 +327,13 @@ export default function EditProblemPage() {
               <Button onClick={() => insertMarkdown('italic')} mr={2}>斜体</Button>
               <Button onClick={() => insertMarkdown('list')} mr={2}>リスト</Button>
               <Button onClick={() => insertMarkdown('space')} mr={2}>空白</Button>
+              <Button onClick={() => insertMarkdown('diagram')} mr={2}>[DIAGRAM]</Button>
+              <Button onClick={() => insertMarkdown('indent')} mr={2}>字下げ</Button>
+              <Button onClick={() => insertMarkdown('newline')} mr={2}>空行</Button>
               <Text fontSize="sm" color="gray.600" mt={2}>
-                Markdown記法が利用可能です (太字: **太字**, 斜体: *斜体*, リスト: - リスト項目)
+                Markdown記法が利用可能です (太字: **太字**, 斜体: *斜体*, リスト: - リスト項目, 字下げ: &gt; 文章)<br />
+                <b>[DIAGRAM]</b> と入力すると、その位置に図が挿入されます。<br />
+                <b>空行</b>を挿入したい場合は「空行」ボタンを使ってください（行間が狭い改行になります）。
               </Text>
             </Box>
             <Textarea

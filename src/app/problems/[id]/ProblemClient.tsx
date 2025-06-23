@@ -250,9 +250,9 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
           </Button>
         </HStack>
         
-        <Box as="div" className="problem-text">{renderLatex(problem.content)}</Box>
+        <Box as="div" className="problem-text">{renderLatex(problem.content, problem.diagram_svg)}</Box>
 
-        {problem.diagram_svg && (
+        {problem.diagram_svg && !problem.content.includes('[DIAGRAM]') && (
           <Box display="flex" justifyContent="center">
             <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
           </Box>

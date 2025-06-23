@@ -7,7 +7,7 @@ import { ja } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList, Cell } from 'recharts';
-import { VirtualContest, VirtualContestContest, Submission, SubmissionProblem } from '@/types/database'; // 型定義をdatabase.tsからインポート
+import { VirtualContest, VirtualContestContest, Submission } from '@/types/database'; // 型定義をdatabase.tsからインポート
 
 interface LearningDataProps {
   submissions: Submission[];
@@ -40,7 +40,7 @@ export default function LearningData({
         });
       } else if (submission.problems && typeof submission.problems === 'object') {
         // 万が一オブジェクト単体でproblemsが来る場合のフォールバック（型定義とは異なるが安全のため）
-        const field = (submission.problems as SubmissionProblem).field || '不明な分野'; // 型アサーション
+        const field = (submission.problems as any).field || '不明な分野'; // 型アサーション
         if (!stats[field]) {
           stats[field] = { total: 0, correct: 0 };
         }
@@ -170,46 +170,52 @@ export default function LearningData({
   ];
 
   // バーチャルコンテスト履歴の表示
+  const [vcPage, setVcPage] = useState(1);
+  const VC_PAGE_SIZE = 7;
+  const totalVcPages = Math.ceil(virtualContests.length / VC_PAGE_SIZE);
+  const pagedVirtualContests = virtualContests.slice((vcPage - 1) * VC_PAGE_SIZE, vcPage * VC_PAGE_SIZE);
+
   const renderVirtualContests = () => {
     if (virtualContests.length === 0) {
       return <Text>まだバーチャルコンテストに参加していません。</Text>;
     }
 
     return (
-      <TableContainer>
-        <Table variant="simple" size="sm">
-          <Thead>
-            <Tr>
-              <Th>開始日時</Th>
-              <Th>コンテスト名</Th>
-              <Th>ステータス</Th>
-              <Th>スコア</Th>
-              <Th>結果</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {virtualContests.map((vc) => (
-              <Tr key={vc.id}>
-                <Td>{format(new Date(vc.start_time), 'yyyy/MM/dd HH:mm', { locale: ja })}</Td>
-                <Td>
-                  {vc.contest_id && vc.contests ? (
-                    <ChakraLink as={Link} href={`/contests/${vc.contest_id}/virtual/${vc.id}`}>
-                      {vc.contests.name || 'N/A'}
-                    </ChakraLink>
-                  ) : 'N/A'}
-                </Td>
-                <Td>{vc.status}</Td>
-                <Td>{correctCounts[vc.id] ?? 0} / {problemCounts[vc.id] ?? 'N/A'}</Td>
-                <Td>
-                  {vc.status === 'finished' ? (
-                    <ChakraLink as={Link} href={`/contests/${vc.contest_id}/virtual/${vc.id}/result`}>結果を見る</ChakraLink>
-                  ) : '-'}
-                </Td>
+      <>
+        <TableContainer>
+          <Table variant="simple" size="sm">
+            <Thead>
+              <Tr>
+                <Th>開始日時</Th>
+                <Th>コンテスト名</Th>
+                <Th>ステータス</Th>
+                <Th>スコア</Th>
+                <Th>結果</Th>
               </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+            </Thead>
+            <Tbody>
+              {pagedVirtualContests.map((vc) => (
+                <Tr key={vc.id}>
+                  <Td>{format(new Date(vc.start_time), 'yyyy/MM/dd HH:mm', { locale: ja })}</Td>
+                  <Td>{vc.contests?.name || 'N/A'}</Td>
+                  <Td>{vc.status}</Td>
+                  <Td>{correctCounts[vc.id] ?? 0} / {problemCounts[vc.id] ?? 'N/A'}</Td>
+                  <Td>
+                    {vc.status === 'finished' ? (
+                      <ChakraLink as={Link} href={`/contests/${vc.contest_id}/virtual/${vc.id}/result`}>結果を見る</ChakraLink>
+                    ) : '-'}
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableContainer>
+        <Box mt={2} display="flex" justifyContent="center" alignItems="center" gap={2}>
+          <button onClick={() => setVcPage(p => Math.max(1, p - 1))} disabled={vcPage === 1}>前へ</button>
+          <span>{vcPage} / {totalVcPages || 1}</span>
+          <button onClick={() => setVcPage(p => Math.min(totalVcPages, p + 1))} disabled={vcPage === totalVcPages || totalVcPages === 0}>次へ</button>
+        </Box>
+      </>
     );
   };
 

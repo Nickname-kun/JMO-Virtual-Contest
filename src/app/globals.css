@@ -17,6 +17,27 @@
   font-weight: 700; /* Noto Sans JPの太字ウェイト */
 }
 
+.problem-text blockquote {
+  margin-left: 2em;
+  margin-right: 6em;
+  padding-left: 1em;
+  border-left: none;
+  background: none;
+}
+
+.problem-text br {
+  line-height: 0.5;
+  margin: 0;
+  display: block;
+}
+
+.problem-text .narrow-break {
+  display: block;
+  height: 0.5em;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -50,4 +71,12 @@ ML__placeholder {
   background: #f3f4f6 !important;
   opacity: 0.7;
   border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  .problem-text blockquote {
+    margin-right: 1em;
+    margin-left: 1em;
+    padding-left: 0.7em;
+  }
 }

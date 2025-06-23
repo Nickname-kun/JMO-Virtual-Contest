@@ -6,22 +6,43 @@ import remarkRehype from 'remark-rehype';
 import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
 import React from 'react';
+import { visit } from 'unist-util-visit';
 
-export function renderLatex(text: string) {
-  // unified (remark -> rehype) パイプラインを構築し、Markdownと数式を処理する
+// [DIAGRAM]タグを置換するカスタムremarkプラグイン
+const remarkDiagram = (options: { svg: string }) => {
+  return (tree: any) => {
+    visit(tree, 'text', (node: any, index: any, parent: any) => {
+      if (node.value.includes('[DIAGRAM]')) {
+        const parts = node.value.split(/(\[DIAGRAM\])/g);
+        const newNodes = parts.map((part: string) => {
+          if (part === '[DIAGRAM]') {
+            return { type: 'html', value: `<div class="diagram-wrapper" style=\"margin:1.5em auto;display:flex;justify-content:center;\">${options.svg}</div>` };
+          }
+          return { type: 'text', value: part };
+        }).filter((n: any) => n.value); // 空のテキストノードを除外
+        
+        parent.children.splice(index, 1, ...newNodes);
+      }
+    });
+  };
+};
+
+export function renderLatex(text: string, diagramSvg?: string | null) {
+  const processor = remark()
+    .use(remarkBreaks)
+    .use(remarkMath);
+
+  if (diagramSvg && text.includes('[DIAGRAM]')) {
+    processor.use(remarkDiagram, { svg: diagramSvg });
+  }
+
   const processedHtmlString = String(
-    remark()
-      .use(remarkBreaks) // 単一改行を<br>に変換
-      .use(remarkMath) // 数式を処理
-      .use(remarkRehype) // remarkASTをrehypeASTに変換
-      .use(rehypeKatex) // rehypeASTの数式ノードをKaTeXのHTMLに変換
-      .use(rehypeStringify) // rehypeASTをHTML文字列に変換
+    processor
+      .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeKatex)
+      .use(rehypeStringify, { allowDangerousHtml: true })
       .processSync(text)
   );
 
-  // 生成されたHTML文字列をdangerouslySetInnerHTMLを使ってレンダリング
-  // 注意：この方法だとReactによる差分更新の恩恵を受けられず、セキュリティリスクも伴うため、
-  // 理想的にはHTML文字列ではなくReact要素のツリーを生成すべきですが、
-  // まずは表示崩れを解消することを優先します。
   return <div dangerouslySetInnerHTML={{ __html: processedHtmlString }} />;
 } 

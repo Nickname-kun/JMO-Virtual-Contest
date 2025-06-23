@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Container, Heading, Text, Box, VStack, HStack, Button, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useSession, useSessionContext } from '@supabase/auth-helpers-react';
 import { MdArrowBack, MdAccessTime, MdCheck } from 'react-icons/md';
 import { Tag } from '@chakra-ui/react';
 
@@ -26,6 +26,7 @@ interface VirtualContest {
 export default function VirtualContestPage({ params }: { params: { id: string; virtual_id: string } }) {
   const router = useRouter();
   const session = useSession();
+  const { isLoading } = useSessionContext();
   const toast = useToast();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [virtualContest, setVirtualContest] = useState<VirtualContest | null>(null);
@@ -38,6 +39,7 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (isLoading) return; // セッションロード中は何もしない
     if (!session?.user) {
       router.push('/auth');
       return;
@@ -87,7 +89,7 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
     };
 
     fetchData();
-  }, [session, params.id, params.virtual_id, router, supabase, toast]);
+  }, [session, isLoading, params.id, params.virtual_id, router, supabase, toast]);
 
   // タイマーの更新
   useEffect(() => {
@@ -100,7 +102,8 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
 
       if (diff <= 0) {
         setTimeLeft('終了');
-        // コンテスト終了時の処理
+        // コンテスト終了時の自動遷移
+        router.push(`/contests/${params.id}/virtual/${params.virtual_id}/result`);
         return;
       }
 
@@ -114,7 +117,41 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
     const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
-  }, [virtualContest]);
+  }, [virtualContest, router, params.id, params.virtual_id]);
+
+  // バチャ中のページ離脱警告
+  useEffect(() => {
+    if (!virtualContest || virtualContest.status !== 'in_progress') return;
+    const message = 'バーチャルコンテスト中です。本当にページを離れますか？';
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = message;
+      return message;
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Next.jsルーター遷移時の警告
+    const handleRouteChange = (url: string) => {
+      if (!url.includes(`/contests/${params.id}/virtual/${params.virtual_id}`)) {
+        if (!window.confirm(message)) {
+          throw 'Route change aborted by user';
+        }
+      }
+    };
+    // next/navigationのrouter.eventsは使えないため、popstateで対応
+    const handlePopState = (e: PopStateEvent) => {
+      if (!window.confirm(message)) {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [virtualContest, params.id, params.virtual_id]);
 
   const handleProblemClick = (problemId: string) => {
     router.push(`/contests/${params.id}/virtual/${params.virtual_id}/problems/${problemId}`);
@@ -147,7 +184,7 @@ export default function VirtualContestPage({ params }: { params: { id: string; v
     router.push(`/contests/${params.id}/virtual/${params.virtual_id}/result`);
   };
 
-  if (!virtualContest) {
+  if (isLoading || !virtualContest) {
     return <Text>読み込み中...</Text>;
   }
 

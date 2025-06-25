@@ -299,9 +299,9 @@ export default function Navbar() {
                       py={2}
                       _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}
                     >
-                      {username && (
-                        <Text fontSize="lg" fontWeight="bold" color={isMaclathPage ? "blue.800" : "white"}>Hi, {username}</Text>
-                      )}
+                      <Text fontSize="lg" fontWeight="bold" color={isMaclathPage ? "blue.800" : "white"}>
+                        Hi, <span style={{ color: isAdmin ? "rgb(102, 0, 153)" : (isMaclathPage ? "blue.800" : "white") }}>{username}</span>
+                      </Text>
                       <MdKeyboardArrowDown style={{ transform: `rotate(${isUserMenuOpen ? 180 : 0}deg)`, transition: 'transform 0.2s', color: isMaclathPage ? 'blue.800' : 'white' }} />
                     </Flex>
                     <Flex align="center" py={2} _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}

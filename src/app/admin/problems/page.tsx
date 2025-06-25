@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
-import { Table, Thead, Tbody, Tr, Th, Td, Box, Heading, Button } from '@chakra-ui/react'
+import { Table, Thead, Tbody, Tr, Th, Td, Box, Heading, Button, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react'
 
 type Problem = {
   id: string
@@ -60,35 +60,53 @@ export default function ProblemsPage() {
       {Object.keys(grouped).length === 0 && !error && (
         <Box color="gray.500" textAlign="center" py={8}>問題がありません</Box>
       )}
-      {Object.entries(grouped).map(([year, plist]) => (
-        <Box key={year} mb={8}>
-          <Heading size="md" mb={2}>{year}</Heading>
-          <Table variant="striped" size="md">
-            <Thead>
-              <Tr>
-                <Th>問題番号</Th>
-                <Th>タイトル</Th>
-                <Th>配点</Th>
-                <Th>編集</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {plist.map(problem => (
-                <Tr key={problem.id}>
-                  <Td>第{problem.number}問</Td>
-                  <Td>{problem.title}</Td>
-                  <Td>{problem.points}点</Td>
-                  <Td>
-                    <Button as={Link} href={`/admin/problems/${problem.id}/edit`} size="sm" colorScheme="blue" variant="outline">
-                      編集
-                    </Button>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </Box>
-      ))}
+      {/* 年度（year）を新しい順に降順ソート */}
+      <Accordion allowMultiple>
+        {Object.entries(grouped)
+          .sort(([a], [b]) => {
+            // 年度名が数値の場合は数値で比較、それ以外は文字列比較
+            const numA = parseInt(a, 10);
+            const numB = parseInt(b, 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
+            return b.localeCompare(a, 'ja');
+          })
+          .map(([year, plist]) => (
+            <AccordionItem key={year} mb={4} borderRadius="md" border="1px solid #e2e8f0" overflow="hidden">
+              <h2>
+                <AccordionButton _expanded={{ bg: 'teal.50' }}>
+                  <Box as="span" flex="1" textAlign="left" fontWeight="bold">{year}</Box>
+                  <AccordionIcon />
+                </AccordionButton>
+              </h2>
+              <AccordionPanel pb={4}>
+                <Table variant="striped" size="md">
+                  <Thead>
+                    <Tr>
+                      <Th>問題番号</Th>
+                      <Th>タイトル</Th>
+                      <Th>配点</Th>
+                      <Th>編集</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {plist.map(problem => (
+                      <Tr key={problem.id}>
+                        <Td>第{problem.number}問</Td>
+                        <Td>{problem.title}</Td>
+                        <Td>{problem.points}点</Td>
+                        <Td>
+                          <Button as={Link} href={`/admin/problems/${problem.id}/edit`} size="sm" colorScheme="blue" variant="outline">
+                            編集
+                          </Button>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </AccordionPanel>
+            </AccordionItem>
+          ))}
+      </Accordion>
     </Box>
   )
 } 

@@ -473,7 +473,9 @@ function ProblemClientContent({ problem, params, userId, virtualContest }: { pro
         {/* [DIAGRAM]タグがない場合のみ従来通り図を表示 */}
         {problem.diagram_svg && !problem.content.includes('[DIAGRAM]') && (
           <Box display="flex" justifyContent="center">
-            <div dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+            <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+              <div style={{ display: 'inline-block' }} dangerouslySetInnerHTML={{ __html: problem.diagram_svg }} />
+            </div>
           </Box>
         )}
 

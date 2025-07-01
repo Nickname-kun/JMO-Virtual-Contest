@@ -12,6 +12,7 @@ import { FiBell } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import Image from 'next/image';
+import ColoredUserName from './ColoredUserName';
 
 type Notification = {
   id: string;
@@ -30,6 +31,11 @@ export default function Navbar() {
   const session = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [explanationCount, setExplanationCount] = useState(0);
+  const [bestAnswerCount, setBestAnswerCount] = useState(0);
+  const [isExplanationNo1, setIsExplanationNo1] = useState(false);
+  const [isBestAnswerNo1, setIsBestAnswerNo1] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -44,6 +50,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user) {
+        setUserId(session.user.id);
         const { data: profile } = await supabase
           .from('profiles')
           .select('username, is_admin')
@@ -54,6 +61,64 @@ export default function Navbar() {
           setUsername(profile.username);
           setIsAdmin(profile.is_admin);
         }
+        // 解説数
+        const { data: explanations } = await supabase
+          .from('explanations')
+          .select('id')
+          .eq('user_id', session.user.id);
+        setExplanationCount(explanations?.length || 0);
+        // ベストアンサー数
+        const { data: bestAnswerQuestions } = await supabase
+          .from('questions')
+          .select('best_answer_id')
+          .not('best_answer_id', 'is', null);
+        let baCount = 0;
+        if (bestAnswerQuestions) {
+          const { data: myAnswers } = await supabase
+            .from('answers')
+            .select('id, user_id');
+          const myAnswerIds = myAnswers?.filter(a => a.user_id === session.user.id).map(a => a.id) || [];
+          baCount = bestAnswerQuestions.filter(q => myAnswerIds.includes(q.best_answer_id)).length;
+        }
+        setBestAnswerCount(baCount);
+        // No.1バッジ
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('id, is_admin');
+        const { data: allExplanations } = await supabase
+          .from('explanations')
+          .select('user_id');
+        const explanationCountMap = {};
+        allExplanations?.forEach(e => {
+          if (!allProfiles?.find(p => p.id === e.user_id)?.is_admin) {
+            explanationCountMap[e.user_id] = (explanationCountMap[e.user_id] || 0) + 1;
+          }
+        });
+        const maxExplanation = Math.max(...Object.values(explanationCountMap), 0);
+        const no1ExplanationUsers = Object.entries(explanationCountMap)
+          .filter(([_, cnt]) => cnt === maxExplanation)
+          .map(([uid]) => uid);
+        setIsExplanationNo1(!profile?.is_admin && no1ExplanationUsers.includes(session.user.id));
+        // ベストアンサーNo.1
+        const { data: allAnswers } = await supabase
+          .from('answers')
+          .select('id, user_id');
+        const { data: allBestAnswerQuestions } = await supabase
+          .from('questions')
+          .select('best_answer_id')
+          .not('best_answer_id', 'is', null);
+        const bestAnswerCountMap = {};
+        allBestAnswerQuestions?.forEach(q => {
+          const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+          if (ans && !allProfiles?.find(p => p.id === ans.user_id)?.is_admin) {
+            bestAnswerCountMap[ans.user_id] = (bestAnswerCountMap[ans.user_id] || 0) + 1;
+          }
+        });
+        const maxBestAnswer = Math.max(...Object.values(bestAnswerCountMap), 0);
+        const no1BestAnswerUsers = Object.entries(bestAnswerCountMap)
+          .filter(([_, cnt]) => cnt === maxBestAnswer)
+          .map(([uid]) => uid);
+        setIsBestAnswerNo1(!profile?.is_admin && no1BestAnswerUsers.includes(session.user.id));
       }
     };
 
@@ -195,7 +260,22 @@ export default function Navbar() {
             <HStack spacing={4}>
               <Menu>
                 <MenuButton as={Button} rightIcon={<MdKeyboardArrowDown />} size="sm" colorScheme={isMaclathPage ? "blue" : "whiteAlpha"} variant="outline" color={isMaclathPage ? "blue.800" : "white"}>
-                  Hi, <Text as="span" color={isAdmin ? "rgb(102, 0, 153)" : undefined}>{username || session.user.email}</Text>
+                  Hi, {userId && username ? (
+                    <ColoredUserName
+                      userId={userId}
+                      username={username}
+                      isAdmin={isAdmin}
+                      explanationCount={explanationCount}
+                      bestAnswerCount={bestAnswerCount}
+                      isExplanationNo1={isExplanationNo1}
+                      isBestAnswerNo1={isBestAnswerNo1}
+                      fontWeight="bold"
+                      fontSize="inherit"
+                      isProfileLink={true}
+                    />
+                  ) : (
+                    <Text as="span" color={isAdmin ? "rgb(102, 0, 153)" : undefined}>{username || session?.user?.email}</Text>
+                  )}
                 </MenuButton>
                 <MenuList bg={isMaclathPage ? "white" : "blue.800"}>
                   <MenuItem as={Link} href="/profile" bg={isMaclathPage ? "white" : "blue.800"} color={isMaclathPage ? "blue.800" : "white"}>マイページ</MenuItem>
@@ -300,7 +380,22 @@ export default function Navbar() {
                       _hover={{ color: isMaclathPage ? 'blue.600' : 'blue.200' }}
                     >
                       <Text fontSize="lg" fontWeight="bold" color={isMaclathPage ? "blue.800" : "white"}>
-                        Hi, <span style={{ color: isAdmin ? "rgb(102, 0, 153)" : (isMaclathPage ? "blue.800" : "white") }}>{username}</span>
+                        Hi, {userId && username ? (
+                          <ColoredUserName
+                            userId={userId}
+                            username={username}
+                            isAdmin={isAdmin}
+                            explanationCount={explanationCount}
+                            bestAnswerCount={bestAnswerCount}
+                            isExplanationNo1={isExplanationNo1}
+                            isBestAnswerNo1={isBestAnswerNo1}
+                            fontWeight="bold"
+                            fontSize="inherit"
+                            isProfileLink={true}
+                          />
+                        ) : (
+                          <span style={{ color: isAdmin ? "rgb(102, 0, 153)" : (isMaclathPage ? "blue.800" : "white") }}>{username}</span>
+                        )}
                       </Text>
                       <MdKeyboardArrowDown style={{ transform: `rotate(${isUserMenuOpen ? 180 : 0}deg)`, transition: 'transform 0.2s', color: isMaclathPage ? 'blue.800' : 'white' }} />
                     </Flex>

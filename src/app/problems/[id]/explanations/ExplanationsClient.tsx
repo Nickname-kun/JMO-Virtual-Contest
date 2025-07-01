@@ -38,6 +38,7 @@ import { renderLatex } from '@/utils/renderLatex'
 import { formatDistanceToNow } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { FiTrash2 } from 'react-icons/fi'
+import ColoredUserName from '@/components/ColoredUserName'
 
 interface Problem {
   id: string
@@ -75,6 +76,10 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
   const cancelRef = useRef<HTMLButtonElement>(null)
   const [deletingExplanation, setDeletingExplanation] = useState(false)
   const [explanationAuthors, setExplanationAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean; is_public?: boolean } }>({});
+  const [explanationCounts, setExplanationCounts] = useState<Record<string, number>>({});
+  const [no1ExplanationUsers, setNo1ExplanationUsers] = useState<string[]>([]);
+  const [bestAnswerCounts, setBestAnswerCounts] = useState<Record<string, number>>({});
+  const [no1BestAnswerUsers, setNo1BestAnswerUsers] = useState<string[]>([]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -131,6 +136,89 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
     };
 
     fetchExplanationAuthors();
+  }, [explanations, supabase]);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const userIds = explanations.map(e => e.user_id);
+      if (userIds.length === 0) return;
+      // 全体の解説数を取得
+      const { data: allExplanations } = await supabase
+        .from('explanations')
+        .select('user_id');
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, is_admin');
+      const counts: Record<string, number> = {};
+      allExplanations?.forEach(e => {
+        if (!allProfiles?.find(p => p.id === e.user_id)?.is_admin) {
+          counts[e.user_id] = (counts[e.user_id] || 0) + 1;
+        }
+      });
+      setExplanationCounts(counts);
+      // No.1ユーザー
+      const maxEx = Math.max(...Object.values(counts), 0);
+      const exNo1Users = Object.entries(counts)
+        .filter(([_, cnt]) => cnt === maxEx)
+        .map(([uid]) => uid);
+      setNo1ExplanationUsers(exNo1Users);
+    };
+    fetchCounts();
+  }, [explanations, supabase]);
+
+  useEffect(() => {
+    const fetchBestAnswerCounts = async () => {
+      const userIds = explanations.map(e => e.user_id);
+      if (userIds.length === 0) return;
+      // best_answer_idがnullでないquestionsを全件取得
+      const { data: bestAnswerQuestions } = await supabase
+        .from('questions')
+        .select('best_answer_id')
+        .not('best_answer_id', 'is', null);
+      const { data: allAnswers } = await supabase
+        .from('answers')
+        .select('id, user_id');
+      const counts: Record<string, number> = {};
+      bestAnswerQuestions?.forEach(q => {
+        const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+        if (ans) {
+          counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+        }
+      });
+      setBestAnswerCounts(counts);
+    };
+    fetchBestAnswerCounts();
+  }, [explanations, supabase]);
+
+  useEffect(() => {
+    const fetchNo1BestAnswerUsers = async () => {
+      const userIds = explanations.map(e => e.user_id);
+      if (userIds.length === 0) return;
+      // best_answer_idがnullでないquestionsを全件取得
+      const { data: bestAnswerQuestions } = await supabase
+        .from('questions')
+        .select('best_answer_id')
+        .not('best_answer_id', 'is', null);
+      const { data: allAnswers } = await supabase
+        .from('answers')
+        .select('id, user_id');
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, is_admin');
+      const counts: Record<string, number> = {};
+      bestAnswerQuestions?.forEach(q => {
+        const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+        if (ans && !allProfiles?.find(p => p.id === ans.user_id)?.is_admin) {
+          counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+        }
+      });
+      const maxBa = Math.max(...Object.values(counts), 0);
+      const baNo1Users = Object.entries(counts)
+        .filter(([_, cnt]) => cnt === maxBa)
+        .map(([uid]) => uid);
+      setNo1BestAnswerUsers(baNo1Users);
+    };
+    fetchNo1BestAnswerUsers();
   }, [explanations, supabase]);
 
   const handleToggleOfficial = async (explanationId: string, currentStatus: boolean) => {
@@ -323,23 +411,16 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
                               <Badge colorScheme="green" mb={{ base: 1, md: 0 }}>公式解説</Badge>
                             )}
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
-                              by {explanationAuthors[explanation.user_id]?.is_public
-                                ? (
-                                  <ChakraLink
-                                    as={Link}
-                                    href={`/profile/${explanation.user_id}`}
-                                    color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}
-                                    _hover={{ textDecoration: 'underline' }}
-                                    display="inline"
-                                  >
-                                    {explanationAuthors[explanation.user_id]?.username || '不明'}
-                                  </ChakraLink>
-                                )
-                                : (
-                                  <Text as="span" color={explanationAuthors[explanation.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
-                                    {explanationAuthors[explanation.user_id]?.username || '不明'}
-                                  </Text>
-                                )}
+                              by <ColoredUserName
+                                userId={explanation.user_id}
+                                username={explanationAuthors[explanation.user_id]?.username || '不明'}
+                                isAdmin={explanationAuthors[explanation.user_id]?.is_admin}
+                                explanationCount={explanationCounts[explanation.user_id] || 0}
+                                bestAnswerCount={bestAnswerCounts[explanation.user_id] || 0}
+                                isProfileLink={!!explanationAuthors[explanation.user_id]?.is_public}
+                                isExplanationNo1={!explanationAuthors[explanation.user_id]?.is_admin && no1ExplanationUsers.includes(explanation.user_id)}
+                                isBestAnswerNo1={!explanationAuthors[explanation.user_id]?.is_admin && no1BestAnswerUsers.includes(explanation.user_id)}
+                              />
                             </Text>
                             <Text fontSize="sm" color="gray.500" mb={{ base: 1, md: 0 }}>
                               {formatDistanceToNow(new Date(explanation.created_at), { addSuffix: true, locale: ja })}

@@ -32,6 +32,14 @@ export default function RulesPage() {
         <ListItem>バチャ履歴はマイページから確認できます。</ListItem>
       </List>
 
+      <Heading as="h2" size="md" mt={8} mb={2}>ユーザー名について</Heading>
+      <List spacing={2} mb={4} pl={4} styleType="disc">
+        <ListItem>ユーザー名は、投稿した解説数・ベストアンサー獲得回数に応じて色分けされます（黒→茶色→水色→黄色→オレンジ→赤→???）。</ListItem>
+        <ListItem>解説投稿数No.1・ベストアンサー数No.1のユーザーには、それぞれ<b>👑</b>・<b>🌟</b>バッジが表示されます（同率1位も全員表示、管理者は除外）。</ListItem>
+        <ListItem>プロフィールページで「ベストアンサー獲得回数」「投稿した解説数」が確認できます。</ListItem>
+        <ListItem>色分け・バッジの詳細ルールは運営方針により変更される場合があります。</ListItem>
+      </List>
+
       <Heading as="h2" size="md" mt={8} mb={2}>注意事項</Heading>
       <List spacing={2} mb={4} pl={4} styleType="disc">
         <ListItem>本サービスは非公式の学習支援サイトです。実際のJMO運営とは関係ありません。</ListItem>

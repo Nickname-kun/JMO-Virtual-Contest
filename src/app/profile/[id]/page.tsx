@@ -6,6 +6,7 @@ import Link from 'next/link';
 import LearningData from '../learning-data';
 import { FaXTwitter, FaGithub, FaGlobe } from 'react-icons/fa6';
 import SnsLinks from './SnsLinks';
+import ColoredUserName from '@/components/ColoredUserName';
 
 export default async function PublicProfilePage({ params }: { params: { id: string } }) {
   const supabase = createServerComponentClient({ cookies });
@@ -84,10 +85,83 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
     .eq('user_id', id)
     .order('created_at', { ascending: false });
 
+  // ベストアンサー数を集計
+  const { data: bestAnswerQuestions } = await supabase
+    .from('questions')
+    .select('best_answer_id')
+    .not('best_answer_id', 'is', null);
+
+  let bestAnswerCount = 0;
+  if (bestAnswerQuestions) {
+    // answersテーブルから自分のuser_idのものだけカウント
+    const { data: myAnswers } = await supabase
+      .from('answers')
+      .select('id, user_id');
+    const myAnswerIds = myAnswers?.filter(a => a.user_id === id).map(a => a.id) || [];
+    bestAnswerCount = bestAnswerQuestions.filter(q => myAnswerIds.includes(q.best_answer_id)).length;
+  }
+
+  // 解説No.1・ベストアンサーNo.1判定用データ取得
+  const { data: allProfiles } = await supabase
+    .from('profiles')
+    .select('id, is_admin');
+
+  // 全ユーザーの解説数を取得
+  const { data: allExplanations } = await supabase
+    .from('explanations')
+    .select('user_id');
+  const explanationCountMap: Record<string, number> = {};
+  allExplanations?.forEach(e => {
+    if (!allProfiles?.find(p => p.id === e.user_id)?.is_admin) {
+      explanationCountMap[e.user_id] = (explanationCountMap[e.user_id] || 0) + 1;
+    }
+  });
+  const maxExplanation = Math.max(...Object.values(explanationCountMap), 0);
+  const no1ExplanationUsers = Object.entries(explanationCountMap)
+    .filter(([_, cnt]) => cnt === maxExplanation)
+    .map(([uid]) => uid);
+
+  // 全ユーザーのベストアンサー数を取得
+  // まずanswersを全件取得
+  const { data: allAnswers } = await supabase
+    .from('answers')
+    .select('id, user_id');
+  // best_answer_idがnullでないquestionsを全件取得
+  const { data: allBestAnswerQuestions } = await supabase
+    .from('questions')
+    .select('best_answer_id')
+    .not('best_answer_id', 'is', null);
+  // user_idごとにカウント
+  const bestAnswerCountMap: Record<string, number> = {};
+  allBestAnswerQuestions?.forEach(q => {
+    const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+    if (ans && !allProfiles?.find(p => p.id === ans.user_id)?.is_admin) {
+      bestAnswerCountMap[ans.user_id] = (bestAnswerCountMap[ans.user_id] || 0) + 1;
+    }
+  });
+  const maxBestAnswer = Math.max(...Object.values(bestAnswerCountMap), 0);
+  const no1BestAnswerUsers = Object.entries(bestAnswerCountMap)
+    .filter(([_, cnt]) => cnt === maxBestAnswer)
+    .map(([uid]) => uid);
+
   return (
     <Container maxW="container.sm" py={16}>
       <Box textAlign="center" p={8} borderWidth={1} borderRadius="lg" bg="white" boxShadow="md">
-        <Heading size="lg" mb={2} color={profile.is_admin ? 'rgb(102, 0, 153)' : undefined}>{profile.username}</Heading>
+        <Heading size="lg" mb={2}>
+          <ColoredUserName
+            userId={id}
+            username={profile.username}
+            isAdmin={profile.is_admin}
+            explanationCount={explanations?.length || 0}
+            bestAnswerCount={bestAnswerCount}
+            isProfileLink={false}
+            isExplanationNo1={!profile.is_admin && no1ExplanationUsers.includes(id)}
+            isBestAnswerNo1={!profile.is_admin && no1BestAnswerUsers.includes(id)}
+          />
+        </Heading>
+        <Text fontSize="md" mb={2}>
+          ベストアンサー獲得回数: <b>{bestAnswerCount}</b> ／ 投稿した解説数: <b>{explanations?.length || 0}</b>
+        </Text>
         {profile.affiliation && (
           <Text color="gray.600" fontSize="md" mb={1}>所属: {profile.affiliation}</Text>
         )}

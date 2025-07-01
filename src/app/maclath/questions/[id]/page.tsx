@@ -12,6 +12,7 @@ import React, { useRef } from 'react';
 import { useSession } from '@supabase/auth-helpers-react';
 import { FiHeart, FiTrash2 } from 'react-icons/fi';
 import { AiFillHeart } from 'react-icons/ai';
+import ColoredUserName from '@/components/ColoredUserName';
 
 type Question = {
   id: string;
@@ -89,6 +90,16 @@ export default function QuestionDetailPage({
     md: "ベストアンサー",
   });
 
+  // 解説数No.1判定用データ
+  const [explanationCounts, setExplanationCounts] = useState<Record<string, number>>({});
+  const [no1ExplanationUsers, setNo1ExplanationUsers] = useState<string[]>([]);
+
+  // ベストアンサー数集計
+  const [bestAnswerCounts, setBestAnswerCounts] = useState<Record<string, number>>({});
+
+  // ベストアンサーNo.1ユーザーリスト
+  const [no1BestAnswerUsers, setNo1BestAnswerUsers] = useState<string[]>([]);
+
   useEffect(() => {
     fetchQuestion();
     fetchAnswers();
@@ -99,6 +110,9 @@ export default function QuestionDetailPage({
       setIsLoggedIn(!!user);
     };
     checkAuth();
+    fetchCounts();
+    fetchBestAnswerCounts();
+    fetchNo1BestAnswerUsers();
   }, [params.id, question]);
 
   const checkOwnership = async () => {
@@ -410,6 +424,80 @@ export default function QuestionDetailPage({
     fetchAnswers();
   };
 
+  const fetchCounts = async () => {
+    const answerUserIds = answers.map(a => a.user_id);
+    if (answerUserIds.length === 0) return;
+    // 全体の解説数を取得
+    const { data: allExplanations } = await supabase
+      .from('explanations')
+      .select('user_id');
+    const { data: allProfiles } = await supabase
+      .from('profiles')
+      .select('id, is_admin');
+    const counts: Record<string, number> = {};
+    allExplanations?.forEach(e => {
+      if (!allProfiles?.find(p => p.id === e.user_id)?.is_admin) {
+        counts[e.user_id] = (counts[e.user_id] || 0) + 1;
+      }
+    });
+    setExplanationCounts(counts);
+    // No.1ユーザー
+    const maxEx = Math.max(...Object.values(counts), 0);
+    const exNo1Users = Object.entries(counts)
+      .filter(([_, cnt]) => cnt === maxEx)
+      .map(([uid]) => uid);
+    setNo1ExplanationUsers(exNo1Users);
+  };
+
+  const fetchBestAnswerCounts = async () => {
+    const answerUserIds = answers.map(a => a.user_id);
+    if (answerUserIds.length === 0) return;
+    // best_answer_idがnullでないquestionsを全件取得
+    const { data: bestAnswerQuestions } = await supabase
+      .from('questions')
+      .select('best_answer_id')
+      .not('best_answer_id', 'is', null);
+    const { data: allAnswers } = await supabase
+      .from('answers')
+      .select('id, user_id');
+    const counts: Record<string, number> = {};
+    bestAnswerQuestions?.forEach(q => {
+      const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+      if (ans) {
+        counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+      }
+    });
+    setBestAnswerCounts(counts);
+  };
+
+  const fetchNo1BestAnswerUsers = async () => {
+    const answerUserIds = answers.map(a => a.user_id);
+    if (answerUserIds.length === 0) return;
+    // best_answer_idがnullでないquestionsを全件取得
+    const { data: bestAnswerQuestions } = await supabase
+      .from('questions')
+      .select('best_answer_id')
+      .not('best_answer_id', 'is', null);
+    const { data: allAnswers } = await supabase
+      .from('answers')
+      .select('id, user_id');
+    const { data: allProfiles } = await supabase
+      .from('profiles')
+      .select('id, is_admin');
+    const counts: Record<string, number> = {};
+    bestAnswerQuestions?.forEach(q => {
+      const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+      if (ans && !allProfiles?.find(p => p.id === ans.user_id)?.is_admin) {
+        counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+      }
+    });
+    const maxBa = Math.max(...Object.values(counts), 0);
+    const baNo1Users = Object.entries(counts)
+      .filter(([_, cnt]) => cnt === maxBa)
+      .map(([uid]) => uid);
+    setNo1BestAnswerUsers(baNo1Users);
+  };
+
   if (loading) {
     return <Text textAlign="center" py={8}>読み込み中...</Text>;
   }
@@ -524,19 +612,18 @@ export default function QuestionDetailPage({
               >
                 <Flex justify="space-between" align="center" mb={3}>
                   <HStack spacing={2} flexWrap="wrap">
-                    <Text 
-                      fontWeight="semibold" 
-                      mb={{ base: 1, md: 0 }}
-                    >
-                      回答者: <Link href={`/profile/${answer.user_id}`}>
-                        <span style={answer.profiles?.is_admin ? {
-                          color: "rgb(102, 0, 153)",
-                          WebkitTextStroke: "0.2px white",
-                          fontWeight: "bold"
-                        } : {}}>
-                          {answer.profiles?.username || '不明'}
-                        </span>
-                      </Link>
+                    <Text fontWeight="semibold" mb={{ base: 1, md: 0 }}>
+                      回答者: <ColoredUserName
+                        userId={answer.user_id}
+                        username={answer.profiles?.username || '不明'}
+                        isAdmin={answer.profiles?.is_admin}
+                        explanationCount={explanationCounts[answer.user_id] || 0}
+                        bestAnswerCount={bestAnswerCounts[answer.user_id] || 0}
+                        isProfileLink={true}
+                        isExplanationNo1={!answer.profiles?.is_admin && no1ExplanationUsers.includes(answer.user_id)}
+                        isBestAnswerNo1={!answer.profiles?.is_admin && no1BestAnswerUsers.includes(answer.user_id)}
+                        isChalkboard={true}
+                      />
                     </Text>
                     {question?.best_answer_id === answer.id && (
                       <Tag size="sm" colorScheme="green" bg="green.600" color="white" mb={{ base: 1, md: 0 }}>

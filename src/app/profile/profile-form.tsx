@@ -67,6 +67,20 @@ export default function ProfileForm({
       return;
     }
 
+    // バッジ絵文字禁止
+    const BADGE_EMOJIS = ['👑', '🌟'];
+    if (BADGE_EMOJIS.some(e => username.includes(e))) {
+      toast({
+        title: 'エラー',
+        description: 'ユーザー名に👑や🌟などのバッジ絵文字は使用できません。',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     // ユーザー名の重複チェック
     const { data: existingUser } = await supabase
       .from('profiles')

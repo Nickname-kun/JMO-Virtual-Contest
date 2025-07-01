@@ -38,6 +38,7 @@ import { useUser } from '@supabase/auth-helpers-react'
 import { Comment } from '@/types/database'
 import { formatDistanceToNow } from 'date-fns'
 import { ja } from 'date-fns/locale'
+import ColoredUserName from '@/components/ColoredUserName'
 
 interface Problem {
   id: string
@@ -83,6 +84,15 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const [commentAuthors, setCommentAuthors] = useState<{ [key: string]: { username: string; is_admin: boolean; is_public?: boolean } }>({});
+
+  // 解説数No.1判定用データ
+  const [explanationCounts, setExplanationCounts] = useState<Record<string, number>>({});
+  const [no1ExplanationUsers, setNo1ExplanationUsers] = useState<string[]>([]);
+
+  // ベストアンサー数集計
+  const [bestAnswerCounts, setBestAnswerCounts] = useState<Record<string, number>>({});
+
+  const [no1BestAnswerUsers, setNo1BestAnswerUsers] = useState<string[]>([]);
 
   const renderCommentContent = (content: string) => {
     const elements: JSX.Element[] = [];
@@ -164,6 +174,89 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
     };
 
     fetchCommentAuthors();
+  }, [comments, supabase]);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const authorIds = comments.map(c => c.user_id);
+      if (authorIds.length === 0) return;
+      // 全体の解説数を取得
+      const { data: allExplanations } = await supabase
+        .from('explanations')
+        .select('user_id');
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, is_admin');
+      const counts: Record<string, number> = {};
+      allExplanations?.forEach(e => {
+        if (!allProfiles?.find(p => p.id === e.user_id)?.is_admin) {
+          counts[e.user_id] = (counts[e.user_id] || 0) + 1;
+        }
+      });
+      setExplanationCounts(counts);
+      // No.1ユーザー
+      const maxEx = Math.max(...Object.values(counts), 0);
+      const exNo1Users = Object.entries(counts)
+        .filter(([_, cnt]) => cnt === maxEx)
+        .map(([uid]) => uid);
+      setNo1ExplanationUsers(exNo1Users);
+    };
+    fetchCounts();
+  }, [comments, supabase]);
+
+  useEffect(() => {
+    const fetchBestAnswerCounts = async () => {
+      const authorIds = comments.map(c => c.user_id);
+      if (authorIds.length === 0) return;
+      // best_answer_idがnullでないquestionsを全件取得
+      const { data: bestAnswerQuestions } = await supabase
+        .from('questions')
+        .select('best_answer_id')
+        .not('best_answer_id', 'is', null);
+      const { data: allAnswers } = await supabase
+        .from('answers')
+        .select('id, user_id');
+      const counts: Record<string, number> = {};
+      bestAnswerQuestions?.forEach(q => {
+        const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+        if (ans) {
+          counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+        }
+      });
+      setBestAnswerCounts(counts);
+    };
+    fetchBestAnswerCounts();
+  }, [comments, supabase]);
+
+  useEffect(() => {
+    const fetchNo1BestAnswerUsers = async () => {
+      const authorIds = comments.map(c => c.user_id);
+      if (authorIds.length === 0) return;
+      // best_answer_idがnullでないquestionsを全件取得
+      const { data: bestAnswerQuestions } = await supabase
+        .from('questions')
+        .select('best_answer_id')
+        .not('best_answer_id', 'is', null);
+      const { data: allAnswers } = await supabase
+        .from('answers')
+        .select('id, user_id');
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, is_admin');
+      const counts: Record<string, number> = {};
+      bestAnswerQuestions?.forEach(q => {
+        const ans = allAnswers?.find(a => a.id === q.best_answer_id);
+        if (ans && !allProfiles?.find(p => p.id === ans.user_id)?.is_admin) {
+          counts[ans.user_id] = (counts[ans.user_id] || 0) + 1;
+        }
+      });
+      const maxBa = Math.max(...Object.values(counts), 0);
+      const baNo1Users = Object.entries(counts)
+        .filter(([_, cnt]) => cnt === maxBa)
+        .map(([uid]) => uid);
+      setNo1BestAnswerUsers(baNo1Users);
+    };
+    fetchNo1BestAnswerUsers();
   }, [comments, supabase]);
 
   const handlePostComment = async (e: React.FormEvent) => {
@@ -285,11 +378,16 @@ function ProblemClientContent({ problem }: { problem: Problem }) {
                 (showAllComments ? comments : comments.slice(0, COMMENT_DISPLAY_LIMIT)).map((comment) => (
                   <ListItem key={comment.id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
                     <Flex justify="space-between" align="center" mb={1}>
-                      <Text fontSize="sm" fontWeight="bold" color={commentAuthors[comment.user_id]?.is_admin ? "rgb(102, 0, 153)" : undefined}>
-                        {commentAuthors[comment.user_id]?.is_public
-                          ? <Link href={`/profile/${comment.user_id}`} style={{ textDecoration: 'none' }}><span style={{ borderBottom: '1px dashed transparent', transition: 'border-bottom 0.2s' }} onMouseOver={e => (e.currentTarget.style.borderBottom = '1px solid')} onMouseOut={e => (e.currentTarget.style.borderBottom = '1px dashed transparent')}>{commentAuthors[comment.user_id]?.username || '匿名ユーザー'}</span></Link>
-                          : commentAuthors[comment.user_id]?.username || '匿名ユーザー'}
-                      </Text>
+                      <ColoredUserName
+                        userId={comment.user_id}
+                        username={commentAuthors[comment.user_id]?.username || '匿名ユーザー'}
+                        isAdmin={commentAuthors[comment.user_id]?.is_admin}
+                        explanationCount={explanationCounts[comment.user_id] || 0}
+                        bestAnswerCount={bestAnswerCounts[comment.user_id] || 0}
+                        isProfileLink={!!commentAuthors[comment.user_id]?.is_public}
+                        isExplanationNo1={!commentAuthors[comment.user_id]?.is_admin && no1ExplanationUsers.includes(comment.user_id)}
+                        isBestAnswerNo1={!commentAuthors[comment.user_id]?.is_admin && no1BestAnswerUsers.includes(comment.user_id)}
+                      />
                       <Text fontSize="xs" color="gray.500">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ja })}</Text>
                     </Flex>
                     

@@ -67,20 +67,6 @@ export type Submission = {
   };
 };
 
-export type VirtualContest = {
-  id: string;
-  user_id: string;
-  start_time: string;
-  end_time: string;
-  status: 'not_started' | 'in_progress' | 'finished';
-  score: number;
-  contest_id: string;
-  contests?: {
-    id: string;
-    name: string;
-  };
-};
-
 export type Profile = {
   id: string;
   is_admin: boolean;
@@ -93,6 +79,7 @@ export type Contest = {
   description: string | null;
   duration_minutes: number;
   created_at: string;
+  pdf_url?: string | null;
 };
 
 export type Comment = {

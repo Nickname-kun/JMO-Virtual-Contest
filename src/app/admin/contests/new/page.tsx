@@ -33,6 +33,7 @@ export default function NewContestPage() {
     border_a: '',
     border_b: '',
     border_c: '',
+    pdf_url: '', // PDFリンク欄を追加
   });
   const toast = useToast();
 
@@ -52,6 +53,7 @@ export default function NewContestPage() {
           border_a: formData.border_a ? parseInt(formData.border_a) : null,
           border_b: formData.border_b ? parseInt(formData.border_b) : null,
           border_c: formData.border_c ? parseInt(formData.border_c) : null,
+          pdf_url: formData.pdf_url || null, // PDFリンクも送信
         },
       ])
       .select()
@@ -141,6 +143,10 @@ export default function NewContestPage() {
           <FormControl id="border_c">
             <FormLabel>ボーダーC</FormLabel>
             <Input type="number" name="border_c" value={formData.border_c} onChange={handleChange} />
+          </FormControl>
+          <FormControl id="pdf_url">
+            <FormLabel>PDFリンク</FormLabel>
+            <Input name="pdf_url" value={formData.pdf_url} onChange={handleChange} placeholder="https://..." />
           </FormControl>
           <Flex justify="flex-end">
             <Button type="submit" colorScheme="blue" isLoading={loading}>

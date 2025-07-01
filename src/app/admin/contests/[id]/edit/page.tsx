@@ -22,6 +22,7 @@ interface InitialContestData {
   border_a: number | null;
   border_b: number | null;
   border_c: number | null;
+  pdf_url?: string | null;
 }
 
 export default function EditContestPage() {
@@ -42,7 +43,7 @@ export default function EditContestPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("contests")
-        .select("id, name, description, duration_minutes, year, border_a, border_b, border_c") // year を追加
+        .select("id, name, description, duration_minutes, year, border_a, border_b, border_c, pdf_url")
         .eq("id", contestId)
         .single();
       if (error || !data) {
@@ -58,6 +59,7 @@ export default function EditContestPage() {
           border_a: data.border_a,
           border_b: data.border_b,
           border_c: data.border_c,
+          pdf_url: data.pdf_url || '',
         });
         setError(null); // 成功したらエラーをクリア
       }
@@ -82,6 +84,7 @@ export default function EditContestPage() {
           border_a: updatedData.border_a,
           border_b: updatedData.border_b,
           border_c: updatedData.border_c,
+          pdf_url: updatedData.pdf_url || null,
         })
         .eq("id", updatedData.id);
 

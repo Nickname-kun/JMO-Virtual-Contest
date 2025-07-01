@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { Container, Heading, Text, Box, VStack } from '@chakra-ui/react';
+import { Container, Heading, Text, Box, VStack, Button, Link as ChakraLink, HStack } from '@chakra-ui/react';
 import VirtualStartButton from './VirtualStartButton';
 
 interface Contest {
@@ -8,6 +8,7 @@ interface Contest {
   name: string;
   description: string;
   duration_minutes: number;
+  pdf_url?: string;
 }
 
 export default async function ContestPage({ params }: { params: { id: string } }) {
@@ -36,9 +37,25 @@ export default async function ContestPage({ params }: { params: { id: string } }
 
   return (
     <Container maxW="container.md" py={8}>
-      <Heading as="h1" size="xl" mb={4}>
-        {contest.name}
-      </Heading>
+      <HStack spacing={4} align="center" mb={4}>
+        <Heading as="h1" size="xl">
+          {contest.name}
+        </Heading>
+        <Button
+          as={contest.pdf_url ? ChakraLink : undefined}
+          href={contest.pdf_url || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          colorScheme="purple"
+          variant="solid"
+          isDisabled={!contest.pdf_url}
+          opacity={contest.pdf_url ? 1 : 0.5}
+          _hover={contest.pdf_url ? {} : { cursor: 'not-allowed' }}
+          size="sm"
+        >
+          問題PDF
+        </Button>
+      </HStack>
       
       <Text mb={6}>{contest.description}</Text>
 

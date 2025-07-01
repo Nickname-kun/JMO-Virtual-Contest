@@ -15,12 +15,13 @@ interface EditContestFormProps {
     border_a: number | null;
     border_b: number | null;
     border_c: number | null;
+    pdf_url?: string | null;
   };
   onUpdate: (updatedData: EditContestFormProps['initialData']) => Promise<void>; // 更新ハンドラを追加
 }
 
 export default function EditContestForm({ initialData, onUpdate }: EditContestFormProps) {
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState({ ...initialData, pdf_url: initialData.pdf_url || '' });
   const [loading, setLoading] = useState(false); // フォーム固有のローディング状態
   const toast = useToast();
 
@@ -92,6 +93,10 @@ export default function EditContestForm({ initialData, onUpdate }: EditContestFo
         <FormControl id="border_c">
           <FormLabel>ボーダーC</FormLabel>
           <Input type="number" name="border_c" value={formData.border_c || ''} onChange={handleChange} />
+        </FormControl>
+        <FormControl id="pdf_url">
+          <FormLabel>PDFリンク</FormLabel>
+          <Input name="pdf_url" value={formData.pdf_url || ''} onChange={handleChange} placeholder="https://..." />
         </FormControl>
 
         <Button type="submit" colorScheme="blue" isLoading={loading}>

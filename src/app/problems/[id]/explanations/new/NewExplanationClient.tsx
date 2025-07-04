@@ -82,6 +82,33 @@ export default function NewExplanationClient({ problem }: { problem: Problem }) 
         isClosable: true,
       })
     } else {
+      // 管理者全員に通知
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true);
+      // 投稿者名を取得
+      let posterName = '';
+      const { data: posterProfile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+      if (posterProfile && posterProfile.username) {
+        posterName = posterProfile.username;
+      }
+      if (admins && Array.isArray(admins)) {
+        const notificationInserts = admins.map((admin) => ({
+          user_id: admin.id,
+          type: 'explanation_posted',
+          message: `新しいユーザー解説が投稿されました（${title.trim()}）\n問題: ${problem.title}\n投稿者: ${posterName}`,
+          related_entity_id: problem.id,
+          is_read: false,
+        }));
+        if (notificationInserts.length > 0) {
+          await supabase.from('notifications').insert(notificationInserts);
+        }
+      }
       toast({
         title: '成功',
         description: '解説を投稿しました。',

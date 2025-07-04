@@ -184,7 +184,13 @@ export default function Navbar() {
       setUnreadCount(prev => prev > 0 ? prev - 1 : 0);
     }
 
-    router.push(`/maclath/questions/${notification.related_entity_id}`);
+    if (notification.type === 'explanation_posted') {
+      router.push(`/problems/${notification.related_entity_id}/explanations`);
+    } else if (notification.type === 'user_deleted') {
+      router.push(`/`);
+    } else {
+      router.push(`/maclath/questions/${notification.related_entity_id}`);
+    }
     onNotificationsClose();
   };
 

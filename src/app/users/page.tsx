@@ -18,6 +18,7 @@ import {
   Select,
   IconButton,
   HStack,
+  Tooltip,
 } from "@chakra-ui/react";
 import ColoredUserName from '@/components/ColoredUserName';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
@@ -227,7 +228,17 @@ export default function UsersPage() {
                       isBestAnswerNo1={!user.is_admin && no1BestAnswerUsers.includes(user.id)}
                     />
                   </Td>
-                  <Td>{user.affiliation || "-"}</Td>
+                  <Td>
+                    {user.affiliation && user.affiliation.length > 15 ? (
+                      <Tooltip label={user.affiliation}>
+                        <span style={{ cursor: 'pointer' }}>
+                          {user.affiliation.slice(0, 15) + '…'}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      user.affiliation || "-"
+                    )}
+                  </Td>
                   {/* 解説投稿数・ベストアンサー数の列は非表示に */}
                   <Td textAlign="right">
                     {sortKey === 'created_at'

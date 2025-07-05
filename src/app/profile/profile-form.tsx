@@ -183,7 +183,7 @@ export default function ProfileForm({
                 name="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="自己紹介を入力してください"
+                placeholder="自己紹介や目標を入力してください"
                 rows={3}
               />
             </FormControl>
@@ -234,7 +234,7 @@ export default function ProfileForm({
             isChecked={isPublic}
             onChange={(e) => setIsPublic(e.target.checked)}
           >
-            プロフィールを公開する
+            プロフィールを公開する <span style={{fontSize:'0.9em', color:'#888'}}>(SNSリンクなどが設定できます)</span>
           </Checkbox>
         </FormControl>
         <Button type="submit" colorScheme="blue" isLoading={isLoading}>

@@ -479,16 +479,25 @@ export default function Navbar() {
                     <Box
                       key={notification.id}
                       p={3}
-                      bg={notification.is_read ? "blue.600" : "blue.500"}
+                      bg={notification.is_read ? "gray.700" : "purple.200"}
                       borderRadius="md"
-                      _hover={{ bg: "blue.400" }}
+                      _hover={{ bg: notification.is_read ? "gray.600" : "purple.300" }}
                       cursor="pointer"
                       onClick={() => handleNotificationClick(notification)}
+                      display="flex"
+                      alignItems="center"
                     >
-                      <Text fontWeight={notification.is_read ? "normal" : "bold"}>{notification.message}</Text>
-                      <Text fontSize="xs" color="gray.300">
-                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ja })}
-                      </Text>
+                      {!notification.is_read && (
+                        <span style={{ color: '#a259ff', marginRight: 8, fontSize: '1.2em' }}>●</span>
+                      )}
+                      <Box flex="1">
+                        <Text fontWeight={notification.is_read ? "normal" : "bold"} color={notification.is_read ? "gray.200" : "purple.900"}>
+                          {notification.message}
+                        </Text>
+                        <Text fontSize="xs" color={notification.is_read ? "gray.400" : "purple.700"}>
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ja })}
+                        </Text>
+                      </Box>
                     </Box>
                   ))}
                 </>

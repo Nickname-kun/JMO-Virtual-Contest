@@ -26,6 +26,35 @@ export interface Database {
           is_admin?: boolean
         }
       }
+      explanation_images: {
+        Row: {
+          id: string
+          explanation_id: string
+          image_url: string
+          file_name: string
+          file_size: number
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          explanation_id: string
+          image_url: string
+          file_name: string
+          file_size: number
+          position: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          explanation_id?: string
+          image_url?: string
+          file_name?: string
+          file_size?: number
+          position?: number
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

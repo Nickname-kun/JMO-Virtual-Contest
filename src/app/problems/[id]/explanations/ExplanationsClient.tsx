@@ -365,6 +365,25 @@ export default function ExplanationsClient({ problem }: { problem: Problem }) {
     setDeletingExplanation(true)
     setDeleteDialogOpen(false)
 
+    // 画像ファイルのStorage削除処理を追加
+    if (explanation.explanation_images && explanation.explanation_images.length > 0) {
+      for (const img of explanation.explanation_images) {
+        // Storageのファイルパスを抽出
+        let filePath = '';
+        if (img.image_url) {
+          // 例: https://xxxx.supabase.co/storage/v1/object/public/explanations-images/abc/def.png
+          // → abc/def.png
+          const match = img.image_url.match(/\/storage\/v1\/object\/public\/explanations-images\/(.+)/);
+          if (match && match[1]) {
+            filePath = match[1];
+          }
+        }
+        if (filePath) {
+          await supabase.storage.from('explanations-images').remove([filePath]);
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('explanations')
       .delete()

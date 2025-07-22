@@ -143,7 +143,7 @@ export default function UsersPage() {
             baNo1Users.push(uid);
           }
         }
-        setNo1ExplanationUsers(exNo1Users);
+        setNo1ExplanationUsers(maxEx >= 1 ? exNo1Users : []);
         setNo1BestAnswerUsers(maxBa >= 1 ? baNo1Users : []);
       }
       setLoading(false);

@@ -140,6 +140,10 @@ export default function VirtualContestResultPage({ params }: { params: { id: str
               <HStack justify="space-between">
                 <Box>
                   <Text fontWeight="bold" fontSize="lg">{problem.title}</Text>
+                  {/* 解説へのリンクボタンを追加 */}
+                  <Button as={require('next/link').default} href={`/problems/${problem.id}/explanations`} colorScheme="blue" size="sm" mt={2}>
+                    解説を見る
+                  </Button>
                   {/* <Text color="gray.600">難易度: {problem.difficulty}</Text> */}
                 </Box>
                 {submission ? (
